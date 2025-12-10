@@ -246,7 +246,7 @@ type StatusRowProps = {
   value: string;
 };
 
-function StatusRow({ label, value }: StatusRowProps) {
+function StatusRow({ label, value }: StatusRowProps) 
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-slate-400">{label}</span>
