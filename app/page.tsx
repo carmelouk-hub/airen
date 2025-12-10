@@ -18,205 +18,271 @@ const staggerContainer = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4 py-10">
-      <div className="max-w-6xl w-full">
-        {/* TOP BAR */}
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center px-6 py-10">
+      <motion.div
+        className="w-full max-w-6xl mx-auto"
+        initial="hidden"
+        animate="visible"
+        variants={staggerContainer}
+      >
+        {/* Top bar: badge + founder status */}
         <motion.div
-          className="flex items-center justify-between gap-4 mb-10"
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10"
+          variants={fadeInUp}
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/80 px-4 py-1.5 text-xs tracking-wide uppercase">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
-            <span className="font-semibold text-slate-100">AIRen • Core System</span>
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 border border-emerald-400/40 px-4 py-1.5 text-sm">
+            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.9)]" />
+            <span className="font-medium tracking-wide">
+              AIRen · Sistema Centrale
+            </span>
           </div>
-
-          <div className="text-[0.7rem] md:text-xs text-slate-400 text-right leading-tight">
-            <div>Founder Console attiva</div>
-            <div className="text-slate-300">Stiamo preparando l&apos;interfaccia del tuo ecosistema.</div>
+          <div className="text-xs md:text-sm text-slate-400 md:text-right leading-snug">
+            <div className="font-semibold text-slate-200">
+              Founder Console attiva
+            </div>
+            <div>Stiamo preparando l’interfaccia del tuo ecosistema.</div>
           </div>
         </motion.div>
 
-        {/* HERO + STATUS */}
-        <motion.div
-          className="grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)] items-start"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* HERO */}
-          <motion.section variants={fadeInUp}>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-slate-50 mb-4">
-              AIRen –{" "}
-              <span className="text-emerald-400">
-                Sistema in Caricamento
-              </span>
-            </h1>
+        {/* Hero */}
+        <motion.section className="mb-10" variants={fadeInUp}>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight mb-4">
+            AIRen{" "}
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+              – Sistema in caricamento
+            </span>
+          </h1>
+          <p className="max-w-2xl text-sm md:text-base text-slate-300 leading-relaxed">
+            Architettura collegata con successo. Repository GitHub
+            sincronizzato. Vercel attivo. Ora stiamo portando in superficie il{" "}
+            <span className="font-semibold text-emerald-300">
+              livello visibile del tuo ecosistema
+            </span>
+            : l’interfaccia che userai ogni giorno.
+          </p>
+        </motion.section>
 
-            <p className="text-sm sm:text-base text-slate-300 max-w-xl mb-6">
-              Architettura collegata con successo. Repository GitHub sincronizzato.
-              Vercel attivo. Ora stiamo portando in superficie il{" "}
-              <span className="font-semibold text-slate-100">
-                livello visibile del tuo ecosistema
+        {/* Main grid */}
+        <motion.div
+          className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start"
+          variants={staggerContainer}
+        >
+          {/* LEFT: Stato Sistema */}
+          <motion.section
+            className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/80 via-slate-950 to-slate-900/80 p-6 md:p-8 shadow-[0_0_60px_rgba(15,23,42,0.9)]"
+            variants={fadeInUp}
+          >
+            <h2 className="text-sm font-semibold tracking-[0.2em] text-slate-400 mb-4">
+              STATO SISTEMA
+            </h2>
+
+            <p className="text-sm md:text-base text-slate-200 mb-6 max-w-xl leading-relaxed">
+              Strato infrastrutturale pronto. Il prossimo passo: definire
+              pagina iniziale, sezioni del cruscotto e percorsi operativi per{" "}
+              <span className="font-semibold text-emerald-300">
+                AIRen OS, RistoAiren &amp; Galassia
               </span>
-              : l&apos;interfaccia che userai ogni giorno.
+              .
             </p>
 
-            <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-900/90 p-6 sm:p-7">
-              <div className="absolute inset-px rounded-2xl bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.12),_transparent_55%)] pointer-events-none" />
+            {/* Status grid */}
+            <div className="grid gap-4 md:grid-cols-2 mb-6">
+              <div className="space-y-2 text-sm">
+                <StatusRow label="Architettura" value="Collegata" />
+                <StatusRow label="GitHub · airen" value="Sincronizzazione attiva" />
+                <StatusRow label="Vercel · produzione" value="In linea" />
+                <StatusRow label="Interfaccia utente / Dashboard" value="In costruzione guidata" />
+              </div>
 
-              <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[.18em] text-slate-400 mb-2">
-                    Stato Sistema
-                  </h2>
-                  <p className="text-sm text-slate-200 max-w-md">
-                    Layer infrastrutturale pronto. Il prossimo passo: definire
-                    pagina iniziale, sezioni del cruscotto e percorsi
-                    operativi per AIRen OS, RistoAiren &amp; Galassia.
-                  </p>
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs md:text-sm text-slate-300 space-y-2">
+                <div className="font-semibold text-slate-100">
+                  Prossimi step operativi
                 </div>
-
-                <div className="flex flex-col gap-3 text-xs text-slate-200 min-w-[210px]">
-                  <StatusRow label="Architettura" value="Collegata" tone="ok" />
-                  <StatusRow label="GitHub · airen" value="Sync attivo" tone="ok" />
-                  <StatusRow label="Vercel · produzione" value="Online" tone="ok" />
-                  <StatusRow label="UI / Dashboard" value="In costruzione guidata" tone="pending" />
-                </div>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Definizione layout home del Sistema Centrale.</li>
+                  <li>Mappatura sezioni cruscotto Founder.</li>
+                  <li>Accessi rapidi ai moduli verticali (RistoAiren, Syngraphus, APPWORK, EasyPoint...).</li>
+                </ul>
               </div>
             </div>
 
-            <motion.div
-              className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 text-xs sm:text-sm text-slate-300"
-              variants={fadeInUp}
-            >
-              <span className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Prossimi step: struttura sezioni, navigazione, pannello Founder.
-              </span>
-              <span className="hidden sm:inline-block h-px flex-1 bg-slate-800" />
-              <span className="text-slate-400">
-                Tutte le modifiche partiranno da questa pagina:{" "}
-                <code className="rounded-md bg-slate-900/70 px-1.5 py-0.5 text-[0.7rem] border border-slate-800">
-                  app/page.tsx
-                </code>
-              </span>
-            </motion.div>
+            {/* File reference + note */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-4 border-t border-slate-800/70 text-xs md:text-sm">
+              <div className="flex items-center gap-2 text-slate-400">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 border border-slate-700 text-[10px] font-mono">
+                  app
+                </span>
+                <span>
+                  Tutte le modifiche partono da questa pagina:{" "}
+                  <code className="rounded bg-slate-900/80 px-1.5 py-0.5 text-[11px] text-emerald-300 border border-slate-700">
+                    app/page.tsx
+                  </code>
+                </span>
+              </div>
+              <div className="text-slate-500">
+                Strato <span className="text-slate-200">fondativo</span> pronto.
+              </div>
+            </div>
           </motion.section>
 
-          {/* PANNELLO LATERALE */}
-          <motion.aside
-            className="space-y-5"
-            variants={fadeInUp}
+          {/* RIGHT: Timeline + Note Founder */}
+          <motion.div
+            className="space-y-4"
+            variants={staggerContainer}
           >
-            <Panel title="Timeline Sistema">
-              <TimelineStep
-                label="1 · Collegamento repository"
-                detail="GitHub &amp; Vercel agganciati al progetto AIRen."
-                done
-              />
-              <TimelineStep
-                label="2 · Sincronizzazione iniziale"
-                detail="Branch main allineato, prime modifiche tracciate."
-                done
-              />
-              <TimelineStep
-                label="3 · Interfaccia fondativa"
-                detail="Definizione layout home + struttura dashboard."
-                active
-              />
-              <TimelineStep
-                label="4 · Moduli verticali"
-                detail="RistoAiren, Syngraphus, APPWORK, EasyPoint..."
-              />
-            </Panel>
+            {/* Timeline sistema */}
+            <motion.section
+              className="rounded-3xl border border-slate-800 bg-slate-950/80 p-5 md:p-6"
+              variants={fadeInUp}
+            >
+              <h3 className="text-xs font-semibold tracking-[0.22em] text-slate-400 mb-4">
+                TIMELINE SISTEMA
+              </h3>
 
-            <Panel title="Founder Notes">
-              <ul className="space-y-2 text-xs text-slate-300">
-                <li>• Mantenere il design essenziale, leggibile, senza rumore.</li>
-                <li>• Pensare già in ottica 2050: moduli estendibili e scalabili.</li>
-                <li>• Ogni sezione della UI deve parlare la lingua del Founder.</li>
+              <div className="space-y-3 text-sm">
+                <TimelineItem
+                  active
+                  step="1"
+                  title="Collegamento repository"
+                  desc="GitHub e Vercel si sono agganciati al progetto AIRen."
+                />
+                <TimelineItem
+                  active
+                  step="2"
+                  title="Sincronizzazione iniziale"
+                  desc="Ramo principale allineato, prime modifiche tracciate."
+                />
+                <TimelineItem
+                  active
+                  step="3"
+                  title="Interfaccia fondativa"
+                  desc="Definizione layout home + struttura dashboard."
+                />
+                <TimelineItem
+                  step="4"
+                  title="Moduli verticali"
+                  desc="RistoAiren, Syngraphus, APPWORK, EasyPoint…"
+                />
+                <TimelineItem
+                  step="5"
+                  title="Navigazione Galassia"
+                  desc="Accesso unificato ai progetti della Galaxy AIRen."
+                />
+                <TimelineItem
+                  step="6"
+                  title="Pannello Founder"
+                  desc="Vista dedicata al controllo strategico e operativo."
+                />
+                <TimelineItem
+                  step="7"
+                  title="AI Layer & Kairos"
+                  desc="Integrazione ARYA, motori predittivi e Kairos Engine."
+                />
+              </div>
+            </motion.section>
+
+            {/* Note del Foundatore */}
+            <motion.section
+              className="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 md:p-6"
+              variants={fadeInUp}
+            >
+              <h3 className="text-xs font-semibold tracking-[0.22em] text-slate-400 mb-4">
+                NOTE DEL FONDATORE
+              </h3>
+              <ul className="space-y-2 text-xs md:text-sm text-slate-300">
+                <li>
+                  • Mantenere il design{" "}
+                  <span className="font-semibold text-slate-100">
+                    essenziale, leggibile, senza rumore
+                  </span>
+                  .
+                </li>
+                <li>
+                  • Pensare già in ottica{" "}
+                  <span className="font-semibold text-emerald-300">
+                    2050
+                  </span>
+                  : moduli estensibili e scalabili, mai rigidi.
+                </li>
+                <li>
+                  • Ogni sezione della UI deve parlare la{" "}
+                  <span className="font-semibold text-slate-100">
+                    lingua del Founder
+                  </span>
+                  , non del tecnico.
+                </li>
+                <li>
+                  • La home del Sistema Centrale è il{" "}
+                  <span className="font-semibold text-slate-100">
+                    quadro strumenti
+                  </span>{" "}
+                  da cui parte tutta la Galassia AIRen.
+                </li>
               </ul>
-            </Panel>
-          </motion.aside>
+            </motion.section>
+          </motion.div>
         </motion.div>
-      </div>
+
+        {/* Footer tecnico */}
+        <motion.footer
+          className="mt-10 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-[11px] text-slate-500"
+          variants={fadeInUp}
+        >
+          <div>
+            AIRen OS · Interfaccia fondativa v0.2 · Processo guidato dal Founder
+          </div>
+          <div className="text-slate-600">
+            © AIRen Galaxy Initiative — Tutti i percorsi convergono nel Sistema
+            Centrale.
+          </div>
+        </motion.footer>
+      </motion.div>
     </main>
   );
 }
 
-type StatusTone = "ok" | "pending";
-
-function StatusRow({
-  label,
-  value,
-  tone = "ok",
-}: {
+type StatusRowProps = {
   label: string;
   value: string;
-  tone?: StatusTone;
-}) {
-  const color =
-    tone === "ok"
-      ? "bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.9)]"
-      : "bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.9)]";
+};
 
+function StatusRow({ label, value }: StatusRowProps) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-slate-400">{label}</span>
-      <span className="inline-flex items-center gap-2">
-        <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
+      <span className="inline-flex items-center gap-2 text-emerald-300 text-xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         <span className="font-medium">{value}</span>
       </span>
     </div>
   );
 }
 
-function Panel({
-  title,
-  children,
-}: {
+type TimelineItemProps = {
+  step: string;
   title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.75)]">
-      <h3 className="text-xs font-semibold tracking-[.18em] uppercase text-slate-400 mb-3">
-        {title}
-      </h3>
-      <div className="space-y-3 text-[0.8rem] text-slate-200">{children}</div>
-    </div>
-  );
-}
-
-function TimelineStep({
-  label,
-  detail,
-  done,
-  active,
-}: {
-  label: string;
-  detail: string;
-  done?: boolean;
+  desc: string;
   active?: boolean;
-}) {
-  let dot = "bg-slate-600";
-  if (done) dot = "bg-emerald-400";
-  if (active) dot = "bg-sky-400";
+};
 
+function TimelineItem({ step, title, desc, active }: TimelineItemProps) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="mt-1">
-        <span
-          className={`h-2 w-2 rounded-full ${dot} block shadow-[0_0_10px_rgba(148,163,184,0.4)]`}
-        />
-      </div>
-      <div className="space-y-0.5">
-        <div className="text-[0.78rem] font-semibold text-slate-100">
-          {label}
+    <div className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div
+          className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${
+            active
+              ? "border-emerald-400 text-emerald-300 bg-slate-900"
+              : "border-slate-700 text-slate-400 bg-slate-900/60"
+          }`}
+        >
+          {step}
         </div>
-        <div className="text-[0.75rem] text-slate-400">{detail}</div>
+        <div className="h-full w-px bg-slate-800/70 mt-1" />
+      </div>
+      <div className="pt-0.5">
+        <div className="text-[13px] font-medium text-slate-100">{title}</div>
+        <div className="text-xs text-slate-400">{desc}</div>
       </div>
     </div>
   );
