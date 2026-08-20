@@ -1,0 +1,27 @@
+{
+  "pack": "B44-FX-008",
+  "slice": "Foundation Runtime Slice 1",
+  "implemented": [
+    "fail-closed hostname resolution",
+    "reserved trusted platform subdomain namespace",
+    "provider-neutral authenticated principal contract",
+    "TenantMembership and LocationMembership context construction",
+    "platform-role and tenant-role authority separation",
+    "permission and entitlement checks",
+    "Tenant/Location resource scope enforcement",
+    "audit + outbox governed mutation contract",
+    "cross-tenant/location PostgreSQL runtime-core schema invariants",
+    "transaction-local PostgreSQL request-context contract"
+  ],
+  "local_node_tests": {"status":"PASS","passed":11,"failed":0},
+  "local_boundary_check": "PASS",
+  "local_sql_static_check": "PASS",
+  "postgres_runtime_execution": "UNAVAILABLE_IN_AUTHORING_ENVIRONMENT",
+  "postgres_rls_runtime": "PENDING",
+  "github_actions_runtime": "PENDING_OBSERVATION_AFTER_COMMIT",
+  "g4": "PENDING",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "migration_rehearsal": "NOT_PASSED",
+  "corte_production_changed": false
+}
