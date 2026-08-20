@@ -1,27 +1,15 @@
 {
-  "name": "airen-os",
-  "version": "0.1.0",
+  "name": "airenos-foundation",
   "private": true,
+  "version": "0.0.0-foundation-skeleton",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "description": "AIRenOS portable Foundation repository skeleton. Dependency versions intentionally not pinned in B44-FX-006.",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "framer-motion": "^12.23.26",
-    "next": "16.0.7",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.7",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:machine-context": "node -e \"for (const f of require('fs').readdirSync('machine-context').filter(x=>x.endsWith('.json'))) JSON.parse(require('fs').readFileSync('machine-context/'+f,'utf8')); console.log('Machine context JSON PASS')\"",
+    "check:foundation-contracts": "node scripts/check-foundation-contracts.mjs"
   }
 }

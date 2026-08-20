@@ -1,0 +1,38 @@
+{
+  "version": "0.1",
+  "authority": [
+    "AIRenOS Platform Bible active canonical documents",
+    "B44-FX forensic evidence",
+    "B44-FX-004 boundary mapping",
+    "B44-FX-005 accepted ADRs",
+    "T20 and Golden Restaurant contracts",
+    "accepted/tested target code",
+    "coding-agent proposals"
+  ],
+  "core_documents": {
+    "DOC-014": "T20 Security Certification Specification",
+    "DOC-015": "Golden Restaurant E2E Specification",
+    "DOC-016": "Base44 Forensic Extraction Manifest",
+    "DOC-017": "Base44 to Portable Architecture Mapping",
+    "DOC-018": "Codex Rebuild Pack",
+    "DOC-020": "Final Rebuild & Parity Plan",
+    "B44-FX-001": "AIRenOS Forensic Source Snapshot",
+    "B44-FX-002": "RISTOAIREN Forensic Source Snapshot",
+    "B44-FX-003": "Corte delle Stelle Forensic Source Snapshot",
+    "B44-FX-004": "Consolidated Boundary & Portability Matrix",
+    "B44-FX-005": "Decision Queue Reconciliation & ADR Pack",
+    "B44-FX-006": "Portable Foundation Repository & Migration Contract Pack"
+  },
+  "non_negotiable": [
+    "No Base44 dependency in Foundation core",
+    "Tenant and Location resolved server-side",
+    "Identity separate from membership",
+    "Platform roles separate from tenant roles",
+    "Unknown hostname fails closed",
+    "STELLA has no raw DB authority",
+    "Secrets outside operational rows/source control",
+    "T20 and Golden E2E are release gates",
+    "Corte production is not a destructive fixture",
+    "AIRenOS NEXT excluded unless promoted"
+  ]
+}

@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AIRenOS Foundation
 
-## Getting Started
+Status: **B44-FX-007 / R0 GITHUB BOOTSTRAP — FOUNDATION RUNTIME NOT YET OPERATIONAL**
 
-First, run the development server:
+This repository is the governed portable target for AIRenOS Foundation. It is derived from the AIRenOS Platform Bible, B44-FX forensic evidence, B44-FX-004 boundary mapping, and the 13 accepted B44-FX-005 ADRs.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Non-negotiables
+- AIRenOS is the control plane.
+- RISTOAIREN is the hospitality vertical.
+- Tenant is the universal SaaS root; Location is first-class.
+- Identity is separated from TenantMembership and LocationMembership.
+- Platform roles and tenant roles are separate authority planes.
+- Tenant identity is never trusted from browser, AI tool, or webhook payload.
+- Unknown hostname fails closed.
+- STELLA executes governed named capabilities and never writes raw DB state.
+- Secrets live outside operational data and source control.
+- Corte delle Stelle remains a tenant, not product identity or destructive fixture.
+- T20 and Golden Restaurant are release gates.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The December 2025 Next.js prototype is preserved under `legacy/airen-2025-prototype/` for provenance only.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Current gate
+G3 source-level architecture: PASS. G4 operational Foundation: PENDING. No Corte production change is part of this bootstrap.

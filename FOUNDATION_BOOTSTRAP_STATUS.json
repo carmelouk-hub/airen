@@ -1,0 +1,20 @@
+{
+  "pack": "B44-FX-007",
+  "phase": "R0_GITHUB_BOOTSTRAP",
+  "branch": "foundation/r0-bootstrap-20260820",
+  "base_branch": "main",
+  "repository": "carmelouk-hub/airen",
+  "git_initialized": true,
+  "main_modified": false,
+  "corte_production_changed": false,
+  "g3_source_level": "PASS",
+  "g4_runtime_foundation": "PENDING",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "migration_rehearsal": "NOT_PASSED",
+  "notes": [
+    "Existing December 2025 Next.js prototype is preserved as legacy evidence in the bootstrap branch.",
+    "No Base44 runtime dependency is permitted in Foundation core.",
+    "Branch protection/check enforcement on main remains a governance action pending connector capability/manual repository rule configuration."
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "suite":"Golden Restaurant E2E",
+  "status":"SKELETON_NOT_CERTIFIED",
+  "tenant":"synthetic-permanent-golden-restaurant",
+  "journey":["Discovery","Booking","Customer","Arrival","Check-In","Table","ServiceSession","Order","Production Routing","Kitchen/Bar","Ready","Serve","Bill","Payment","Close","CRM Update","Analytics/Event","Audit","STELLA Observation/Insight"],
+  "must_include":["failure paths","degraded providers","reset contract","no production Corte data"]
+}
