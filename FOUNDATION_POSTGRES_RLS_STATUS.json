@@ -1,0 +1,13 @@
+{
+  "pack": "B44-FX-009",
+  "phase": "POSTGRESQL_HARNESS_RLS_CI_RUNTIME_VERIFICATION",
+  "harness": "IMPLEMENTED",
+  "rls_migration": "IMPLEMENTED_STATICALLY",
+  "synthetic_rls_tests": "IMPLEMENTED",
+  "local_postgres_execution": "BLOCKED_BY_AUTHORING_ENVIRONMENT_NETWORK/PACKAGE_AVAILABILITY",
+  "github_actions_runtime_evidence": "PENDING_OBSERVATION",
+  "g4": "PENDING",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "corte_production_changed": false
+}

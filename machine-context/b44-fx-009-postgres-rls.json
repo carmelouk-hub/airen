@@ -1,0 +1,15 @@
+{
+  "pack": "B44-FX-009",
+  "scope": "PostgreSQL Harness, RLS & CI Runtime Verification",
+  "assets": [
+    "db/migrations/0003_foundation_rls.sql",
+    "tests/postgres/bootstrap_roles.sql",
+    "tests/postgres/rls_runtime.sql",
+    "scripts/run-postgres-runtime-tests.sh",
+    ".github/workflows/ci.yml postgres service job"
+  ],
+  "static_contract": "READY",
+  "runtime_evidence": "PENDING",
+  "g4": "PENDING",
+  "rule": "No G4 PASS without observed PostgreSQL + RLS + CI runtime evidence"
+}

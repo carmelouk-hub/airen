@@ -1,15 +1,19 @@
 {
   "name": "airenos-foundation",
   "private": true,
-  "version": "0.0.0-foundation-runtime-slice-1",
-  "workspaces": ["apps/*", "packages/*"],
+  "version": "0.0.0-foundation-rls-harness",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:machine-context": "node -e \"for (const f of require('fs').readdirSync('machine-context').filter(x=>x.endsWith('.json'))) JSON.parse(require('fs').readFileSync('machine-context/'+f,'utf8')); console.log('Machine context JSON PASS')\"",
     "check:foundation-contracts": "node scripts/check-foundation-contracts.mjs",
     "check:runtime-slice": "node scripts/check-runtime-slice.mjs",
+    "test:foundation-runtime": "node --experimental-strip-types --test tests/integration/foundation-runtime.test.ts",
     "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
-    "test:foundation-runtime": "node --experimental-strip-types --test tests/integration/foundation-runtime.test.ts"
+    "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh"
   },
   "type": "module"
 }
