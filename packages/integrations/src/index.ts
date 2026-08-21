@@ -58,6 +58,9 @@ export class HmacSignedSessionVerifier implements SessionCredentialVerifier {
     const [payloadSegment, signatureSegment] = parts;
     let actualSignature: Buffer;
     try { actualSignature = Buffer.from(signatureSegment, "base64url"); } catch { return null; }
+    // Reject alternate/non-canonical Base64URL spellings of the same signature bytes.
+    // This removes token-string malleability before the constant-time MAC comparison.
+    if (actualSignature.toString("base64url") !== signatureSegment) return null;
     const expectedSignature = createHmac("sha256", this.verificationKey).update(payloadSegment).digest();
     if (actualSignature.length !== expectedSignature.length || !timingSafeEqual(actualSignature, expectedSignature)) return null;
     const claims = decodeClaims(payloadSegment);
