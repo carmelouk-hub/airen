@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-011-R1",
-  "status": "ARCHIVE_COMPLETE_PENDING_FINAL_POST_CLEANUP_CI",
+  "status": "CLOSED_PASS",
   "scope": "Authentication Token Canonicalization & Test Reliability Reconciliation",
   "trigger": {
     "post_archive_cleanup_run_id": 32504951362,
@@ -37,6 +37,12 @@
     "drive_original_evidence_id": "1QABWZ6MjRlCFwEHGRdJfLhjHbRqDwOGc",
     "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
     "integrity": "PASS"
+  },
+  "post_cleanup_ci": {
+    "run": {"id": 32506606185, "run_number": 107, "conclusion": "success"},
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
   },
   "effect_on_b44_fx_011": "HISTORICAL_SUPERSEDED_BY_R1",
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
