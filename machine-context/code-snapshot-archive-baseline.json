@@ -1,6 +1,6 @@
 {
   "governance_pack": "04.3-CODE-SNAPSHOT-BASELINE",
-  "status": "COMPLETE_INTEGRITY_PASS_THROUGH_B44_FX_013_PENDING_POST_CLEANUP_CI",
+  "status": "COMPLETE_INTEGRITY_PASS_THROUGH_B44_FX_013",
   "source_of_truth": {
     "code": "GitHub",
     "canonical_meaning": "AIRenOS Platform Bible",
@@ -50,10 +50,11 @@
     "internal_sha256sums": "PASS"
   },
   "latest_post_cleanup_ci": {
-    "milestone": "B44-FX-012",
-    "github_actions_run_id": 32508364975,
-    "run_number": 155,
+    "milestone": "B44-FX-013",
+    "github_actions_run_id": 32510601218,
+    "run_number": 199,
     "application_contracts": "PASS",
+    "observability_tests": "PASS",
     "postgres_rls_runtime": "PASS",
     "temporary_snapshot_tooling_removed": true
   },
@@ -129,7 +130,7 @@
     },
     {
       "id": "B44-FX-013",
-      "status": "ACTIVE_BASELINE_PENDING_POST_CLEANUP_CI",
+      "status": "ACTIVE_BASELINE",
       "closure_commit": "a4b6ced261126ab3db3646391b991101ff41f8e3",
       "tree_sha": "ac75c04452e35256cef1fa62b6dbb6220490ad87",
       "runtime_run_id": 32509849518,
@@ -138,6 +139,8 @@
       "closure_run_number": 187,
       "snapshot_run_id": 32510154448,
       "snapshot_run_number": 189,
+      "post_cleanup_run_id": 32510601218,
+      "post_cleanup_run_number": 199,
       "package_sha256": "dd3a13f1d28990bb5e6a2301d9153fa186a99d19f8ee828f43cdcd08d90f5fe8",
       "source_zip_sha256": "b4ec10804fc01fa2d0169f1958dd7a789628d0c1d56272066ae61a94fba8b966",
       "drive_folder_id": "1VYGsiHFAMWuKQErWCHVXV7OzGDD8Wx0A",
