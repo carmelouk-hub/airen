@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-013",
-  "status": "CLOSED_PASS_PENDING_ARCHIVE",
+  "status": "CLOSED_PASS_PENDING_POST_CLEANUP_CI",
   "scope": "Observability Baseline",
   "contracts": {
     "trace_correlation_context": "PASS",
@@ -19,6 +19,30 @@
     "application_contracts": "PASS",
     "observability_tests": "PASS",
     "postgres_rls_runtime": "PASS"
+  },
+  "closure": {
+    "commit": "a4b6ced261126ab3db3646391b991101ff41f8e3",
+    "tree_sha": "ac75c04452e35256cef1fa62b6dbb6220490ad87",
+    "run_id": 32510040099,
+    "run_number": 187,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS"
+  },
+  "archive": {
+    "snapshot_run_id": 32510154448,
+    "snapshot_run_number": 189,
+    "snapshot_job": "PASS",
+    "artifact_id": 9456726138,
+    "artifact_sha256": "dd3a13f1d28990bb5e6a2301d9153fa186a99d19f8ee828f43cdcd08d90f5fe8",
+    "source_zip_sha256": "b4ec10804fc01fa2d0169f1958dd7a789628d0c1d56272066ae61a94fba8b966",
+    "internal_sha256sums": "PASS",
+    "drive_folder_id": "1VYGsiHFAMWuKQErWCHVXV7OzGDD8Wx0A",
+    "drive_package_id": "1Nr7jdu5W0guqsZO-Z6ZsTdRoG4oAdgXh",
+    "drive_runtime_evidence_id": "1OHctIQgyHj1dy4FW6JtW0hx-HldVkHaC",
+    "drive_archive_manifest_id": "17QkipuMhzLNk-HHE9bL5PKO6C98HylId",
+    "operational_evidence_04_2_id": "1Rf7umn71CERdDKmzhiqmtKk3GzHQK9pA",
+    "integrity": "PASS"
   },
   "tests": [
     "trace propagation and child span continuity",
