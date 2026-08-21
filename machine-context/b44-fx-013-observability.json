@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-013",
-  "status": "RUNTIME_EVIDENCE_PASS_PENDING_CLOSURE_CI",
+  "status": "CLOSED_PASS_PENDING_ARCHIVE",
   "scope": "Observability Baseline",
   "contracts": {
     "trace_correlation_context": "PASS",
@@ -30,11 +30,11 @@
     "API runtime observability composition"
   ],
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
-  "g4_blocker_closed_on_closure": "observability baseline",
-  "g4_remaining_after_closure": ["deployment path verification"],
+  "g4_blocker_closed": "observability baseline",
+  "g4_remaining": ["deployment path verification"],
   "t20": "NOT_PASSED",
   "golden_e2e": "NOT_PASSED",
   "main_modified": false,
   "corte_production_changed": false,
-  "next_if_closed": "B44-FX-014 — Deployment Path Verification"
+  "next": "B44-FX-014 — Deployment Path Verification"
 }
