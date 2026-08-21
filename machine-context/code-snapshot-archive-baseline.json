@@ -1,0 +1,67 @@
+{
+  "governance_pack": "04.3-CODE-SNAPSHOT-BASELINE",
+  "status": "COMPLETE_INTEGRITY_PASS",
+  "source_of_truth": {
+    "code": "GitHub",
+    "canonical_meaning": "AIRenOS Platform Bible",
+    "immutable_milestone_archive": "Google Drive / 04.3"
+  },
+  "drive": {
+    "folder_id": "1CShs_fLvqepKtSO5LpCkzPgiTZ851nrG",
+    "policy_document_id": "1ZJJRPktIhJe1Alwf8KYpsVhK8EubhG4CaiTkN2MhglU",
+    "baseline_register_document_id": "13XwQL5-3YZVMR8N9aCDHI0ICDC2pYNbP50E20TcfoI0"
+  },
+  "snapshot_generation": {
+    "github_actions_run_id": 32502373898,
+    "run_number": 47,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_jobs": "4/4 PASS",
+    "internal_sha256sums": "PASS"
+  },
+  "post_cleanup_ci": {
+    "github_actions_run_id": 32502764172,
+    "run_number": 49,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS"
+  },
+  "milestones": [
+    {
+      "id": "B44-FX-007",
+      "closure_commit": "85bda9473395a64050089c3779689f600d8b5214",
+      "tree_sha": "ae987cdb54f921ca58b872fd926261cbc58da541",
+      "package_sha256": "322c5f9d6ae38d0bbbc0f360563b8ecb717d9459afb44dc4b5d80cc1936f3bdd",
+      "drive_folder_id": "1LjxPUhEJxTgpaDzJdl-kORxFz0o1m0-J"
+    },
+    {
+      "id": "B44-FX-008",
+      "closure_commit": "7a222dda07ae9f3060e7c9a4139fbf8a4fadd6b5",
+      "tree_sha": "965057c0fe96e26bd02e85f947b055204bda73ba",
+      "package_sha256": "850600808c4f1bdaaf1dc47ec07952e8c20b4b2e7bcfc9f4394da12e7b03935d",
+      "drive_folder_id": "1Blcamhuha2RK6ZIzbIsZtASBIUfroAhI"
+    },
+    {
+      "id": "B44-FX-009-R1",
+      "closure_commit": "0862251e84b5a8edeebc73bd85b157940b1e8807",
+      "tree_sha": "04cf8239a44b4193793195b573fa859119ae9dec",
+      "package_sha256": "51fe37c4a4fd043c995b5887e0fe9cf3df5d155bb6ac8b062c1af6c0092b6ac6",
+      "drive_folder_id": "10aW58HURY-ZK7OtfO0UoIHFenAW4ZXhg"
+    },
+    {
+      "id": "B44-FX-010",
+      "closure_commit": "d7254ca4218adeafb2eefbc8bdbd998d9e5476c1",
+      "tree_sha": "274df1f96e5e58091bb3a27b82f07d3cec38847f",
+      "package_sha256": "60062f61ced4d0c61cb1213cd53febffcb7c0664b43caad6d1c42440066a2657",
+      "drive_folder_id": "1cYDf2mmBQOkQMc9DPKWvvP4ohqh1OUsu"
+    }
+  ],
+  "governance": {
+    "main_modified": false,
+    "corte_production_changed": false,
+    "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+    "t20": "NOT_PASSED",
+    "golden_e2e": "NOT_PASSED",
+    "next_gate": "B44-FX-011 — Identity Adapter & Authenticated Principal Runtime",
+    "rule": "No repository-changing milestone closes without code snapshot reconciliation in 04.3."
+  }
+}
