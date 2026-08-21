@@ -23,10 +23,19 @@
     "trigger_run_id": 32504951362,
     "trigger_run_number": 91,
     "finding": "Non-canonical Base64URL signature spelling could decode to identical signature bytes, causing a flaky tamper test.",
-    "source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
+    "hardening_source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
     "verification_run_id": 32505412332,
     "verification_run_number": 95,
-    "verification": "PASS"
+    "verification": "PASS",
+    "closure_commit": "2505ccd6bf45ad47d4a63abea9fa9286de0a33fa",
+    "closure_run_id": 32505553453,
+    "closure_run_number": 99,
+    "snapshot_run_id": 32505671459,
+    "snapshot_run_number": 101,
+    "snapshot_integrity": "PASS",
+    "post_cleanup_run_id": 32506606185,
+    "post_cleanup_run_number": 107,
+    "post_cleanup_ci": "PASS"
   },
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
   "g4_remaining_blockers": [
