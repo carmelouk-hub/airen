@@ -1,6 +1,6 @@
 {
   "governance_pack": "04.3-CODE-SNAPSHOT-BASELINE",
-  "status": "COMPLETE_INTEGRITY_PASS",
+  "status": "COMPLETE_INTEGRITY_PASS_WITH_SUPERSEDING_R1",
   "source_of_truth": {
     "code": "GitHub",
     "canonical_meaning": "AIRenOS Platform Bible",
@@ -11,7 +11,7 @@
     "policy_document_id": "1ZJJRPktIhJe1Alwf8KYpsVhK8EubhG4CaiTkN2MhglU",
     "baseline_register_document_id": "13XwQL5-3YZVMR8N9aCDHI0ICDC2pYNbP50E20TcfoI0"
   },
-  "snapshot_generation": {
+  "retroactive_snapshot_generation": {
     "github_actions_run_id": 32502373898,
     "run_number": 47,
     "application_contracts": "PASS",
@@ -19,15 +19,22 @@
     "snapshot_jobs": "4/4 PASS",
     "internal_sha256sums": "PASS"
   },
-  "post_cleanup_ci": {
-    "github_actions_run_id": 32502764172,
-    "run_number": 49,
+  "r1_snapshot_generation": {
+    "github_actions_run_id": 32505671459,
+    "run_number": 101,
     "application_contracts": "PASS",
-    "postgres_rls_runtime": "PASS"
+    "postgres_rls_runtime": "PASS",
+    "snapshot_job": "PASS",
+    "artifact_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+    "internal_sha256sums": "PASS"
+  },
+  "post_cleanup_ci": {
+    "status": "PENDING_FINAL_STANDARD_CI_AFTER_R1_ARCHIVE"
   },
   "milestones": [
     {
       "id": "B44-FX-007",
+      "status": "ACTIVE_BASELINE",
       "closure_commit": "85bda9473395a64050089c3779689f600d8b5214",
       "tree_sha": "ae987cdb54f921ca58b872fd926261cbc58da541",
       "package_sha256": "322c5f9d6ae38d0bbbc0f360563b8ecb717d9459afb44dc4b5d80cc1936f3bdd",
@@ -35,6 +42,7 @@
     },
     {
       "id": "B44-FX-008",
+      "status": "ACTIVE_BASELINE",
       "closure_commit": "7a222dda07ae9f3060e7c9a4139fbf8a4fadd6b5",
       "tree_sha": "965057c0fe96e26bd02e85f947b055204bda73ba",
       "package_sha256": "850600808c4f1bdaaf1dc47ec07952e8c20b4b2e7bcfc9f4394da12e7b03935d",
@@ -42,6 +50,7 @@
     },
     {
       "id": "B44-FX-009-R1",
+      "status": "ACTIVE_BASELINE",
       "closure_commit": "0862251e84b5a8edeebc73bd85b157940b1e8807",
       "tree_sha": "04cf8239a44b4193793195b573fa859119ae9dec",
       "package_sha256": "51fe37c4a4fd043c995b5887e0fe9cf3df5d155bb6ac8b062c1af6c0092b6ac6",
@@ -49,19 +58,47 @@
     },
     {
       "id": "B44-FX-010",
+      "status": "ACTIVE_BASELINE",
       "closure_commit": "d7254ca4218adeafb2eefbc8bdbd998d9e5476c1",
       "tree_sha": "274df1f96e5e58091bb3a27b82f07d3cec38847f",
       "package_sha256": "60062f61ced4d0c61cb1213cd53febffcb7c0664b43caad6d1c42440066a2657",
       "drive_folder_id": "1cYDf2mmBQOkQMc9DPKWvvP4ohqh1OUsu"
+    },
+    {
+      "id": "B44-FX-011",
+      "status": "HISTORICAL_SUPERSEDED_BY_B44_FX_011_R1",
+      "closure_commit": "77855a68c078f435ad4be28064fe33527ad9560e",
+      "tree_sha": "8b911b1f36845391f7801cf6dcab37cd87a6548d",
+      "package_sha256": "030f3b1ffeb066f22d624fdc94c583e590fc6f3c952910ab7ae5f85a4f9824fd",
+      "drive_folder_id": "1gNSustDC9uln-Pgbf5IeuP8JNzg5Idij",
+      "superseded_reason": "Post-archive test exposed Base64URL equivalent-byte encoding malleability in the synthetic session verifier/test surface. Historical evidence retained."
+    },
+    {
+      "id": "B44-FX-011-R1",
+      "status": "ACTIVE_SUPERSEDING_BASELINE",
+      "closure_commit": "2505ccd6bf45ad47d4a63abea9fa9286de0a33fa",
+      "tree_sha": "48ee6a256c411212056081afe5a39b9dadc6732b",
+      "package_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+      "source_zip_sha256": "2abb285383e179ac0b4e134d2183b3acf393c7c9e1e7da7f50d774b0362f6376",
+      "drive_folder_id": "1_Hc7EPJjLKQKOiIdEiwTW9rdD6w_1IK2",
+      "drive_package_id": "1YzFiq1rWY7QDRHrQAhbCRyDg21uU9SCq",
+      "drive_runtime_evidence_id": "1vlKZBZUkDNgpdCJzyeyWMNToT1_SrJVi",
+      "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
+      "integrity": "PASS"
     }
   ],
   "governance": {
     "main_modified": false,
     "corte_production_changed": false,
     "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+    "g4_remaining_blockers": [
+      "environment + secret-provider runtime contract",
+      "observability baseline",
+      "deployment path verification"
+    ],
     "t20": "NOT_PASSED",
     "golden_e2e": "NOT_PASSED",
-    "next_gate": "B44-FX-011 — Identity Adapter & Authenticated Principal Runtime",
-    "rule": "No repository-changing milestone closes without code snapshot reconciliation in 04.3."
+    "next_gate": "B44-FX-012 — Environment & Secret Provider Runtime Contract",
+    "rule": "No repository-changing milestone closes without code snapshot reconciliation in 04.3; superseded snapshots remain immutable historical evidence."
   }
 }
