@@ -1,17 +1,20 @@
 import { AppError } from "../../../packages/shared-contracts/src/index.ts";
 import { loadFoundationRuntimeEnvironment, runtimeEnvironmentDiagnostics, type FoundationRuntimeEnvironment } from "../../../packages/platform-core/src/index.ts";
 import { HmacSignedSessionVerifier, type SecretProvider } from "../../../packages/integrations/src/index.ts";
+import { createFoundationObservabilityRuntime, type FoundationObservabilityRuntime, type LogSink, type MetricSink } from "../../../packages/observability/src/index.ts";
 
 export type FoundationRuntimeBootstrap = Readonly<{
   config: FoundationRuntimeEnvironment;
   diagnostics: Readonly<Record<string, unknown>>;
+  observability: FoundationObservabilityRuntime;
   withDatabaseConnectionString<T>(consumer: (connectionString: string) => T): T;
   createReferenceSignedSessionVerifier(options?: { now?: () => number; clockSkewSeconds?: number }): HmacSignedSessionVerifier;
 }>;
 
 export async function bootstrapFoundationRuntime(
   environment: Readonly<Record<string, string | undefined>>,
-  secrets: SecretProvider
+  secrets: SecretProvider,
+  options?: Readonly<{ logSink?: LogSink; metricSink?: MetricSink; now?: () => Date }>
 ): Promise<FoundationRuntimeBootstrap> {
   const config = loadFoundationRuntimeEnvironment(environment);
   if (secrets.providerKey !== config.secretManagerAdapter) {
@@ -23,9 +26,18 @@ export async function bootstrapFoundationRuntime(
     secrets.resolve(config.authSessionKeyRef)
   ]);
 
+  const observability = createFoundationObservabilityRuntime({
+    service: "airenos-api",
+    environment: config.nodeEnv,
+    logSink: options?.logSink,
+    metricSink: options?.metricSink,
+    now: options?.now
+  });
+
   return Object.freeze({
     config,
     diagnostics: runtimeEnvironmentDiagnostics(config),
+    observability,
     withDatabaseConnectionString<T>(consumer: (connectionString: string) => T): T {
       return databaseUrl.use(consumer);
     },
