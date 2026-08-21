@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-011-R1",
-  "status": "RECONCILIATION_PASS_PENDING_CLOSURE_COMMIT",
+  "status": "ARCHIVE_COMPLETE_PENDING_FINAL_POST_CLEANUP_CI",
   "scope": "Authentication Token Canonicalization & Test Reliability Reconciliation",
   "trigger": {
     "post_archive_cleanup_run_id": 32504951362,
@@ -16,16 +16,29 @@
     "secret_handling_changed": false
   },
   "verification": {
-    "source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
-    "github_actions_run_id": 32505412332,
-    "run_number": 95,
-    "conclusion": "success",
+    "hardening_source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
+    "verification_run": {"id": 32505412332, "run_number": 95, "conclusion": "success"},
+    "closure_commit": "2505ccd6bf45ad47d4a63abea9fa9286de0a33fa",
+    "closure_run": {"id": 32505553453, "run_number": 99, "conclusion": "success"},
     "application_contracts": "PASS",
     "identity_adapter_tests": "5/5 PASS",
     "postgres_rls_runtime": "PASS",
     "authenticated_principal_runtime": "PASS"
   },
-  "effect_on_b44_fx_011": "SUPERSEDE_ARCHIVE_BASELINE_WITH_R1",
+  "archive": {
+    "snapshot_generation_run": {"id": 32505671459, "run_number": 101, "conclusion": "success"},
+    "artifact_id": 9455177032,
+    "artifact_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+    "source_zip_sha256": "2abb285383e179ac0b4e134d2183b3acf393c7c9e1e7da7f50d774b0362f6376",
+    "internal_sha256sums": "PASS",
+    "drive_folder_id": "1_Hc7EPJjLKQKOiIdEiwTW9rdD6w_1IK2",
+    "drive_package_id": "1YzFiq1rWY7QDRHrQAhbCRyDg21uU9SCq",
+    "drive_runtime_evidence_id": "1vlKZBZUkDNgpdCJzyeyWMNToT1_SrJVi",
+    "drive_original_evidence_id": "1QABWZ6MjRlCFwEHGRdJfLhjHbRqDwOGc",
+    "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
+    "integrity": "PASS"
+  },
+  "effect_on_b44_fx_011": "HISTORICAL_SUPERSEDED_BY_R1",
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
   "g4_remaining_blockers": [
     "environment + secret-provider runtime contract",
@@ -36,5 +49,6 @@
   "golden_e2e": "NOT_PASSED",
   "main_modified": false,
   "corte_production_changed": false,
-  "rule": "Do not hide post-closure failures. Reconcile, harden, re-certify, and archive a superseding exact-commit baseline."
+  "next": "B44-FX-012 — Environment & Secret Provider Runtime Contract",
+  "rule": "Do not hide post-closure failures. Reconcile, harden, re-certify, archive a superseding exact-commit baseline, then prove the standard CI is clean after temporary tooling removal."
 }
