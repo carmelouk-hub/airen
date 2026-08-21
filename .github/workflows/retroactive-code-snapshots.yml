@@ -1,0 +1,88 @@
+name: retroactive-code-snapshots
+on:
+  push:
+    branches:
+      - foundation/r0-bootstrap-20260820
+
+jobs:
+  snapshot:
+    name: snapshot-${{ matrix.milestone }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - milestone: B44-FX-007
+            ref: 85bda9473395a64050089c3779689f600d8b5214
+          - milestone: B44-FX-008
+            ref: 7a222dda07ae9f3060e7c9a4139fbf8a4fadd6b5
+          - milestone: B44-FX-009-R1
+            ref: 0862251e84b5a8edeebc73bd85b157940b1e8807
+          - milestone: B44-FX-010
+            ref: d7254ca4218adeafb2eefbc8bdbd998d9e5476c1
+    steps:
+      - name: Checkout exact closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          fetch-depth: 1
+
+      - name: Build immutable snapshot package
+        env:
+          MILESTONE: ${{ matrix.milestone }}
+          COMMIT_SHA: ${{ matrix.ref }}
+          REPOSITORY: carmelouk-hub/airen
+          ORIGIN_BRANCH: foundation/r0-bootstrap-20260820
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/$MILESTONE"
+          mkdir -p "$OUT"
+          git archive --format=zip --output="$OUT/AIRenOS-Foundation-$MILESTONE-source.zip" HEAD
+          TREE_SHA="$(git rev-parse HEAD^{tree})"
+          export TREE_SHA OUT
+          python3 - <<'PY'
+          import json, os, pathlib, hashlib
+          out = pathlib.Path(os.environ['OUT'])
+          milestone = os.environ['MILESTONE']
+          commit = os.environ['COMMIT_SHA']
+          tree = os.environ['TREE_SHA']
+          repo = os.environ['REPOSITORY']
+          branch = os.environ['ORIGIN_BRANCH']
+          commit_manifest = {
+              'milestone': milestone,
+              'repository': repo,
+              'closure_commit': commit,
+              'tree_sha': tree,
+              'origin_branch': branch,
+              'archive_type': 'git archive',
+              'source_of_truth': 'GitHub',
+              'drive_role': 'immutable milestone disaster-recovery archive'
+          }
+          (out/'commit-manifest.json').write_text(json.dumps(commit_manifest, indent=2) + '\n')
+          dep = {'milestone': milestone, 'repository': repo, 'closure_commit': commit, 'files': {}}
+          for p in ['package.json','package-lock.json','legacy/airen-2025-prototype/package.json','legacy/airen-2025-prototype/package-lock.json']:
+              path = pathlib.Path(p)
+              if path.exists():
+                  raw = path.read_bytes()
+                  item = {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}
+                  if path.name == 'package.json':
+                      try:
+                          pkg = json.loads(raw)
+                          item['name'] = pkg.get('name')
+                          item['version'] = pkg.get('version')
+                          item['dependencies'] = pkg.get('dependencies', {})
+                          item['devDependencies'] = pkg.get('devDependencies', {})
+                      except Exception:
+                          item['parse_status'] = 'UNPARSEABLE'
+                  dep['files'][p] = item
+          (out/'dependency-manifest.json').write_text(json.dumps(dep, indent=2, sort_keys=True) + '\n')
+          PY
+          (cd "$OUT" && sha256sum "AIRenOS-Foundation-$MILESTONE-source.zip" commit-manifest.json dependency-manifest.json > SHA256SUMS.txt)
+
+      - name: Upload snapshot package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.milestone }}-code-snapshot
+          path: ${{ runner.temp }}/${{ matrix.milestone }}/*
+          if-no-files-found: error
+          retention-days: 30
