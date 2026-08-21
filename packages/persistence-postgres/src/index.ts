@@ -6,6 +6,7 @@ import type { MembershipRepository, RolePermissionResolver, TenantMembership, Lo
 import type { EntitlementRepository } from "../../entitlements/src/index.ts";
 import type { AuditRecord, UnitOfWork } from "../../audit-events/src/index.ts";
 import type { DomainEvent } from "../../shared-contracts/src/index.ts";
+import type { AuthenticationIdentityDirectory, AuthenticationIdentityRecord } from "../../identity/src/index.ts";
 
 function oneOrNull<T extends QueryResultRow>(rows: T[]): T | null { return rows[0] ?? null; }
 function assertRoleIdentifier(role: string): string { if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier"); return role; }
@@ -24,6 +25,36 @@ export class PostgresFoundationReadStore implements TenantDomainRepository, Memb
   async tenantPermissions(roleKey: string): Promise<readonly string[]> { const r=await this.pool.query("SELECT permission_key FROM authz.role_permission_grants WHERE scope_kind='tenant' AND role_key=$1 AND effect='allow'",[roleKey]); return r.rows.map((x)=>String(x.permission_key)); }
   async locationPermissions(roleKey: string): Promise<readonly string[]> { const r=await this.pool.query("SELECT permission_key FROM authz.role_permission_grants WHERE scope_kind='location' AND role_key=$1 AND effect='allow'",[roleKey]); return r.rows.map((x)=>String(x.permission_key)); }
   async enabledForTenant(tenantId: UUID): Promise<readonly string[]> { const r=await this.pool.query("SELECT entitlement_key FROM billing.tenant_entitlements WHERE tenant_id=$1 AND enabled=true AND (valid_until IS NULL OR valid_until > now())",[tenantId]); return r.rows.map((x)=>String(x.entitlement_key)); }
+}
+
+export class PostgresAuthenticationIdentityDirectory implements AuthenticationIdentityDirectory {
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_auth") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
+
+  async resolveProviderIdentity(providerKey: string, providerSubject: string): Promise<AuthenticationIdentityRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`SET LOCAL ROLE ${assertRoleIdentifier(this.assumeRole)}`);
+      const r = await client.query(
+        "SELECT identity_id AS \"identityId\", identity_status AS status, platform_roles AS \"platformRoles\" FROM security.resolve_authentication_identity($1,$2)",
+        [providerKey, providerSubject]
+      );
+      await client.query("COMMIT");
+      const row = oneOrNull(r.rows) as { identityId: UUID; status: string; platformRoles: string[] } | null;
+      return row ? { identityId: row.identityId, status: row.status, platformRoles: row.platformRoles ?? [] } : null;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export class PostgresTenantRepositoryAdapter implements TenantRepository {
