@@ -50,7 +50,7 @@ function parseBaseDomain(raw: string): string {
 export function parseSecretRef(raw: string, field: string): SecretRef {
   let url: URL;
   try { url = new URL(raw); } catch { return fail(`${field} must be a secret:// reference`, field); }
-  if (url.protocol !== "secret:") fail(`${field} must use the secret:// scheme`, field);
+  if (url.protocol.replace(/:$/, "") !== "secret") fail(`${field} must use the secret:// scheme`, field);
   const provider = url.hostname;
   const key = url.pathname.replace(/^\//, "");
   const version = url.searchParams.get("version") ?? undefined;
