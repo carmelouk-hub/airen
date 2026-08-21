@@ -1,6 +1,6 @@
 {
   "governance_pack": "04.3-CODE-SNAPSHOT-BASELINE",
-  "status": "COMPLETE_INTEGRITY_PASS_WITH_SUPERSEDING_R1",
+  "status": "COMPLETE_INTEGRITY_PASS_THROUGH_B44_FX_012",
   "source_of_truth": {
     "code": "GitHub",
     "canonical_meaning": "AIRenOS Platform Bible",
@@ -19,7 +19,7 @@
     "snapshot_jobs": "4/4 PASS",
     "internal_sha256sums": "PASS"
   },
-  "r1_snapshot_generation": {
+  "b44_fx_011_r1_snapshot_generation": {
     "github_actions_run_id": 32505671459,
     "run_number": 101,
     "application_contracts": "PASS",
@@ -28,12 +28,18 @@
     "artifact_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
     "internal_sha256sums": "PASS"
   },
-  "post_cleanup_ci": {
-    "github_actions_run_id": 32506606185,
-    "run_number": 107,
+  "b44_fx_012_snapshot_generation": {
+    "github_actions_run_id": 32508049660,
+    "run_number": 149,
     "application_contracts": "PASS",
     "postgres_rls_runtime": "PASS",
-    "temporary_snapshot_tooling_removed": true
+    "snapshot_job": "PASS",
+    "artifact_sha256": "c8714d4d2c7548e6d648bd80c3fb4e6480da2f5302226fb25215699e656734f1",
+    "source_zip_sha256": "d6e6cf401989dca78f384d4334d342391c210e46fd1305686f78a85f732d4d69",
+    "internal_sha256sums": "PASS"
+  },
+  "latest_post_cleanup_ci": {
+    "status": "PENDING_FINAL_STANDARD_CI_AFTER_B44_FX_012_ARCHIVE"
   },
   "milestones": [
     {
@@ -89,6 +95,19 @@
       "drive_runtime_evidence_id": "1vlKZBZUkDNgpdCJzyeyWMNToT1_SrJVi",
       "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
       "integrity": "PASS"
+    },
+    {
+      "id": "B44-FX-012",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "71d4ea2266fff9fcbb1a5d83b28f2db0182207dd",
+      "tree_sha": "71240417632b25e61602b4c8cdf63f17abf120e1",
+      "package_sha256": "c8714d4d2c7548e6d648bd80c3fb4e6480da2f5302226fb25215699e656734f1",
+      "source_zip_sha256": "d6e6cf401989dca78f384d4334d342391c210e46fd1305686f78a85f732d4d69",
+      "drive_folder_id": "1jbnXvUQ_bD_ajELv5znUAmONpou6GZDI",
+      "drive_package_id": "19bLB-pnf1L9p9l093tLkSw4ERWeLAcV6",
+      "drive_runtime_evidence_id": "1sz51WMwYYB7AmMwb1Qvy9VuCJukLCorO",
+      "drive_archive_manifest_id": "1DAhWW14asXxKwZ1JcFrfvUTiSpwX4FAh",
+      "integrity": "PASS"
     }
   ],
   "governance": {
@@ -96,13 +115,12 @@
     "corte_production_changed": false,
     "g4": "PENDING_R2_FOUNDATION_COMPLETION",
     "g4_remaining_blockers": [
-      "environment + secret-provider runtime contract",
       "observability baseline",
       "deployment path verification"
     ],
     "t20": "NOT_PASSED",
     "golden_e2e": "NOT_PASSED",
-    "next_gate": "B44-FX-012 — Environment & Secret Provider Runtime Contract",
+    "next_gate": "B44-FX-013 — Observability Baseline",
     "rule": "No repository-changing milestone closes without code snapshot reconciliation in 04.3; superseded snapshots remain immutable historical evidence."
   }
 }
