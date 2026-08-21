@@ -9,6 +9,8 @@ export type AppErrorCode =
   | "ENTITLEMENT_REQUIRED"
   | "TENANT_SCOPE_VIOLATION"
   | "LOCATION_SCOPE_VIOLATION"
+  | "RUNTIME_CONFIGURATION_INVALID"
+  | "SECRET_RESOLUTION_FAILED"
   | "VALIDATION_FAILED"
   | "CONFLICT"
   | "IDEMPOTENCY_CONFLICT"
@@ -24,6 +26,12 @@ export class AppError extends Error {
     this.details = details;
   }
 }
+
+export type SecretRef = Readonly<{
+  provider: string;
+  key: string;
+  version?: string;
+}>;
 
 export type ResourceScope = Readonly<{ tenantId: UUID; locationId?: UUID }>;
 export type SecurityContext = Readonly<{
