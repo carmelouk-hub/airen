@@ -20,6 +20,7 @@ jobs:
       - run: npm run check:runtime-slice
       - run: npm run check:sql-runtime
       - run: npm run test:foundation-runtime
+      - run: npm run test:identity-adapter
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -51,3 +52,5 @@ jobs:
         run: bash scripts/run-postgres-runtime-tests.sh
       - name: Execute governed persistent command tests
         run: npm run test:governed-command
+      - name: Execute authenticated principal runtime tests
+        run: npm run test:identity-auth-runtime
