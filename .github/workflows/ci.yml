@@ -54,3 +54,62 @@ jobs:
         run: npm run test:governed-command
       - name: Execute authenticated principal runtime tests
         run: npm run test:identity-auth-runtime
+
+  b44-fx-011-r1-code-snapshot:
+    needs: [application-contracts, postgres-rls-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact B44-FX-011-R1 closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: 2505ccd6bf45ad47d4a63abea9fa9286de0a33fa
+          fetch-depth: 1
+      - name: Build immutable R1 snapshot package
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/B44-FX-011-R1"
+          mkdir -p "$OUT"
+          git archive --format=zip --output="$OUT/AIRenOS-Foundation-B44-FX-011-R1-source.zip" HEAD
+          cp machine-context/b44-fx-011-authenticated-principal.json "$OUT/B44-FX-011_Original_Runtime_Evidence.json"
+          cp machine-context/b44-fx-011-r1-auth-token-canonicalization.json "$OUT/B44-FX-011-R1_Runtime_Evidence.json"
+          export OUT
+          python3 - <<'PY'
+          import json, os, pathlib, hashlib
+          out = pathlib.Path(os.environ['OUT'])
+          closure = '2505ccd6bf45ad47d4a63abea9fa9286de0a33fa'
+          tree = os.popen('git rev-parse HEAD^{tree}').read().strip()
+          manifest = {
+            'milestone': 'B44-FX-011-R1',
+            'supersedes_archive_baseline': 'B44-FX-011',
+            'repository': 'carmelouk-hub/airen',
+            'closure_commit': closure,
+            'tree_sha': tree,
+            'origin_branch': 'foundation/r0-bootstrap-20260820',
+            'archive_type': 'git archive',
+            'source_of_truth': 'GitHub',
+            'drive_role': 'immutable superseding milestone disaster-recovery archive',
+            'trigger_failed_run_id': 32504951362,
+            'r1_verification_run_id': 32505412332,
+            'r1_closure_ci_run_id': 32505553453
+          }
+          (out/'commit-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          dep = {'milestone':'B44-FX-011-R1','closure_commit':closure,'files':{}}
+          for p in ['package.json','package-lock.json']:
+            path=pathlib.Path(p)
+            if path.exists():
+              raw=path.read_bytes()
+              item={'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}
+              if path.name=='package.json':
+                pkg=json.loads(raw)
+                item.update({'name':pkg.get('name'),'version':pkg.get('version'),'dependencies':pkg.get('dependencies',{}),'devDependencies':pkg.get('devDependencies',{})})
+              dep['files'][p]=item
+          (out/'dependency-manifest.json').write_text(json.dumps(dep, indent=2, sort_keys=True) + '\n')
+          PY
+          (cd "$OUT" && sha256sum AIRenOS-Foundation-B44-FX-011-R1-source.zip B44-FX-011_Original_Runtime_Evidence.json B44-FX-011-R1_Runtime_Evidence.json commit-manifest.json dependency-manifest.json > SHA256SUMS.txt)
+      - name: Upload B44-FX-011-R1 snapshot package
+        uses: actions/upload-artifact@v4
+        with:
+          name: B44-FX-011-R1-code-snapshot
+          path: ${{ runner.temp }}/B44-FX-011-R1/*
+          if-no-files-found: error
+          retention-days: 30
