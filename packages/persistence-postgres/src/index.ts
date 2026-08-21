@@ -11,7 +11,8 @@ function oneOrNull<T extends QueryResultRow>(rows: T[]): T | null { return rows[
 function assertRoleIdentifier(role: string): string { if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier"); return role; }
 
 export class PostgresFoundationReadStore implements TenantDomainRepository, MembershipRepository, RolePermissionResolver, EntitlementRepository {
-  constructor(private readonly pool: Pool) {}
+  private readonly pool: Pool;
+  constructor(pool: Pool) { this.pool = pool; }
   async findTenantById(id: UUID): Promise<Tenant | null> { const r=await this.pool.query("SELECT id, slug, name, status FROM platform.tenants WHERE id=$1",[id]); return oneOrNull(r.rows) as Tenant | null; }
   async findBySlug(slug: string): Promise<Tenant | null> { const r=await this.pool.query("SELECT id, slug, name, status FROM platform.tenants WHERE slug=$1",[slug]); return oneOrNull(r.rows) as Tenant | null; }
   async findLocationById(id: UUID): Promise<Location | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", slug, name, status FROM platform.locations WHERE id=$1",[id]); return oneOrNull(r.rows) as Location | null; }
@@ -26,18 +27,21 @@ export class PostgresFoundationReadStore implements TenantDomainRepository, Memb
 }
 
 export class PostgresTenantRepositoryAdapter implements TenantRepository {
-  constructor(private readonly store: PostgresFoundationReadStore) {}
+  private readonly store: PostgresFoundationReadStore;
+  constructor(store: PostgresFoundationReadStore) { this.store = store; }
   findById(id: UUID): Promise<Tenant | null> { return this.store.findTenantById(id); }
   findBySlug(slug: string): Promise<Tenant | null> { return this.store.findBySlug(slug); }
 }
 export class PostgresLocationRepositoryAdapter implements LocationRepository {
-  constructor(private readonly store: PostgresFoundationReadStore) {}
+  private readonly store: PostgresFoundationReadStore;
+  constructor(store: PostgresFoundationReadStore) { this.store = store; }
   findById(id: UUID): Promise<Location | null> { return this.store.findLocationById(id); }
   findPrimaryForTenant(tenantId: UUID): Promise<Location | null> { return this.store.findPrimaryForTenant(tenantId); }
 }
 
 class PostgresLocationTransaction implements LocationMutationTransaction {
-  constructor(private readonly client: PoolClient) {}
+  private readonly client: PoolClient;
+  constructor(client: PoolClient) { this.client = client; }
   async insertLocation(input: { tenantId: UUID; slug: string; name: string; timezone: string }): Promise<Location> {
     const r=await this.client.query("INSERT INTO platform.locations (tenant_id, slug, name, timezone) VALUES ($1,$2,$3,$4) RETURNING id, tenant_id AS \"tenantId\", slug, name, status",[input.tenantId,input.slug,input.name,input.timezone]);
     return r.rows[0] as Location;
@@ -47,7 +51,9 @@ class PostgresLocationTransaction implements LocationMutationTransaction {
 }
 
 export class PostgresLocationUnitOfWork implements UnitOfWork<LocationMutationTransaction> {
-  constructor(private readonly pool: Pool, private readonly assumeRole?: string) {}
+  private readonly pool: Pool;
+  private readonly assumeRole?: string;
+  constructor(pool: Pool, assumeRole?: string) { this.pool = pool; this.assumeRole = assumeRole; }
   async transaction<T>(fn: (tx: LocationMutationTransaction) => Promise<T>, context?: SecurityContext): Promise<T> {
     if (!context) throw new Error("SecurityContext is required for PostgreSQL mutations");
     const client=await this.pool.connect();
