@@ -1,11 +1,8 @@
 {
   "name": "airenos-foundation",
   "private": true,
-  "version": "0.0.0-foundation-rls-harness",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "version": "0.0.0-foundation-governed-command",
+  "workspaces": ["apps/*","packages/*"],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:machine-context": "node -e \"for (const f of require('fs').readdirSync('machine-context').filter(x=>x.endsWith('.json'))) JSON.parse(require('fs').readFileSync('machine-context/'+f,'utf8')); console.log('Machine context JSON PASS')\"",
@@ -13,7 +10,10 @@
     "check:runtime-slice": "node scripts/check-runtime-slice.mjs",
     "test:foundation-runtime": "node --experimental-strip-types --test tests/integration/foundation-runtime.test.ts",
     "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
-    "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh"
+    "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
+    "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts"
   },
+  "dependencies": {"pg": "8.23.0"},
+  "devDependencies": {"@types/pg": "8.23.1"},
   "type": "module"
 }
