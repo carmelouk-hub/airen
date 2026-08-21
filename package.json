@@ -1,7 +1,7 @@
 {
   "name": "airenos-foundation",
   "private": true,
-  "version": "0.0.0-foundation-governed-command",
+  "version": "0.0.0-foundation-authenticated-principal",
   "workspaces": ["apps/*","packages/*"],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
@@ -9,9 +9,11 @@
     "check:foundation-contracts": "node scripts/check-foundation-contracts.mjs",
     "check:runtime-slice": "node scripts/check-runtime-slice.mjs",
     "test:foundation-runtime": "node --experimental-strip-types --test tests/integration/foundation-runtime.test.ts",
+    "test:identity-adapter": "node --experimental-strip-types --test tests/integration/identity-adapter.test.ts",
     "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
-    "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts"
+    "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
+    "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts"
   },
   "dependencies": {"pg": "8.23.0"},
   "devDependencies": {"@types/pg": "8.23.1"},
