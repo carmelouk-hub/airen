@@ -1,0 +1,24 @@
+{
+  "pack": "B44-FX-011",
+  "status": "CLOSED_PASS_PENDING_FINAL_CI_RECONCILIATION",
+  "branch": "foundation/r0-bootstrap-20260820",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "identity_auth_adapter": "PASS",
+  "provider_neutral": true,
+  "provider_subject_to_identity": "PASS",
+  "signed_session_verification": "PASS",
+  "airen_auth_direct_table_access": "DENIED_RUNTIME_PROVEN",
+  "postgres_rls": "PASS",
+  "authenticated_governed_command": "PASS",
+  "atomic_mutation_audit_outbox": "PASS",
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_remaining_blockers": [
+    "environment + secret-provider runtime contract",
+    "observability baseline",
+    "deployment path verification"
+  ],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "next": "B44-FX-012 Environment & Secret Provider Runtime Contract"
+}
