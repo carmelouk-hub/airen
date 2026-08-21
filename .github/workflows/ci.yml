@@ -22,6 +22,7 @@ jobs:
       - run: npm run test:foundation-runtime
       - run: npm run test:identity-adapter
       - run: npm run test:runtime-secrets
+      - run: npm run test:observability
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
