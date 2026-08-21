@@ -1,0 +1,13 @@
+{
+  "pack": "B44-FX-010",
+  "scope": "PostgreSQL Repository Adapters, Transaction Boundary & First Governed Command",
+  "command": "tenant.location.create",
+  "runtime_dependency": {"pg": "8.23.0", "classification": "INFRASTRUCTURE_ADAPTER_ONLY"},
+  "ports": ["TenantRepository","LocationRepository","TenantDomainRepository","MembershipRepository","RolePermissionResolver","EntitlementRepository","UnitOfWork<LocationMutationTransaction>"],
+  "pipeline": ["trusted routing","identity/membership","permission","entitlement","transaction","RLS context","mutation","audit","outbox","commit"],
+  "security": {"mutation_role":"airen_app NOBYPASSRLS","client_tenant_id_authority":false,"corte_fixture_used":false},
+  "runtime_evidence": "PENDING_CI",
+  "g4": "PENDING",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED"
+}
