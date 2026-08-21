@@ -1,0 +1,40 @@
+{
+  "pack": "B44-FX-011-R1",
+  "status": "RECONCILIATION_PASS_PENDING_CLOSURE_COMMIT",
+  "scope": "Authentication Token Canonicalization & Test Reliability Reconciliation",
+  "trigger": {
+    "post_archive_cleanup_run_id": 32504951362,
+    "run_number": 91,
+    "result": "FAIL_APPLICATION_TEST_ONLY",
+    "postgres_rls_runtime": "PASS",
+    "finding": "The test mutated the final Base64URL signature character; alternate non-canonical encodings can decode to identical signature bytes because unused padding bits may differ."
+  },
+  "correction": {
+    "production_hardening": "Reject non-canonical Base64URL signature encodings before constant-time HMAC comparison",
+    "test_hardening": "Mutate a deterministic signature byte and add an explicit equivalent-byte/non-canonical encoding rejection test",
+    "authorization_or_rls_relaxed": false,
+    "secret_handling_changed": false
+  },
+  "verification": {
+    "source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
+    "github_actions_run_id": 32505412332,
+    "run_number": 95,
+    "conclusion": "success",
+    "application_contracts": "PASS",
+    "identity_adapter_tests": "5/5 PASS",
+    "postgres_rls_runtime": "PASS",
+    "authenticated_principal_runtime": "PASS"
+  },
+  "effect_on_b44_fx_011": "SUPERSEDE_ARCHIVE_BASELINE_WITH_R1",
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_remaining_blockers": [
+    "environment + secret-provider runtime contract",
+    "observability baseline",
+    "deployment path verification"
+  ],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "rule": "Do not hide post-closure failures. Reconcile, harden, re-certify, and archive a superseding exact-commit baseline."
+}
