@@ -40,7 +40,14 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/airen_test
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Node PostgreSQL adapter dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Execute migrations and RLS runtime tests
         run: bash scripts/run-postgres-runtime-tests.sh
+      - name: Execute governed persistent command tests
+        run: npm run test:governed-command
