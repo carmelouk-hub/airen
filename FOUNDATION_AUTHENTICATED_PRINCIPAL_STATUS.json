@@ -1,5 +1,5 @@
 {
-  "pack": "B44-FX-011",
+  "pack": "B44-FX-011-R1",
   "status": "CLOSED_PASS",
   "branch": "foundation/r0-bootstrap-20260820",
   "main_modified": false,
@@ -8,19 +8,25 @@
   "provider_neutral": true,
   "provider_subject_to_identity": "PASS",
   "signed_session_verification": "PASS",
+  "canonical_signature_encoding_enforced": true,
   "airen_auth_direct_table_access": "DENIED_RUNTIME_PROVEN",
   "postgres_rls": "PASS",
   "authenticated_governed_command": "PASS",
   "atomic_mutation_audit_outbox": "PASS",
-  "primary_github_actions_run": {
-    "id": 32504082957,
-    "run_number": 75,
-    "conclusion": "success"
+  "original_b44_fx_011": {
+    "closure_commit": "77855a68c078f435ad4be28064fe33527ad9560e",
+    "closure_run_id": 32504534833,
+    "snapshot_run_id": 32504674181,
+    "archive_status": "HISTORICAL_SUPERSEDED_BY_R1"
   },
-  "reconciliation_github_actions_run": {
-    "id": 32504345111,
-    "run_number": 83,
-    "conclusion": "success"
+  "r1_reconciliation": {
+    "trigger_run_id": 32504951362,
+    "trigger_run_number": 91,
+    "finding": "Non-canonical Base64URL signature spelling could decode to identical signature bytes, causing a flaky tamper test.",
+    "source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
+    "verification_run_id": 32505412332,
+    "verification_run_number": 95,
+    "verification": "PASS"
   },
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
   "g4_remaining_blockers": [
