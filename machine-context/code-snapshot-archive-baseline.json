@@ -39,7 +39,11 @@
     "internal_sha256sums": "PASS"
   },
   "latest_post_cleanup_ci": {
-    "status": "PENDING_FINAL_STANDARD_CI_AFTER_B44_FX_012_ARCHIVE"
+    "github_actions_run_id": 32508364975,
+    "run_number": 155,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
   },
   "milestones": [
     {
@@ -107,6 +111,8 @@
       "drive_package_id": "19bLB-pnf1L9p9l093tLkSw4ERWeLAcV6",
       "drive_runtime_evidence_id": "1sz51WMwYYB7AmMwb1Qvy9VuCJukLCorO",
       "drive_archive_manifest_id": "1DAhWW14asXxKwZ1JcFrfvUTiSpwX4FAh",
+      "post_cleanup_run_id": 32508364975,
+      "post_cleanup_run_number": 155,
       "integrity": "PASS"
     }
   ],
