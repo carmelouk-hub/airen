@@ -1,0 +1,66 @@
+{
+  "pack": "B44-FX-011",
+  "status": "RUNTIME_EVIDENCE_PASS_PENDING_FINAL_RECONCILIATION",
+  "scope": "Identity Adapter & Authenticated Principal Runtime",
+  "source_commit": "0064a8eb33f5903ffeab7f969f55fa85388a59c4",
+  "primary_github_actions_run": {
+    "id": 32504082957,
+    "run_number": 75,
+    "conclusion": "success"
+  },
+  "authentication": {
+    "provider_neutral_contract": "PASS",
+    "signed_session_verification": "PASS",
+    "provider_subject_to_identity": "PASS",
+    "inactive_or_unknown_identity_denied": "PASS",
+    "tampered_or_expired_credential_denied": "PASS",
+    "client_role_tenant_authority": false,
+    "production_provider_selection": "TBD_BEHIND_ADAPTER"
+  },
+  "database_boundary": {
+    "role": "airen_auth",
+    "role_attributes": ["NOLOGIN", "NOSUPERUSER", "NOCREATEDB", "NOCREATEROLE", "NOINHERIT", "NOBYPASSRLS"],
+    "direct_identity_table_select": "DENIED_RUNTIME_PROVEN",
+    "allowed_function": "security.resolve_authentication_identity(text,text)",
+    "function_security": "SECURITY_DEFINER_NARROW_PROJECTION"
+  },
+  "authenticated_pipeline": [
+    "signed credential",
+    "session verification",
+    "provider subject",
+    "Identity resolution",
+    "AuthenticatedPrincipal",
+    "trusted hostname",
+    "Tenant/Location",
+    "membership",
+    "permission",
+    "entitlement",
+    "SecurityContext",
+    "PostgreSQL transaction",
+    "RLS",
+    "tenant.location.create",
+    "Audit",
+    "Outbox",
+    "commit"
+  ],
+  "runtime_tests": {
+    "identity_adapter_integration": "4/4 PASS",
+    "identity_authenticated_postgres": "3/3 PASS",
+    "legacy_governed_command": "2/2 PASS",
+    "postgres_rls_regression": "PASS",
+    "application_contracts": "PASS"
+  },
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blocker_closed": "operational identity/authentication adapter",
+  "g4_remaining_blockers": [
+    "environment + secret-provider runtime contract",
+    "observability baseline",
+    "deployment path verification"
+  ],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "corte_production_changed": false,
+  "main_modified": false,
+  "next": "B44-FX-012 Environment & Secret Provider Runtime Contract",
+  "rule": "Authentication may bootstrap Identity only through a verified credential and a narrow audited/controlled adapter boundary; provider-specific implementation remains replaceable."
+}
