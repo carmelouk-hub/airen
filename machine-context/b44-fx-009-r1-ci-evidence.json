@@ -1,0 +1,38 @@
+{
+  "pack": "B44-FX-009-R1",
+  "scope": "Execute PostgreSQL/RLS CI Evidence",
+  "evidence_type": "GITHUB_ACTIONS_RUNTIME",
+  "pull_request": 3,
+  "source_commit": "c72dd65a3357a231b2b66eb72865e37ffcd7c4cb",
+  "workflow": {
+    "name": "foundation-contract-ci",
+    "run_id": 32493366876,
+    "run_number": 5,
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "jobs": {
+    "application-contracts": "PASS",
+    "postgres-rls-runtime": "PASS"
+  },
+  "postgres": {
+    "image": "postgres:16",
+    "observed_version": "16.15",
+    "migrations_executed": [
+      "0001_foundation_runtime_core.sql",
+      "0002_request_context_contract.sql",
+      "0003_foundation_rls.sql"
+    ],
+    "synthetic_fixture": "Alpha/Beta tenant isolation",
+    "rls_result": "PASS",
+    "log_terminal_result": "B44-FX-009 PostgreSQL RLS runtime tests PASS"
+  },
+  "governance": {
+    "main_modified": false,
+    "pull_request_draft": true,
+    "corte_production_changed": false,
+    "g4": "PENDING_FULL_FOUNDATION_GATE",
+    "t20": "NOT_PASSED",
+    "golden_e2e": "NOT_PASSED"
+  }
+}
