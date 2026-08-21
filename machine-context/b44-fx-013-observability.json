@@ -1,17 +1,24 @@
 {
   "pack": "B44-FX-013",
-  "status": "IMPLEMENTED_PENDING_RUNTIME_EVIDENCE",
+  "status": "RUNTIME_EVIDENCE_PASS_PENDING_CLOSURE_CI",
   "scope": "Observability Baseline",
   "contracts": {
-    "trace_correlation_context": "IMPLEMENTED",
-    "w3c_traceparent_propagation": "IMPLEMENTED",
-    "structured_logging": "IMPLEMENTED",
-    "telemetry_redaction": "IMPLEMENTED",
-    "stable_error_taxonomy": "IMPLEMENTED",
-    "metric_low_cardinality_guard": "IMPLEMENTED",
-    "health_readiness": "IMPLEMENTED",
-    "critical_dependency_readiness": "FAIL_CLOSED",
+    "trace_correlation_context": "PASS",
+    "w3c_traceparent_propagation": "PASS",
+    "structured_logging": "PASS",
+    "telemetry_redaction": "PASS",
+    "stable_error_taxonomy": "PASS",
+    "metric_low_cardinality_guard": "PASS",
+    "health_readiness": "PASS",
+    "critical_dependency_readiness": "FAIL_CLOSED_PASS",
     "telemetry_vendor": "TBD_BEHIND_PROVIDER_NEUTRAL_SINKS"
+  },
+  "runtime_evidence": {
+    "run_id": 32509849518,
+    "run_number": 177,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS"
   },
   "tests": [
     "trace propagation and child span continuity",
@@ -23,11 +30,11 @@
     "API runtime observability composition"
   ],
   "g4": "PENDING_R2_FOUNDATION_COMPLETION",
-  "g4_blocker_target": "observability baseline",
-  "g4_remaining_after_pass": ["deployment path verification"],
+  "g4_blocker_closed_on_closure": "observability baseline",
+  "g4_remaining_after_closure": ["deployment path verification"],
   "t20": "NOT_PASSED",
   "golden_e2e": "NOT_PASSED",
   "main_modified": false,
   "corte_production_changed": false,
-  "next_if_pass": "B44-FX-014 — Deployment Path Verification"
+  "next_if_closed": "B44-FX-014 — Deployment Path Verification"
 }
