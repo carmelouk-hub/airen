@@ -1,11 +1,16 @@
 {
   "pack": "B44-FX-011",
-  "status": "RUNTIME_EVIDENCE_PASS_PENDING_FINAL_RECONCILIATION",
+  "status": "CLOSED_PASS",
   "scope": "Identity Adapter & Authenticated Principal Runtime",
   "source_commit": "0064a8eb33f5903ffeab7f969f55fa85388a59c4",
   "primary_github_actions_run": {
     "id": 32504082957,
     "run_number": 75,
+    "conclusion": "success"
+  },
+  "reconciliation_github_actions_run": {
+    "id": 32504345111,
+    "run_number": 83,
     "conclusion": "success"
   },
   "authentication": {
