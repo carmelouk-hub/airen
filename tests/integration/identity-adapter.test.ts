@@ -10,6 +10,23 @@ function issueToken(key: Uint8Array, claims: Record<string, unknown>): string {
   return `${payload}.${signature}`;
 }
 
+function mutateSignatureByte(token: string): string {
+  const [payload, signature] = token.split(".");
+  const replacement = signature[0] === "A" ? "B" : "A";
+  return `${payload}.${replacement}${signature.slice(1)}`;
+}
+
+function makeNonCanonicalEquivalentSignature(token: string): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const [payload, signature] = token.split(".");
+  const canonicalLast = alphabet.indexOf(signature.at(-1)!);
+  if (canonicalLast < 0 || (canonicalLast & 0b11) !== 0) throw new Error("Expected canonical SHA-256 Base64URL signature");
+  const alternateLast = alphabet[canonicalLast | 0b01];
+  const alternateSignature = `${signature.slice(0, -1)}${alternateLast}`;
+  assert.deepEqual(Buffer.from(alternateSignature, "base64url"), Buffer.from(signature, "base64url"));
+  return `${payload}.${alternateSignature}`;
+}
+
 const providerKey = "synthetic-auth";
 const audience = "airenos-foundation";
 const nowMs = Date.UTC(2026, 7, 21, 16, 0, 0);
@@ -41,8 +58,12 @@ test("verified signed session resolves provider subject to AIRenOS Identity", as
 
 test("tampered session signature is rejected", async () => {
   const token = issueToken(key, validClaims());
-  const tampered = token.slice(0, -1) + (token.endsWith("A") ? "B" : "A");
-  assert.equal(await adapter.authenticate({ authorization: `Bearer ${tampered}` }), null);
+  assert.equal(await adapter.authenticate({ authorization: `Bearer ${mutateSignatureByte(token)}` }), null);
+});
+
+test("non-canonical Base64URL spelling of identical signature bytes is rejected", async () => {
+  const token = issueToken(key, validClaims());
+  assert.equal(await adapter.authenticate({ authorization: `Bearer ${makeNonCanonicalEquivalentSignature(token)}` }), null);
 });
 
 test("expired session is rejected", async () => {
