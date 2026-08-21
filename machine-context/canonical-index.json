@@ -10,6 +10,7 @@
     "coding-agent proposals"
   ],
   "core_documents": {
+    "DOC-002": "AIRenOS Identity & Organization Specification",
     "DOC-014": "T20 Security Certification Specification",
     "DOC-015": "Golden Restaurant E2E Specification",
     "DOC-016": "Base44 Forensic Extraction Manifest",
@@ -21,12 +22,19 @@
     "B44-FX-003": "Corte delle Stelle Forensic Source Snapshot",
     "B44-FX-004": "Consolidated Boundary & Portability Matrix",
     "B44-FX-005": "Decision Queue Reconciliation & ADR Pack",
-    "B44-FX-006": "Portable Foundation Repository & Migration Contract Pack"
+    "B44-FX-006": "Portable Foundation Repository & Migration Contract Pack",
+    "B44-FX-007": "R0 GitHub Bootstrap & Foundation Initialization",
+    "B44-FX-008": "Foundation Runtime Slice 1",
+    "B44-FX-009-R1": "PostgreSQL/RLS CI Runtime Evidence",
+    "B44-FX-010": "PostgreSQL Repository Adapters, Transaction Boundary & First Governed Command",
+    "B44-FX-011": "Identity Adapter & Authenticated Principal Runtime"
   },
   "non_negotiable": [
     "No Base44 dependency in Foundation core",
     "Tenant and Location resolved server-side",
     "Identity separate from membership",
+    "Authenticated identity comes only from verified provider/session evidence",
+    "Provider subject maps to Identity through a narrow server-side adapter boundary",
     "Platform roles separate from tenant roles",
     "Unknown hostname fails closed",
     "STELLA has no raw DB authority",
