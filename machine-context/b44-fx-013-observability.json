@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-013",
-  "status": "CLOSED_PASS_PENDING_POST_CLEANUP_CI",
+  "status": "CLOSED_PASS",
   "scope": "Observability Baseline",
   "contracts": {
     "trace_correlation_context": "PASS",
@@ -43,6 +43,15 @@
     "drive_archive_manifest_id": "17QkipuMhzLNk-HHE9bL5PKO6C98HylId",
     "operational_evidence_04_2_id": "1Rf7umn71CERdDKmzhiqmtKk3GzHQK9pA",
     "integrity": "PASS"
+  },
+  "post_cleanup": {
+    "commit": "36b93d07c0a9facd2003bf3636a2e5c7f8fc2d71",
+    "run_id": 32510601218,
+    "run_number": 199,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
   },
   "tests": [
     "trace propagation and child span continuity",
