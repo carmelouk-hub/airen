@@ -29,7 +29,11 @@
     "internal_sha256sums": "PASS"
   },
   "post_cleanup_ci": {
-    "status": "PENDING_FINAL_STANDARD_CI_AFTER_R1_ARCHIVE"
+    "github_actions_run_id": 32506606185,
+    "run_number": 107,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
   },
   "milestones": [
     {
