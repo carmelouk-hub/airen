@@ -55,29 +55,3 @@ jobs:
         run: npm run test:governed-command
       - name: Execute authenticated principal runtime tests
         run: npm run test:identity-auth-runtime
-
-  b44-fx-012-code-snapshot:
-    needs: [application-contracts, postgres-rls-runtime]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout exact B44-FX-012 closure commit
-        uses: actions/checkout@v4
-        with:
-          ref: 71d4ea2266fff9fcbb1a5d83b28f2db0182207dd
-          fetch-depth: 0
-      - name: Build immutable snapshot package
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p snapshot
-          git archive --format=zip --output=snapshot/AIRenOS-Foundation-B44-FX-012-source.zip 71d4ea2266fff9fcbb1a5d83b28f2db0182207dd
-          node -e 'const fs=require("fs"); fs.writeFileSync("snapshot/commit-manifest.json", JSON.stringify({milestone:"B44-FX-012",closure_commit:"71d4ea2266fff9fcbb1a5d83b28f2db0182207dd",tree_sha:"71240417632b25e61602b4c8cdf63f17abf120e1",closure_ci:{run_id:32507898063,run_number:147,status:"PASS"}},null,2)+"\n")'
-          node -e 'const fs=require("fs"),crypto=require("crypto"); const hash=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex"); fs.writeFileSync("snapshot/dependency-manifest.json", JSON.stringify({package_json_sha256:hash("package.json"),package_lock_sha256:fs.existsSync("package-lock.json")?hash("package-lock.json"):null},null,2)+"\n")'
-          cp machine-context/b44-fx-012-environment-secrets.json snapshot/B44-FX-012_Runtime_Evidence.json
-          (cd snapshot && sha256sum AIRenOS-Foundation-B44-FX-012-source.zip commit-manifest.json dependency-manifest.json B44-FX-012_Runtime_Evidence.json > SHA256SUMS.txt)
-      - name: Upload B44-FX-012 snapshot package
-        uses: actions/upload-artifact@v4
-        with:
-          name: B44-FX-012-code-snapshot
-          path: snapshot/*
-          if-no-files-found: error
