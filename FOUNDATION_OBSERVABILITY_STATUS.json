@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-013",
-  "status": "RUNTIME_EVIDENCE_PASS_PENDING_CLOSURE_CI",
+  "status": "CLOSED_PASS_PENDING_ARCHIVE",
   "branch": "foundation/r0-bootstrap-20260820",
   "main_modified": false,
   "corte_production_changed": false,
