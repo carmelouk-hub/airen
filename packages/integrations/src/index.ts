@@ -1,10 +1,50 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { TenantContext } from "../../shared-contracts/src/index.ts";
+import { AppError, type SecretRef, type TenantContext } from "../../shared-contracts/src/index.ts";
 import type { SessionCredentialVerifier, VerifiedAuthSession } from "../../identity/src/index.ts";
 
 export type VerifiedWebhookEvent<T> = { provider: string; providerEventId: string; receivedAtIso: string; payload: T; };
 export interface WebhookAdapter<TPayload, TResult> { verify(rawBody: Uint8Array, headers: Readonly<Record<string, string>>): Promise<VerifiedWebhookEvent<TPayload>>; handle(event: VerifiedWebhookEvent<TPayload>, context: TenantContext): Promise<TResult>; }
 // Trusted provider-account -> Tenant/Location routing is mandatory. Payload tenant identifiers are never authoritative.
+
+export interface SecretMaterial {
+  use<T>(consumer: (value: string) => T): T;
+  toString(): string;
+  toJSON(): string;
+}
+
+class RedactedSecretMaterial implements SecretMaterial {
+  #value: string;
+  constructor(value: string) { this.#value = value; }
+  use<T>(consumer: (value: string) => T): T { return consumer(this.#value); }
+  toString(): string { return "[REDACTED_SECRET]"; }
+  toJSON(): string { return "[REDACTED_SECRET]"; }
+  [Symbol.toPrimitive](): string { return "[REDACTED_SECRET]"; }
+}
+
+export interface SecretProvider {
+  readonly providerKey: string;
+  resolve(ref: SecretRef): Promise<SecretMaterial>;
+}
+
+export class EnvironmentSecretProvider implements SecretProvider {
+  readonly providerKey = "env";
+  private readonly environment: Readonly<Record<string, string | undefined>>;
+  private readonly allowedKeys: ReadonlySet<string>;
+
+  constructor(environment: Readonly<Record<string, string | undefined>>, allowedKeys: readonly string[]) {
+    this.environment = environment;
+    this.allowedKeys = new Set(allowedKeys);
+  }
+
+  async resolve(ref: SecretRef): Promise<SecretMaterial> {
+    if (ref.provider !== this.providerKey) throw new AppError("SECRET_RESOLUTION_FAILED", "Secret reference provider does not match active provider");
+    if (!this.allowedKeys.has(ref.key)) throw new AppError("SECRET_RESOLUTION_FAILED", "Secret reference key is not allowlisted");
+    if (ref.version) throw new AppError("SECRET_RESOLUTION_FAILED", "Environment secret provider does not support versioned references");
+    const value = this.environment[ref.key];
+    if (!value) throw new AppError("SECRET_RESOLUTION_FAILED", "Secret material is unavailable");
+    return new RedactedSecretMaterial(value);
+  }
+}
 
 type SignedSessionClaims = Readonly<{ iss: string; aud: string; sub: string; sid: string; iat: number; exp: number }>;
 
