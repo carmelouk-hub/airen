@@ -1,15 +1,24 @@
 {
-  "version": "0.1",
-  "status": "INITIAL_PROVIDER_NEUTRAL_REGISTRY",
+  "version": "0.2",
+  "status": "PROVIDER_NEUTRAL_REGISTRY_WITH_RUNTIME_SECRET_BOUNDARY",
   "adapters": [
-    {"key":"auth","interface":"AuthAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"database","interface":"PostgresRepository","provider":"PostgreSQL","secret_policy":"vault"},
-    {"key":"object_storage","interface":"ObjectStorageAdapter","provider":"S3-compatible/TBD","secret_policy":"vault"},
-    {"key":"realtime","interface":"RealtimeAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"scheduler","interface":"JobSchedulerAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"email","interface":"EmailAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"messaging","interface":"MessagingAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"payment","interface":"PaymentAdapter","provider":"TBD","secret_policy":"vault"},
-    {"key":"ai_model","interface":"AIModelAdapter","provider":"TBD","secret_policy":"vault"}
-  ]
+    {"key":"auth","interface":"AuthenticationAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"secret_manager","interface":"SecretProvider","provider":"TBD","secret_policy":"provider-bound allowlisted resolution; secret material redacted by default"},
+    {"key":"database","interface":"PostgresRepository","provider":"PostgreSQL","secret_policy":"database connection supplied by SecretProvider consumer boundary"},
+    {"key":"object_storage","interface":"ObjectStorageAdapter","provider":"S3-compatible/TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"realtime","interface":"RealtimeAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"scheduler","interface":"JobSchedulerAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"email","interface":"EmailAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"messaging","interface":"MessagingAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"payment","interface":"PaymentAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"},
+    {"key":"ai_model","interface":"AIModelAdapter","provider":"TBD","secret_policy":"SecretRef via SecretProvider"}
+  ],
+  "runtime_contract": {
+    "raw_secret_values_in_config": "PROHIBITED",
+    "reference_scheme": "secret://provider/key?version=optional",
+    "provider_must_match_configured_secret_manager": true,
+    "diagnostic_secret_ref_key_redaction": true,
+    "resolved_secret_default_representation": "[REDACTED_SECRET]",
+    "production_provider_selection": "TBD_BEHIND_ADAPTER"
+  }
 }
