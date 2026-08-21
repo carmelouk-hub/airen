@@ -1,0 +1,33 @@
+{
+  "pack": "B44-FX-013",
+  "status": "IMPLEMENTED_PENDING_RUNTIME_EVIDENCE",
+  "scope": "Observability Baseline",
+  "contracts": {
+    "trace_correlation_context": "IMPLEMENTED",
+    "w3c_traceparent_propagation": "IMPLEMENTED",
+    "structured_logging": "IMPLEMENTED",
+    "telemetry_redaction": "IMPLEMENTED",
+    "stable_error_taxonomy": "IMPLEMENTED",
+    "metric_low_cardinality_guard": "IMPLEMENTED",
+    "health_readiness": "IMPLEMENTED",
+    "critical_dependency_readiness": "FAIL_CLOSED",
+    "telemetry_vendor": "TBD_BEHIND_PROVIDER_NEUTRAL_SINKS"
+  },
+  "tests": [
+    "trace propagation and child span continuity",
+    "invalid trace headers create fresh safe context",
+    "structured telemetry redaction",
+    "stable error taxonomy without raw exception detail",
+    "metric label cardinality guard",
+    "critical readiness failure",
+    "API runtime observability composition"
+  ],
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blocker_target": "observability baseline",
+  "g4_remaining_after_pass": ["deployment path verification"],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "next_if_pass": "B44-FX-014 — Deployment Path Verification"
+}
