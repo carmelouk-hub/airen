@@ -48,6 +48,13 @@ export type SecurityContext = Readonly<{
   permissions: readonly string[];
   entitlements: readonly string[];
 }>;
+export type PlatformSecurityContext = Readonly<{
+  scopeKind: "platform";
+  correlationId: string;
+  actorIdentityId: UUID;
+  platformRoles: readonly string[];
+  platformPermissions: readonly string[];
+}>;
 export type DomainEvent = Readonly<{ eventType: string; aggregateType: string; aggregateId: string; payloadVersion: number; payload: Readonly<Record<string, unknown>> }>;
 export function hasPermission(context: SecurityContext, permissionKey: string): boolean { return context.permissions.includes(permissionKey) || context.platformPermissions.includes(permissionKey); }
 export function assertResourceScope(context: SecurityContext, resource: ResourceScope): void {

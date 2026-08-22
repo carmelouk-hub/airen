@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "foundation/**"
+      - "r3/**"
 
 jobs:
   application-contracts:
@@ -24,6 +25,7 @@ jobs:
       - run: npm run test:runtime-secrets
       - run: npm run test:observability
       - run: npm run test:deployment-contract
+      - run: npm run test:platform-security-context
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -57,6 +59,8 @@ jobs:
         run: npm run test:governed-command
       - name: Execute authenticated principal runtime tests
         run: npm run test:identity-auth-runtime
+      - name: Execute R3-A Tenant provisioning runtime tests
+        run: npm run test:r3a-tenant-provisioning
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
