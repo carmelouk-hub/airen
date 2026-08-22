@@ -1,0 +1,144 @@
+{
+  "milestone": "R3-D",
+  "title": "Platform Principal & Role Administration",
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "date": "2026-08-22",
+  "repository": "carmelouk-hub/airen",
+  "branch": "r3/control-plane-20260822",
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "r3_c_closure_commit": "96c0bb8610b9fb450793112c759dda28a3eb33b1",
+  "implementation_commit": "58f9d1672a8f1eb6ebc420bb03de2677945182e8",
+  "implementation_tree": "73ea75e76dce79a36fc8979cc0bf82ab22448acd",
+  "implementation_ci": {
+    "workflow": "foundation-contract-ci",
+    "run_number": 381,
+    "run_id": 32592325545,
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "postgres-rls-runtime": "success",
+      "deployment-path-runtime": "success"
+    }
+  },
+  "deployment_evidence_artifact": {
+    "artifact_id": 9480649648,
+    "digest": "sha256:e6393b7ea941a7076e0f5173a13058cb4e2b76981848de5ea631df256ccd98f5"
+  },
+  "scope_document": {
+    "title": "R3-D-001 — Platform Principal & Role Administration Scope & Gap Reconciliation — v0.1",
+    "drive_id": "1FxgcdX0eWt4Q9dMyb1huHT6aePA9gtLZXgWzx34eHG4"
+  },
+  "permissions": [
+    "platform.principals.read",
+    "platform.roles.read",
+    "platform.roles.assign",
+    "platform.roles.suspend",
+    "platform.roles.reactivate",
+    "platform.roles.revoke"
+  ],
+  "authority_invariants": {
+    "tenant_role_is_platform_role": false,
+    "tenant_admin_implies_platform_admin": false,
+    "self_authority_gain_denied": true,
+    "protected_role_peer_required": true,
+    "protected_role_self_suspend_revoke_denied": true,
+    "minimum_active_protected_role_enforced": true,
+    "db_permission_recheck": true,
+    "runtime_direct_table_mutation": false
+  },
+  "protected_roles": {
+    "platform_admin": {
+      "protected": true,
+      "minimum_active_assignments_default": 1
+    }
+  },
+  "assignment_state_machine": {
+    "states": ["active", "suspended", "revoked"],
+    "governed_actions": ["assign", "suspend", "reactivate", "revoke", "regrant_via_assign"],
+    "hard_delete": false
+  },
+  "identity_boundary": {
+    "existing_identity_only": true,
+    "assign_reactivate_requires_active_identity": true,
+    "identity_validation_read_only": true,
+    "identity_locking_read": false,
+    "identity_mutation_authority_added": false
+  },
+  "runtime_assertions": {
+    "clean_migration_chain_0010_through_0013": "PASS",
+    "normal_role_assign": "PASS",
+    "authentication_projection_active_role": "PASS",
+    "identical_retry_replay": "PASS",
+    "replay_no_duplicate_audit": "PASS",
+    "changed_payload_idempotency_conflict": "PASS",
+    "undefined_role_denied": "PASS",
+    "inactive_identity_authority_gain_denied": "PASS",
+    "self_authority_gain_denied": "PASS",
+    "platform_principal_detail_query": "PASS",
+    "platform_principal_filtered_list": "PASS",
+    "platform_role_catalog_query": "PASS",
+    "normal_role_suspend": "PASS",
+    "normal_role_reactivate": "PASS",
+    "normal_role_revoke": "PASS",
+    "revoked_role_regrant": "PASS",
+    "authentication_projection_tracks_role_status": "PASS",
+    "forced_partial_failure_rollback": "PASS",
+    "protected_platform_admin_peer_assign": "PASS",
+    "generic_delegator_protected_role_escalation_denied": "PASS",
+    "protected_role_self_suspend_denied": "PASS",
+    "minimum_active_protected_role_denial": "PASS",
+    "protected_peer_suspend_reactivate_revoke_regrant": "PASS",
+    "unauthorized_read_queries_denied": "PASS",
+    "db_permission_recheck": "PASS",
+    "direct_control_plane_role_update_denied": "PASS",
+    "airen_app_platform_role_capability_denied": "PASS",
+    "transition_history": "PASS",
+    "audit_event": "PASS",
+    "outbox_event": "PASS",
+    "missing_assignment_revoke_fail_closed": "PASS",
+    "missing_assignment_zero_side_effects": "PASS",
+    "foundation_rls_regression": "PASS",
+    "authenticated_principal_regression": "PASS",
+    "r3_a_regression": "PASS",
+    "r3_b_regression": "PASS",
+    "r3_c_regression": "PASS",
+    "deployment_path_regression": "PASS"
+  },
+  "failure_reconciliation": [
+    {
+      "run_number": 355,
+      "run_id": 32590462013,
+      "cause": "Capability owner lacked USAGE on identity schema despite intended table SELECT",
+      "correction": "0011_r3d_platform_role_admin_correction.sql",
+      "security_policy_weakened": false,
+      "runtime_role_authority_expanded": false
+    },
+    {
+      "run_number": 365,
+      "run_id": 32591873828,
+      "cause": "Identity validation used SELECT FOR SHARE and therefore demanded unnecessary locking authority",
+      "correction": "0012_r3d_platform_role_identity_read_correction.sql",
+      "identity_mutation_privilege_added": false,
+      "security_policy_weakened": false
+    },
+    {
+      "run_number": 373,
+      "run_id": 32592178660,
+      "cause": "PL/pgSQL RETURNS TABLE output variable role_key conflicted with unqualified role-assignment UPDATE column",
+      "correction": "0013_r3d_platform_role_column_qualification_correction.sql",
+      "product_authority_changed": false,
+      "security_policy_weakened": false
+    }
+  ],
+  "scope_boundary": {
+    "r3_d_gap_complete": true,
+    "r3_d_closed": false,
+    "r3_e_open": false,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "production_cutover_authorized": false,
+    "t20_pass": false,
+    "golden_e2e_pass": false,
+    "base44_decommission_complete": false
+  }
+}
