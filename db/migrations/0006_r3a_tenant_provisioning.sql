@@ -29,7 +29,7 @@ GRANT USAGE ON SCHEMA platform, authz, audit, events, security TO airen_control_
 GRANT SELECT, INSERT ON platform.tenants, platform.locations TO airen_control_plane_owner;
 GRANT SELECT, INSERT, UPDATE ON platform.tenant_provisioning_idempotency TO airen_control_plane_owner;
 GRANT SELECT ON authz.platform_role_assignments, authz.role_permission_grants TO airen_control_plane_owner;
-GRANT INSERT ON authz.tenant_memberships TO airen_control_plane_owner;
+GRANT SELECT, INSERT ON authz.tenant_memberships TO airen_control_plane_owner;
 GRANT INSERT ON audit.audit_events, events.outbox_events TO airen_control_plane_owner;
 GRANT CREATE ON SCHEMA security TO airen_control_plane_owner;
 
