@@ -25,10 +25,15 @@ function checksum(text: string): string {
 
 function transactionBody(sql: string, migrationId: string): string {
   const trimmed = sql.trim();
-  const begin = /^BEGIN;\s*/i.exec(trimmed);
+  const begin = /(^|\n)\s*BEGIN;\s*/i.exec(trimmed);
   const commit = /\s*COMMIT;\s*$/i.exec(trimmed);
-  if (!begin || !commit) throw new AppError("VALIDATION_FAILED", "Foundation migration must be transaction wrapped", { migrationId });
-  return trimmed.slice(begin[0].length, trimmed.length - commit[0].length).trim();
+  if (!begin || !commit || begin.index >= commit.index) throw new AppError("VALIDATION_FAILED", "Foundation migration must be transaction wrapped", { migrationId });
+  const prefix = trimmed.slice(0, begin.index).trim();
+  if (prefix && prefix.split(/\r?\n/).some((line) => line.trim() && !line.trim().startsWith("--"))) {
+    throw new AppError("VALIDATION_FAILED", "Only comments may precede the migration transaction", { migrationId });
+  }
+  const bodyStart = begin.index + begin[0].length;
+  return trimmed.slice(bodyStart, commit.index).trim();
 }
 
 async function runMigrations(connectionString: string): Promise<void> {
@@ -92,7 +97,8 @@ export async function migrateFoundationDatabase(environment: EnvironmentInput = 
 if (process.argv[1]?.endsWith("deploy/migrate.ts")) {
   migrateFoundationDatabase().catch((error: unknown) => {
     const code = error instanceof AppError ? error.code : "INTERNAL_ERROR";
-    process.stderr.write(`${JSON.stringify({ event: "migration.failed", errorCode: code })}\n`);
+    const migrationId = error instanceof AppError && typeof error.details?.migrationId === "string" ? error.details.migrationId : undefined;
+    process.stderr.write(`${JSON.stringify({ event: "migration.failed", errorCode: code, ...(migrationId ? { migrationId } : {}) })}\n`);
     process.exitCode = 1;
   });
 }
