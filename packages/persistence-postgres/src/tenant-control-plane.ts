@@ -33,7 +33,12 @@ function project(row: Record<string, unknown>): TenantAdminProjection {
 }
 
 class Transaction implements TenantLifecycleTransaction {
-  constructor(private readonly client: PoolClient) {}
+  private readonly client: PoolClient;
+
+  constructor(client: PoolClient) {
+    this.client = client;
+  }
+
   async mutateTenant(input: { action: TenantLifecycleAction; idempotencyKey: string; tenantId: string; name?: string; locale?: string; timezone?: string; currency?: string; reasonCode?: string }): Promise<TenantLifecycleResult> {
     const result = await this.client.query(
       `SELECT action_key, tenant_id, tenant_slug, tenant_name, tenant_status, tenant_locale, tenant_timezone, tenant_currency, tenant_created_at, tenant_updated_at, replayed
@@ -47,7 +52,13 @@ class Transaction implements TenantLifecycleTransaction {
 }
 
 export class PostgresTenantControlPlaneStore implements TenantLifecycleUnitOfWork, TenantAdminQueryStore {
-  constructor(private readonly pool: Pool, private readonly assumeRole = "airen_control_plane") {}
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_control_plane") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
 
   async transaction<T>(fn: (tx: TenantLifecycleTransaction) => Promise<T>, context: PlatformSecurityContext): Promise<T> {
     const client = await this.open(context);
