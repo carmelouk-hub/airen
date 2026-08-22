@@ -63,6 +63,8 @@ jobs:
         run: npm run test:r3a-tenant-provisioning
       - name: Execute R3-A Tenant lifecycle runtime tests
         run: npm run test:r3a-tenant-lifecycle
+      - name: Execute R3-B Location lifecycle runtime tests
+        run: npm run test:r3b-location-lifecycle
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
