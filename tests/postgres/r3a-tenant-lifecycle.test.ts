@@ -113,8 +113,13 @@ test("R3-A remaining Tenant lifecycle is governed, idempotent, non-destructive a
   try {
     await direct.query("BEGIN");
     await direct.query("SET LOCAL ROLE airen_control_plane");
-    await direct.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.correlation_id','r3a2-db-denied',true)", [BOB]);
+    await direct.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.correlation_id','r3a2-db-read-denied',true)", [BOB]);
     await assert.rejects(() => direct.query("SELECT * FROM security.platform_get_tenant($1)", [tenantId]), (error: unknown) => (error as { code?: string }).code === "42501");
+    await direct.query("ROLLBACK");
+
+    await direct.query("BEGIN");
+    await direct.query("SET LOCAL ROLE airen_control_plane");
+    await direct.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.correlation_id','r3a2-db-update-denied',true)", [BOB]);
     await assert.rejects(() => direct.query("UPDATE platform.tenants SET name='Direct Escalation' WHERE id=$1", [tenantId]), (error: unknown) => (error as { code?: string }).code === "42501");
     await direct.query("ROLLBACK");
 
