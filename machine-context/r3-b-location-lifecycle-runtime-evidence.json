@@ -1,0 +1,144 @@
+{
+  "milestone": "R3-B",
+  "title": "Location Lifecycle",
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "date": "2026-08-22",
+  "repository": "carmelouk-hub/airen",
+  "branch": "r3/control-plane-20260822",
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "r3_a_closure_commit": "6ffdc757c6f1b5249bb2ffcef832d7daa179bee5",
+  "implementation_commit": "d54778b64dec5502c06970f908b8a10bb58705ad",
+  "implementation_tree": "55506d4d9c0c9822ec60d0e464749316057a23a5",
+  "implementation_ci": {
+    "workflow": "foundation-contract-ci",
+    "run_number": 315,
+    "run_id": 32588188619,
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "postgres-rls-runtime": "success",
+      "deployment-path-runtime": "success"
+    }
+  },
+  "deployment_evidence_artifact": {
+    "artifact_id": 9479602382,
+    "digest": "sha256:ca1ee9cb22900aded8f101b2a1ded72692fed945739ef3de11a23dfaadc1e955"
+  },
+  "permissions": [
+    "platform.locations.read",
+    "platform.locations.update",
+    "platform.locations.suspend",
+    "platform.locations.reactivate",
+    "platform.locations.archive",
+    "platform.locations.transfer_primary"
+  ],
+  "existing_tenant_create_permission_preserved": "tenant.locations.manage",
+  "state_machine": {
+    "schema_states": ["active", "inactive", "suspended", "archived"],
+    "governed_states": ["active", "suspended", "archived"],
+    "allowed": ["active->suspended", "suspended->active", "active->archived", "suspended->archived"],
+    "inactive_reserved": true,
+    "archived_terminal": true,
+    "hard_delete": false
+  },
+  "identity_invariants": {
+    "tenant_id_immutable": true,
+    "slug_immutable": true,
+    "mutable_fields": ["name", "timezone"]
+  },
+  "primary_location_invariant": {
+    "same_tenant_transfer_only": true,
+    "target_must_be_active": true,
+    "exactly_one_primary_after_transfer": true,
+    "active_tenant_primary_suspend_requires_prior_transfer": true,
+    "active_tenant_primary_archive_requires_prior_transfer": true,
+    "transfer_atomic": true,
+    "transfer_idempotent": true
+  },
+  "query_surface": {
+    "detail": "security.platform_get_location(uuid)",
+    "list": "security.platform_list_locations(tenant_id,status,after,limit)",
+    "tenant_filter_required": true,
+    "limit_max": 100,
+    "raw_table_projection": false
+  },
+  "runtime_assertions": {
+    "location_update": "PASS",
+    "location_tenant_id_immutable": "PASS",
+    "location_slug_immutable": "PASS",
+    "lifecycle_changed_payload_conflict": "PASS",
+    "active_tenant_primary_suspend_denied_before_transfer": "PASS",
+    "second_location_existing_governed_create_path": "PASS",
+    "primary_transfer": "PASS",
+    "exactly_one_primary_after_transfer": "PASS",
+    "primary_transfer_idempotent_replay": "PASS",
+    "primary_transfer_replay_no_duplicate_audit": "PASS",
+    "cross_tenant_primary_transfer_denied": "PASS",
+    "forced_partial_failure_rollback": "PASS",
+    "former_primary_suspend_after_transfer": "PASS",
+    "suspended_primary_target_denied": "PASS",
+    "location_reactivate": "PASS",
+    "location_archive": "PASS",
+    "archived_reactivation_denied": "PASS",
+    "state_transition_history": "PASS",
+    "location_detail_query": "PASS",
+    "tenant_filtered_location_list_query": "PASS",
+    "tenant_admin_not_platform_admin": "PASS",
+    "direct_control_plane_table_update_denied": "PASS",
+    "airen_app_platform_capability_denied": "PASS",
+    "foundation_rls_regression": "PASS",
+    "governed_command_regression": "PASS",
+    "authenticated_principal_regression": "PASS",
+    "r3_a_provisioning_regression": "PASS",
+    "r3_a_lifecycle_regression": "PASS",
+    "deployment_path_regression": "PASS"
+  },
+  "failure_reconciliation": [
+    {
+      "run_number": 309,
+      "run_id": 32587992393,
+      "cause": "Static immutable-field detector scanned beyond UPDATE SET clause and produced a false positive",
+      "correction_commit": "b87e930f20cebed7399ad862da63a76553b0e95b",
+      "product_authority_changed": false,
+      "security_policy_weakened": false
+    },
+    {
+      "run_number": 309,
+      "run_id": 32587992393,
+      "cause": "PL/pgSQL output-column name made an unqualified tenant_id reference ambiguous in primary transfer",
+      "correction_commit": "859d4972b28480305b31a3487e44116c108a8022",
+      "product_authority_changed": false,
+      "security_policy_weakened": false
+    },
+    {
+      "run_number": 313,
+      "run_id": 32588090501,
+      "cause": "Completed primary-transfer retry evaluated fresh current-primary invariant before idempotency replay",
+      "correction_commit": "d54778b64dec5502c06970f908b8a10bb58705ad",
+      "same_tenant_validation_preserved": true,
+      "product_authority_changed": false,
+      "security_policy_weakened": false
+    }
+  ],
+  "doc_004_boundary": {
+    "doc_state": "ACTIVE_DRAFT",
+    "r3_b_certifies_frozen_r3_b_001_gap": true,
+    "subscription_dependency": "R3-E",
+    "entitlement_admin_dependency": "R3-F",
+    "effective_limit_capability_dependency": "R3-G",
+    "integrated_readiness_dependency": "R3-J",
+    "locations_max_certified": false,
+    "archive_is_data_purge": false
+  },
+  "scope_boundary": {
+    "r3_b_gap_complete": true,
+    "r3_b_closed": false,
+    "r3_c_open": false,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "production_cutover_authorized": false,
+    "t20_pass": false,
+    "golden_e2e_pass": false,
+    "base44_decommission_complete": false
+  }
+}
