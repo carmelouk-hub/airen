@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-014",
-  "status": "CLOSED_PASS_ARCHIVE_COMPLETE_POST_CLEANUP_PENDING",
+  "status": "CLOSED_PASS",
   "branch": "foundation/r0-bootstrap-20260820",
   "main_modified": false,
   "corte_production_changed": false,
@@ -30,7 +30,12 @@
     "source_zip_sha256": "e87242a49fbf9ff5e4ea21e968865ee8089e964c94fc1110501bdf1d59b690a6",
     "integrity": "PASS"
   },
-  "post_cleanup_ci": "PENDING",
+  "post_cleanup_ci": {
+    "source_head_sha": "e72833359252e142242d734278b4ea8ecd250a15",
+    "run_id": 32582311060,
+    "run_number": 269,
+    "status": "PASS"
+  },
   "g4": "PENDING_FINAL_R2_FOUNDATION_COMPLETION_RECONCILIATION",
   "g4_remaining_blockers": [],
   "t20": "NOT_PASSED",
