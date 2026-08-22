@@ -1,13 +1,13 @@
 # AIRenOS Foundation
 
-Status: **B44-FX-013 / Observability Baseline — CLOSED/PASS, G4 PENDING DEPLOYMENT PATH VERIFICATION**
+Status: **B44-FX-014 / Deployment Path Verification — IMPLEMENTED, RUNTIME EVIDENCE PENDING; G4 PENDING FINAL R2 RECONCILIATION**
 
 AIRenOS Foundation is the governed portable target outside Base44. The repository preserves the 2025 prototype as legacy and builds from the Platform Bible, forensic snapshots, B44-FX-004 mapping and B44-FX-005 ADRs.
 
-Closed Foundation runtime blockers now include provider-neutral authenticated principal construction, PostgreSQL/RLS governed persistence, the typed fail-closed environment/secret-provider contract, and the provider-neutral observability baseline.
+Closed Foundation runtime blockers already include provider-neutral authenticated principal construction, PostgreSQL/RLS governed persistence, the typed fail-closed environment/secret-provider contract, and the provider-neutral observability baseline.
 
-B44-FX-013 provides correlation/W3C trace context, structured logging with mandatory redaction, stable error taxonomy, low-cardinality metrics, health/readiness diagnostics and API runtime composition. Telemetry sinks remain replaceable and no telemetry vendor is selected by the Foundation contract.
+B44-FX-014 adds the final G4 Foundation blocker implementation: a provider-neutral OCI deployment unit, a non-root API runtime, fail-closed deployment configuration, source-controlled PostgreSQL runtime group-role bootstrap, checksum-guarded atomic migration execution, liveness/readiness endpoints, least-privilege runtime-role verification, structured observability wiring, degraded-candidate detection and a mechanical rollback rehearsal to the exact known-good image identity.
 
-Evidence lineage: runtime #177 PASS; exact closure commit `a4b6ced261126ab3db3646391b991101ff41f8e3`; closure CI #187 PASS; immutable snapshot #189 PASS with independently verified artifact/source digests; standard post-cleanup CI #199 PASS after removal of temporary snapshot tooling.
+The new deployment contract test and full OCI deployment rehearsal are part of GitHub Actions. B44-FX-014 is not CLOSED/PASS and G4 is not PASS until the deployment runtime job succeeds together with the existing application-contract and PostgreSQL/RLS suites, followed by closure/archive reconciliation.
 
-B44-FX-013 is CLOSED/PASS. G4 remains pending only for B44-FX-014 — Deployment Path Verification. T20, Golden Restaurant E2E and Corte migration remain separate later gates. Corte delle Stelle production is not modified by this branch and `main` remains unchanged.
+T20, Golden Restaurant E2E and Corte migration remain separate later gates. Corte delle Stelle production is not modified by this branch and `main` remains unchanged. Production hosting, authentication, secret-manager and telemetry provider selections remain TBD behind provider-neutral interfaces.
