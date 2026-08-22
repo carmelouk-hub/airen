@@ -1,0 +1,110 @@
+{
+  "milestone": "R3-A",
+  "title": "Tenant Lifecycle",
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "date": "2026-08-22",
+  "repository": "carmelouk-hub/airen",
+  "branch": "r3/control-plane-20260822",
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "r3_a1_closure_commit": "bf274805f2e6b0b3bfed4be40f9c03d57725ee64",
+  "implementation_commit": "5be6e25a994fae39166aeff098017b7d9785fd15",
+  "implementation_tree": "b031fd8c45a3cd7f1f39d12b575df662d84cf8d9",
+  "implementation_ci": {
+    "workflow": "foundation-contract-ci",
+    "run_number": 290,
+    "run_id": 32586151703,
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "postgres-rls-runtime": "success",
+      "deployment-path-runtime": "success"
+    }
+  },
+  "deployment_evidence_artifact": {
+    "artifact_id": 9479093663,
+    "digest": "sha256:27bef8757998f1cf9c25e0a68db77e143abf27635a69b5fa681d35ac9792ddff"
+  },
+  "permissions": [
+    "platform.tenants.provision",
+    "platform.tenants.read",
+    "platform.tenants.update",
+    "platform.tenants.suspend",
+    "platform.tenants.reactivate",
+    "platform.tenants.archive"
+  ],
+  "state_machine": {
+    "states": ["active", "suspended", "archived"],
+    "allowed": ["active->suspended", "suspended->active", "active->archived", "suspended->archived"],
+    "archived_terminal": true,
+    "hard_delete": false
+  },
+  "runtime_assertions": {
+    "platform_context_without_fake_tenant_scope": "PASS",
+    "tenant_provisioning": "PASS",
+    "primary_location_bootstrap": "PASS",
+    "initial_owner_membership": "PASS",
+    "tenant_update": "PASS",
+    "tenant_slug_immutable": "PASS",
+    "lifecycle_idempotent_retry": "PASS",
+    "lifecycle_changed_payload_conflict": "PASS",
+    "tenant_suspend": "PASS",
+    "suspended_hostname_resolution_fail_closed": "PASS",
+    "suspension_preserves_locations_memberships": "PASS",
+    "tenant_reactivate": "PASS",
+    "reactivated_hostname_resolution": "PASS",
+    "forced_partial_failure_rollback": "PASS",
+    "tenant_archive": "PASS",
+    "archive_no_hard_delete": "PASS",
+    "archive_preserves_locations_memberships": "PASS",
+    "archived_reactivation_denied": "PASS",
+    "state_transition_history": "PASS",
+    "tenant_detail_query": "PASS",
+    "tenant_list_query": "PASS",
+    "tenant_admin_not_platform_admin": "PASS",
+    "direct_control_plane_table_update_denied": "PASS",
+    "airen_app_platform_capability_denied": "PASS",
+    "foundation_rls_regression": "PASS",
+    "governed_command_regression": "PASS",
+    "authenticated_principal_regression": "PASS",
+    "r3_a1_provisioning_regression": "PASS",
+    "deployment_path_regression": "PASS",
+    "base44_runtime_coupling_boundary": "PASS"
+  },
+  "failure_reconciliation": [
+    {
+      "run_number": 286,
+      "run_id": 32586016966,
+      "cause": "Node 22 strip-types rejected TypeScript parameter properties in new PostgreSQL adapter",
+      "correction_commit": "9d0f20dc5b4273b11d2227c7159899951886f3c8",
+      "security_policy_weakened": false
+    },
+    {
+      "run_number": 288,
+      "run_id": 32586083040,
+      "cause": "Privilege test reused an aborted PostgreSQL transaction after an expected permission denial",
+      "correction_commit": "5be6e25a994fae39166aeff098017b7d9785fd15",
+      "product_authority_changed": false,
+      "security_policy_weakened": false
+    }
+  ],
+  "doc_004_boundary": {
+    "doc_state": "ACTIVE_DRAFT",
+    "r3_a_certifies_frozen_r3_cp_001_gap": true,
+    "full_subscription_readiness_saga_certified": false,
+    "subscription_dependency": "R3-E",
+    "entitlement_dependency": "R3-F",
+    "capability_dependency": "R3-G",
+    "integrated_readiness_dependency": "R3-J",
+    "archive_is_data_purge": false
+  },
+  "scope_boundary": {
+    "r3_a_gap_complete": true,
+    "r3_a_closed": false,
+    "r3_b_open": false,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "production_cutover_authorized": false,
+    "t20_pass": false,
+    "golden_e2e_pass": false
+  }
+}
