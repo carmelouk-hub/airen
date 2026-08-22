@@ -1,6 +1,6 @@
 {
   "pack": "B44-FX-014",
-  "status": "CLOSED_PASS_ARCHIVE_COMPLETE_POST_CLEANUP_PENDING",
+  "status": "CLOSED_PASS",
   "scope": "Deployment Path Verification",
   "contracts": {
     "portable_oci_image": "PASS",
@@ -73,6 +73,16 @@
       "source_zip_sha256": "e87242a49fbf9ff5e4ea21e968865ee8089e964c94fc1110501bdf1d59b690a6",
       "runtime_evidence_sha256": "b8c1a484a7aaab18abfcd35c3e30bd9ddef8227365932fedfc866545d6f0ef67",
       "internal_sha256sums": "PASS"
+    },
+    "post_cleanup_ci": {
+      "source_head_sha": "e72833359252e142242d734278b4ea8ecd250a15",
+      "run_id": 32582311060,
+      "run_number": 269,
+      "application_contracts": "PASS",
+      "postgres_rls_runtime": "PASS",
+      "deployment_path_runtime": "PASS",
+      "temporary_snapshot_tooling_removed": true,
+      "status": "PASS"
     }
   },
   "drive_archive": {
@@ -83,7 +93,6 @@
     "operational_runtime_evidence_04_2_id": "1FIZiquEs1pJk4DRlpFexy-ytz7oVNJaB",
     "integrity": "PASS"
   },
-  "post_cleanup_ci": "PENDING",
   "g4": "PENDING_FINAL_R2_FOUNDATION_COMPLETION_RECONCILIATION",
   "g4_blocker_closed": "deployment path verification",
   "g4_remaining_blockers": [],
