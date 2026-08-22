@@ -67,6 +67,8 @@ jobs:
         run: npm run test:r3b-location-lifecycle
       - name: Execute R3-C TenantDomain lifecycle runtime tests
         run: npm run test:r3c-tenant-domain-lifecycle
+      - name: Execute R3-D Platform Principal and Role Administration runtime tests
+        run: npm run test:r3d-platform-role-admin
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
