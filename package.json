@@ -1,7 +1,7 @@
 {
   "name": "airenos-foundation",
   "private": true,
-  "version": "0.0.0-foundation-observability-baseline",
+  "version": "0.0.0-foundation-deployment-path",
   "workspaces": ["apps/*","packages/*"],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
@@ -12,6 +12,7 @@
     "test:identity-adapter": "node --experimental-strip-types --test tests/integration/identity-adapter.test.ts",
     "test:runtime-secrets": "node --experimental-strip-types --test tests/integration/runtime-environment-secrets.test.ts",
     "test:observability": "node --experimental-strip-types --test tests/integration/observability-baseline.test.ts",
+    "test:deployment-contract": "node --experimental-strip-types --test tests/integration/deployment-contract.test.ts",
     "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
     "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
