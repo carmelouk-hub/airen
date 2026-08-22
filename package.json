@@ -14,7 +14,7 @@
     "test:observability": "node --experimental-strip-types --test tests/integration/observability-baseline.test.ts",
     "test:deployment-contract": "node --experimental-strip-types --test tests/integration/deployment-contract.test.ts",
     "test:platform-security-context": "node --experimental-strip-types --test tests/integration/platform-security-context.test.ts",
-    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
+    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs && node scripts/check-r3d-correction.mjs",
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
     "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
     "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts",
@@ -22,7 +22,7 @@
     "test:r3a-tenant-lifecycle": "node --experimental-strip-types --test tests/postgres/r3a-tenant-lifecycle.test.ts",
     "test:r3b-location-lifecycle": "node --experimental-strip-types --test tests/postgres/r3b-location-lifecycle.test.ts",
     "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts",
-    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts"
+    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts && node --experimental-strip-types --test tests/postgres/r3d-platform-role-invalid-state.test.ts"
   },
   "dependencies": {"pg": "8.23.0"},
   "devDependencies": {"@types/pg": "8.23.1"},
