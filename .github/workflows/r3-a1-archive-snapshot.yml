@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - "archive/r3-a1-snapshot-20260822"
+  pull_request:
+    branches:
+      - "foundation/**"
 
 permissions:
   contents: read
