@@ -250,11 +250,6 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'AIRENOS_LOCATION_NOT_FOUND:target' USING ERRCODE='P0002'; END IF;
   IF v_source.tenant_id <> v_target.tenant_id THEN RAISE EXCEPTION 'AIRENOS_LOCATION_SCOPE_MISMATCH' USING ERRCODE='P0001'; END IF;
 
-  PERFORM l.id FROM platform.locations l WHERE l.tenant_id=v_source.tenant_id FOR UPDATE;
-  SELECT count(*)::int INTO v_primary_count FROM platform.locations l WHERE l.tenant_id=v_source.tenant_id AND l.is_primary=true;
-  IF v_primary_count <> 1 OR NOT v_source.is_primary THEN RAISE EXCEPTION 'AIRENOS_PRIMARY_SOURCE_REQUIRED' USING ERRCODE='P0001'; END IF;
-  IF v_target.status <> 'active' THEN RAISE EXCEPTION 'AIRENOS_PRIMARY_TARGET_REQUIRES_ACTIVE' USING ERRCODE='P0001'; END IF;
-
   v_request_hash := encode(public.digest(jsonb_build_object(
     'action','transfer_primary','sourceLocationId',p_source_location_id,'targetLocationId',p_target_location_id,'reasonCode',p_reason_code
   )::text, 'sha256'), 'hex');
@@ -282,6 +277,11 @@ BEGIN
       true;
     RETURN;
   END IF;
+
+  PERFORM l.id FROM platform.locations l WHERE l.tenant_id=v_source.tenant_id FOR UPDATE;
+  SELECT count(*)::int INTO v_primary_count FROM platform.locations l WHERE l.tenant_id=v_source.tenant_id AND l.is_primary=true;
+  IF v_primary_count <> 1 OR NOT v_source.is_primary THEN RAISE EXCEPTION 'AIRENOS_PRIMARY_SOURCE_REQUIRED' USING ERRCODE='P0001'; END IF;
+  IF v_target.status <> 'active' THEN RAISE EXCEPTION 'AIRENOS_PRIMARY_TARGET_REQUIRES_ACTIVE' USING ERRCODE='P0001'; END IF;
 
   UPDATE platform.locations SET is_primary=false, updated_at=now() WHERE id=p_source_location_id;
   UPDATE platform.locations SET is_primary=true, updated_at=now() WHERE id=p_target_location_id RETURNING * INTO v_target;
