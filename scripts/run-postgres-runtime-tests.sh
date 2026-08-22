@@ -10,4 +10,5 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0005_runtime_role_grant
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0006_r3a_tenant_provisioning.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0007_r3a_tenant_lifecycle.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0008_r3b_location_lifecycle.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0009_r3c_tenant_domain_lifecycle.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/postgres/rls_runtime.sql
