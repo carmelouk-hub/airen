@@ -1,0 +1,31 @@
+{
+  "pack": "B44-FX-014",
+  "status": "IMPLEMENTED_PENDING_RUNTIME_EVIDENCE",
+  "scope": "Deployment Path Verification",
+  "contracts": {
+    "portable_oci_image": "IMPLEMENTED",
+    "non_root_runtime": "IMPLEMENTED",
+    "fail_closed_startup": "IMPLEMENTED",
+    "separate_migration_job": "IMPLEMENTED",
+    "migration_checksum_guard": "IMPLEMENTED",
+    "migration_idempotency": "IMPLEMENTED",
+    "canonical_db_runtime_roles": "IMPLEMENTED",
+    "least_privilege_runtime_login_fixture": "SYNTHETIC_CI_ONLY",
+    "liveness_endpoint": "IMPLEMENTED",
+    "readiness_endpoint": "IMPLEMENTED",
+    "observability_wiring": "IMPLEMENTED",
+    "degraded_candidate_detection": "IMPLEMENTED",
+    "rollback_rehearsal": "IMPLEMENTED",
+    "hosting_provider": "TBD_BEHIND_PORTABLE_OCI_CONTRACT",
+    "production_secret_provider": "TBD_BEHIND_SECRET_PROVIDER"
+  },
+  "runtime_evidence": "PENDING_GITHUB_ACTIONS",
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blocker_target": "deployment path verification",
+  "g4_remaining_after_pass": [],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "next_if_pass": "G4 — R2 Foundation Completion Reconciliation"
+}
