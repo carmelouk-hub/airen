@@ -47,8 +47,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install Node PostgreSQL adapter dependency
-        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Install locked Node PostgreSQL adapter dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Execute migrations and RLS runtime tests
@@ -77,7 +77,7 @@ jobs:
       MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
     steps:
       - uses: actions/checkout@v4
-      - name: Build portable OCI runtime image
+      - name: Build portable OCI runtime image from locked dependencies
         run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t "airenos-foundation:${GITHUB_SHA}" -f deploy/Dockerfile .
       - name: Verify deploy, readiness, degraded detection and rollback
         env:
@@ -89,20 +89,4 @@ jobs:
         with:
           name: B44-FX-014-deployment-runtime-evidence
           path: ${{ runner.temp }}/airen-deployment-evidence/B44-FX-014_Deployment_Runtime_Evidence.json
-          if-no-files-found: error
-
-  b44-fx-014-lockfile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Generate exact npm dependency lock
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --workspaces=false
-      - name: Upload generated package-lock
-        uses: actions/upload-artifact@v4
-        with:
-          name: B44-FX-014-package-lock
-          path: package-lock.json
           if-no-files-found: error
