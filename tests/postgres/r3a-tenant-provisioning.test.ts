@@ -23,6 +23,33 @@ async function seedPlatformAuthority() {
 test.before(seedPlatformAuthority);
 test.after(async () => { await pool.end(); });
 
+test("R3-A runtime roles expose only the narrow provisioning capability", async () => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL ROLE airen_control_plane");
+    await assert.rejects(
+      () => client.query("INSERT INTO platform.tenants(slug,name) VALUES ('direct-r3a','Direct R3A')"),
+      (error: unknown) => (error as { code?: string }).code === "42501"
+    );
+    await client.query("ROLLBACK");
+
+    await client.query("BEGIN");
+    await client.query("SET LOCAL ROLE airen_app");
+    await client.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.correlation_id','r3a-app-function-denied',true)", [ALICE]);
+    await assert.rejects(
+      () => client.query("SELECT * FROM security.platform_provision_tenant('r3a-app-denied-v1','app-denied-r3a','App Denied','it-IT','Europe/Rome','EUR','main','Main','Europe/Rome')"),
+      (error: unknown) => (error as { code?: string }).code === "42501"
+    );
+    await client.query("ROLLBACK");
+  } finally {
+    client.release();
+  }
+
+  const directRows = await pool.query("SELECT count(*)::int AS c FROM platform.tenants WHERE slug IN ('direct-r3a','app-denied-r3a')");
+  assert.equal(directRows.rows[0].c, 0);
+});
+
 test("R3-A provisions Tenant atomically, replays idempotently, denies tenant-only actors and rolls back partial failure", async () => {
   const allowedContext = await buildPlatformSecurityContext({
     principal: { identityId: ALICE, providerKey: "synthetic", providerSubject: "alice-platform", platformRoles: ["platform_admin"] },
