@@ -26,6 +26,7 @@ jobs:
       - run: npm run test:observability
       - run: npm run test:deployment-contract
       - run: npm run test:platform-security-context
+      - run: npm run test:r3e-billing-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -69,6 +70,8 @@ jobs:
         run: npm run test:r3c-tenant-domain-lifecycle
       - name: Execute R3-D Platform Principal and Role Administration runtime tests
         run: npm run test:r3d-platform-role-admin
+      - name: Execute R3-E Plan and Subscription lifecycle runtime tests
+        run: npm run test:r3e-plan-subscription-lifecycle
 
   deployment-path-runtime:
     runs-on: ubuntu-latest

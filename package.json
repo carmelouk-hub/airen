@@ -2,7 +2,10 @@
   "name": "airenos-foundation",
   "private": true,
   "version": "0.0.0-foundation-deployment-path",
-  "workspaces": ["apps/*","packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:machine-context": "node -e \"for (const f of require('fs').readdirSync('machine-context').filter(x=>x.endsWith('.json'))) JSON.parse(require('fs').readFileSync('machine-context/'+f,'utf8')); console.log('Machine context JSON PASS')\"",
@@ -22,9 +25,15 @@
     "test:r3a-tenant-lifecycle": "node --experimental-strip-types --test tests/postgres/r3a-tenant-lifecycle.test.ts",
     "test:r3b-location-lifecycle": "node --experimental-strip-types --test tests/postgres/r3b-location-lifecycle.test.ts",
     "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts",
-    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts && node --experimental-strip-types --test tests/postgres/r3d-platform-role-invalid-state.test.ts"
+    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts && node --experimental-strip-types --test tests/postgres/r3d-platform-role-invalid-state.test.ts",
+    "test:r3e-billing-contract": "node --experimental-strip-types --test tests/integration/r3e-billing-contract.test.ts",
+    "test:r3e-plan-subscription-lifecycle": "node --experimental-strip-types --test tests/postgres/r3e-plan-subscription-lifecycle.test.ts"
   },
-  "dependencies": {"pg": "8.23.0"},
-  "devDependencies": {"@types/pg": "8.23.1"},
+  "dependencies": {
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
+  },
   "type": "module"
 }
