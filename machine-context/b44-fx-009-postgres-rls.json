@@ -1,0 +1,19 @@
+{
+  "pack": "B44-FX-009-R1",
+  "scope": "PostgreSQL Harness, RLS & CI Runtime Verification",
+  "assets": [
+    "db/migrations/0003_foundation_rls.sql",
+    "tests/postgres/bootstrap_roles.sql",
+    "tests/postgres/rls_runtime.sql",
+    "scripts/run-postgres-runtime-tests.sh",
+    ".github/workflows/ci.yml postgres service job",
+    "machine-context/b44-fx-009-r1-ci-evidence.json"
+  ],
+  "static_contract": "PASS",
+  "runtime_evidence": "PASS",
+  "github_actions_run_id": 32493366876,
+  "postgres_version": "16.15",
+  "rls_runtime": "PASS",
+  "g4": "PENDING_FULL_FOUNDATION_GATE",
+  "rule": "RLS security foundation is runtime-proven; do not claim full G4, T20 or Golden until their dedicated gates pass"
+}

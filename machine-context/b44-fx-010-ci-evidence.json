@@ -1,0 +1,43 @@
+{
+  "pack": "B44-FX-010",
+  "evidence_type": "GITHUB_ACTIONS_POSTGRESQL_RUNTIME",
+  "source_commit": "611935096edf1a290312e3e6b542923ad3f7cd79",
+  "workflow": {
+    "name": "foundation-contract-ci",
+    "run_id": 32494752512,
+    "run_number": 31,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS"
+  },
+  "first_attempt": {
+    "run_id": 32494615548,
+    "run_number": 29,
+    "result": "FAIL",
+    "failure_class": "NODE_STRIP_TYPES_PARAMETER_PROPERTY",
+    "security_regression": false,
+    "remediation": "adapter syntax corrected without relaxing RLS or authorization"
+  },
+  "postgres": {
+    "version": "16.15",
+    "rls_regression_suite": "PASS",
+    "governed_command_tests": {
+      "CreateLocation persists mutation, audit and outbox atomically under RLS": "PASS",
+      "CreateLocation authorization failure produces no mutation, audit or outbox": "PASS"
+    }
+  },
+  "command": {
+    "key": "tenant.location.create",
+    "permission": "tenant.locations.manage",
+    "entitlement": "tenant.multi_location",
+    "mutation_role": "airen_app NOBYPASSRLS",
+    "client_tenant_id_authority": false
+  },
+  "governance": {
+    "main_modified": false,
+    "corte_production_changed": false,
+    "pull_request": 3,
+    "pull_request_draft": true,
+    "t20": "NOT_PASSED",
+    "golden_e2e": "NOT_PASSED"
+  }
+}

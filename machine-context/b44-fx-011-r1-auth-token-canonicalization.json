@@ -1,0 +1,60 @@
+{
+  "pack": "B44-FX-011-R1",
+  "status": "CLOSED_PASS",
+  "scope": "Authentication Token Canonicalization & Test Reliability Reconciliation",
+  "trigger": {
+    "post_archive_cleanup_run_id": 32504951362,
+    "run_number": 91,
+    "result": "FAIL_APPLICATION_TEST_ONLY",
+    "postgres_rls_runtime": "PASS",
+    "finding": "The test mutated the final Base64URL signature character; alternate non-canonical encodings can decode to identical signature bytes because unused padding bits may differ."
+  },
+  "correction": {
+    "production_hardening": "Reject non-canonical Base64URL signature encodings before constant-time HMAC comparison",
+    "test_hardening": "Mutate a deterministic signature byte and add an explicit equivalent-byte/non-canonical encoding rejection test",
+    "authorization_or_rls_relaxed": false,
+    "secret_handling_changed": false
+  },
+  "verification": {
+    "hardening_source_commit": "54df0624f597d75227ae669ba096b8c3ddb40cd8",
+    "verification_run": {"id": 32505412332, "run_number": 95, "conclusion": "success"},
+    "closure_commit": "2505ccd6bf45ad47d4a63abea9fa9286de0a33fa",
+    "closure_run": {"id": 32505553453, "run_number": 99, "conclusion": "success"},
+    "application_contracts": "PASS",
+    "identity_adapter_tests": "5/5 PASS",
+    "postgres_rls_runtime": "PASS",
+    "authenticated_principal_runtime": "PASS"
+  },
+  "archive": {
+    "snapshot_generation_run": {"id": 32505671459, "run_number": 101, "conclusion": "success"},
+    "artifact_id": 9455177032,
+    "artifact_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+    "source_zip_sha256": "2abb285383e179ac0b4e134d2183b3acf393c7c9e1e7da7f50d774b0362f6376",
+    "internal_sha256sums": "PASS",
+    "drive_folder_id": "1_Hc7EPJjLKQKOiIdEiwTW9rdD6w_1IK2",
+    "drive_package_id": "1YzFiq1rWY7QDRHrQAhbCRyDg21uU9SCq",
+    "drive_runtime_evidence_id": "1vlKZBZUkDNgpdCJzyeyWMNToT1_SrJVi",
+    "drive_original_evidence_id": "1QABWZ6MjRlCFwEHGRdJfLhjHbRqDwOGc",
+    "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
+    "integrity": "PASS"
+  },
+  "post_cleanup_ci": {
+    "run": {"id": 32506606185, "run_number": 107, "conclusion": "success"},
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
+  },
+  "effect_on_b44_fx_011": "HISTORICAL_SUPERSEDED_BY_R1",
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_remaining_blockers": [
+    "environment + secret-provider runtime contract",
+    "observability baseline",
+    "deployment path verification"
+  ],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "next": "B44-FX-012 — Environment & Secret Provider Runtime Contract",
+  "rule": "Do not hide post-closure failures. Reconcile, harden, re-certify, archive a superseding exact-commit baseline, then prove the standard CI is clean after temporary tooling removal."
+}

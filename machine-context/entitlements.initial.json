@@ -1,0 +1,6 @@
+{
+  "version": "0.1",
+  "status": "INITIAL_REGISTRY_NOT_COMPLETE",
+  "rule": "Entitlement controls commercial/product eligibility; permission controls actor authority. They are never the same check.",
+  "families": ["risto.booking","risto.order","risto.production","risto.pos","risto.crm","stella","atmos","integrations"]
+}

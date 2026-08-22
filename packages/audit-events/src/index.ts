@@ -1,0 +1,5 @@
+import type { DomainEvent, SecurityContext } from "../../shared-contracts/src/index.ts";
+export type AuditRecord = Readonly<{ actorIdentityId: string; tenantId: string; locationId: string; actionKey: string; resourceType?: string; resourceId?: string; correlationId: string; outcome: "success" | "denied" | "failure"; metadata?: Readonly<Record<string, unknown>> }>;
+export interface TransactionContext { audit(record: AuditRecord): Promise<void>; outbox(event: DomainEvent & { tenantId: string; locationId: string; correlationId: string }): Promise<void>; }
+export interface UnitOfWork<TTx extends TransactionContext = TransactionContext> { transaction<T>(fn: (tx: TTx) => Promise<T>, context?: SecurityContext): Promise<T>; }
+export function successAudit(context: SecurityContext, actionKey: string, resource?: { type: string; id: string }): AuditRecord { return { actorIdentityId: context.actorIdentityId, tenantId: context.tenantId, locationId: context.locationId, actionKey, resourceType: resource?.type, resourceId: resource?.id, correlationId: context.correlationId, outcome: "success" }; }

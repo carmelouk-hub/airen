@@ -1,0 +1,19 @@
+{
+  "pack": "B44-FX-009-R1",
+  "phase": "POSTGRESQL_HARNESS_RLS_CI_RUNTIME_VERIFICATION",
+  "harness": "IMPLEMENTED",
+  "rls_migration": "IMPLEMENTED",
+  "synthetic_rls_tests": "PASS_RUNTIME",
+  "local_postgres_execution": "NOT_REQUIRED_FOR_GATE_AFTER_CI_RUNTIME_PASS",
+  "github_actions_runtime_evidence": "PASS",
+  "github_actions_run_id": 32493366876,
+  "github_actions_run_number": 5,
+  "application_contracts": "PASS",
+  "postgres_runtime": "PASS_POSTGRESQL_16_15",
+  "postgres_rls": "PASS",
+  "g4": "PENDING_FULL_FOUNDATION_GATE",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false
+}

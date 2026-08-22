@@ -1,0 +1,104 @@
+{
+  "pack": "B44-FX-014",
+  "status": "CLOSED_PASS",
+  "scope": "Deployment Path Verification",
+  "contracts": {
+    "portable_oci_image": "PASS",
+    "locked_dependency_resolution": "PASS",
+    "non_root_runtime": "PASS",
+    "fail_closed_startup": "PASS",
+    "separate_migration_job": "PASS",
+    "migration_checksum_guard": "PASS",
+    "migration_idempotency": "PASS",
+    "canonical_db_runtime_roles": "PASS",
+    "least_privilege_runtime_login_fixture": "SYNTHETIC_CI_ONLY_PASS",
+    "liveness_endpoint": "PASS",
+    "readiness_endpoint": "PASS",
+    "observability_wiring": "PASS",
+    "w3c_trace_propagation": "PASS",
+    "degraded_candidate_detection": "PASS",
+    "rollback_rehearsal": "PASS",
+    "secret_material_absent_from_evidence": "PASS",
+    "hosting_provider": "TBD_BEHIND_PORTABLE_OCI_CONTRACT",
+    "production_secret_provider": "TBD_BEHIND_SECRET_PROVIDER"
+  },
+  "lineage": {
+    "first_attempt": {
+      "run_id": 32581572089,
+      "run_number": 241,
+      "application_contracts": "PASS",
+      "oci_build": "PASS",
+      "deployment_runtime": "FAIL_MIGRATION_WRAPPER_PARSER",
+      "root_cause": "verification parser rejected canonical migration header comments before BEGIN; no PostgreSQL, RLS or OCI defect"
+    },
+    "parser_reconciliation": {
+      "commit": "f433f618fe71ef61c9cc1b4b5d557b39285214ea",
+      "run_id": 32581629000,
+      "run_number": 243,
+      "application_contracts": "PASS",
+      "postgres_rls_runtime": "PASS",
+      "deployment_path_runtime": "PASS"
+    },
+    "dependency_lock_generation": {
+      "run_id": 32581767147,
+      "run_number": 245,
+      "artifact_sha256": "9d0b9944c6d6d8c53b1ed24716a96c487e82f5e65194ee104fd0e94b953e7aca",
+      "package_lock_sha256": "0624b2b1e62501ad927f54bdf2906be1d843fe05de6a6c02bbdc3a1c2dfff46c"
+    },
+    "definitive_runtime_evidence": {
+      "source_head_sha": "f580cd19d6b071f202f70df463c4d993ceb2be73",
+      "pr_merge_test_revision": "a5f9e34b7cc7ffdc5b1a7d5b901d2defe9e51c6d",
+      "run_id": 32581856143,
+      "run_number": 251,
+      "application_contracts": "PASS",
+      "postgres_rls_runtime": "PASS",
+      "deployment_path_runtime": "PASS",
+      "locked_dependencies": "PASS",
+      "evidence_artifact_sha256": "208f98318a52541c5c58e99345922adaf619be64fffdac7b2134f26e7da5efa7",
+      "evidence_json_sha256": "1991aec89f74b6b88d85e07f12eeed944dfe888247159dceb751329debf87a1f",
+      "runtime_uid": 1000
+    },
+    "closure": {
+      "commit": "74c1766136fa887a6e3cc6818f2ddff71d049290",
+      "tree_sha": "dcc59068326dac62f2809bbc7e2d33cbed213750",
+      "run_id": 32581971279,
+      "run_number": 257,
+      "status": "PASS"
+    },
+    "snapshot": {
+      "run_id": 32582045778,
+      "run_number": 259,
+      "status": "PASS",
+      "artifact_sha256": "0d54cbc326cab1e2789dfba6324db3020ec4ffc842c7abd6b658fb6cddd6d73b",
+      "source_zip_sha256": "e87242a49fbf9ff5e4ea21e968865ee8089e964c94fc1110501bdf1d59b690a6",
+      "runtime_evidence_sha256": "b8c1a484a7aaab18abfcd35c3e30bd9ddef8227365932fedfc866545d6f0ef67",
+      "internal_sha256sums": "PASS"
+    },
+    "post_cleanup_ci": {
+      "source_head_sha": "e72833359252e142242d734278b4ea8ecd250a15",
+      "run_id": 32582311060,
+      "run_number": 269,
+      "application_contracts": "PASS",
+      "postgres_rls_runtime": "PASS",
+      "deployment_path_runtime": "PASS",
+      "temporary_snapshot_tooling_removed": true,
+      "status": "PASS"
+    }
+  },
+  "drive_archive": {
+    "folder_id": "115TeD36SbF1HcaFvI13CyUKmABBb4WHG",
+    "package_id": "1qi2I9LEBtj-dZE1us0JWbQhTtoqlVWqy",
+    "runtime_evidence_id": "1IKHM7XAbsI1qaVN4rNFcu4kX-uyH9U9q",
+    "archive_manifest_id": "1Xe5Z_D0SpF-rPzxFAPhEcWV9Ta6VvLq-",
+    "operational_runtime_evidence_04_2_id": "1FIZiquEs1pJk4DRlpFexy-ytz7oVNJaB",
+    "integrity": "PASS"
+  },
+  "g4": "PENDING_FINAL_R2_FOUNDATION_COMPLETION_RECONCILIATION",
+  "g4_blocker_closed": "deployment path verification",
+  "g4_remaining_blockers": [],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "next": "G4 — R2 Foundation Completion Reconciliation"
+}

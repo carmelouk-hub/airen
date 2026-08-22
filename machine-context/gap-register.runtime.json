@@ -1,0 +1,17 @@
+{
+  "status":"RUNTIME_EVIDENCE_PENDING",
+  "blockers":[
+    {"id":"RB-01","name":"Base44 auth configuration"},
+    {"id":"RB-02","name":"Deployed RLS verification"},
+    {"id":"RB-03","name":"User/role/membership distribution"},
+    {"id":"RB-04","name":"Runtime entity counts and integrity"},
+    {"id":"RB-05","name":"Live domain/DNS/SSL mappings"},
+    {"id":"RB-06","name":"Secret-name inventory only"},
+    {"id":"RB-07","name":"OAuth/payment/fiscal/supplier runtime configuration"},
+    {"id":"RB-08","name":"AuditLog/backend log evidence"},
+    {"id":"RB-09","name":"Role-authenticated T20 evidence"},
+    {"id":"RB-10","name":"Golden Restaurant E2E evidence"},
+    {"id":"RB-11","name":"Corte migration rehearsal and reconciliation"}
+  ],
+  "rule":"These blockers do not reopen source-level ADRs unless contradictory evidence is found, but they block runtime/certification/cutover gates."
+}

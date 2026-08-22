@@ -1,0 +1,73 @@
+{
+  "pack": "B44-FX-013",
+  "status": "CLOSED_PASS",
+  "scope": "Observability Baseline",
+  "contracts": {
+    "trace_correlation_context": "PASS",
+    "w3c_traceparent_propagation": "PASS",
+    "structured_logging": "PASS",
+    "telemetry_redaction": "PASS",
+    "stable_error_taxonomy": "PASS",
+    "metric_low_cardinality_guard": "PASS",
+    "health_readiness": "PASS",
+    "critical_dependency_readiness": "FAIL_CLOSED_PASS",
+    "telemetry_vendor": "TBD_BEHIND_PROVIDER_NEUTRAL_SINKS"
+  },
+  "runtime_evidence": {
+    "run_id": 32509849518,
+    "run_number": 177,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS"
+  },
+  "closure": {
+    "commit": "a4b6ced261126ab3db3646391b991101ff41f8e3",
+    "tree_sha": "ac75c04452e35256cef1fa62b6dbb6220490ad87",
+    "run_id": 32510040099,
+    "run_number": 187,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS"
+  },
+  "archive": {
+    "snapshot_run_id": 32510154448,
+    "snapshot_run_number": 189,
+    "snapshot_job": "PASS",
+    "artifact_id": 9456726138,
+    "artifact_sha256": "dd3a13f1d28990bb5e6a2301d9153fa186a99d19f8ee828f43cdcd08d90f5fe8",
+    "source_zip_sha256": "b4ec10804fc01fa2d0169f1958dd7a789628d0c1d56272066ae61a94fba8b966",
+    "internal_sha256sums": "PASS",
+    "drive_folder_id": "1VYGsiHFAMWuKQErWCHVXV7OzGDD8Wx0A",
+    "drive_package_id": "1Nr7jdu5W0guqsZO-Z6ZsTdRoG4oAdgXh",
+    "drive_runtime_evidence_id": "1OHctIQgyHj1dy4FW6JtW0hx-HldVkHaC",
+    "drive_archive_manifest_id": "17QkipuMhzLNk-HHE9bL5PKO6C98HylId",
+    "operational_evidence_04_2_id": "1Rf7umn71CERdDKmzhiqmtKk3GzHQK9pA",
+    "integrity": "PASS"
+  },
+  "post_cleanup": {
+    "commit": "36b93d07c0a9facd2003bf3636a2e5c7f8fc2d71",
+    "run_id": 32510601218,
+    "run_number": 199,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
+  },
+  "tests": [
+    "trace propagation and child span continuity",
+    "invalid trace headers create fresh safe context",
+    "structured telemetry redaction",
+    "stable error taxonomy without raw exception detail",
+    "metric label cardinality guard",
+    "critical readiness failure",
+    "API runtime observability composition"
+  ],
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blocker_closed": "observability baseline",
+  "g4_remaining": ["deployment path verification"],
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "next": "B44-FX-014 — Deployment Path Verification"
+}

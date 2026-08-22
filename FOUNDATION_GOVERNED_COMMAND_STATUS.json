@@ -1,0 +1,28 @@
+{
+  "pack": "B44-FX-010",
+  "phase": "PERSISTENT_COMMAND_RUNTIME",
+  "status": "CLOSED_PASS",
+  "repository_adapters": "PASS_RUNTIME",
+  "transaction_boundary": "PASS_RUNTIME",
+  "first_governed_command": "tenant.location.create",
+  "postgres_runtime_evidence": "PASS",
+  "primary_github_actions_run_id": 32494752512,
+  "primary_github_actions_run_number": 31,
+  "reconciliation_github_actions_run_id": 32494893849,
+  "reconciliation_github_actions_run_number": 37,
+  "atomic_mutation_audit_outbox": "PASS",
+  "authorization_denial_no_side_effects": "PASS",
+  "rls_regression_suite": "PASS",
+  "main_modified": false,
+  "corte_production_changed": false,
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blockers": [
+    "operational identity/authentication adapter",
+    "environment and secret-provider runtime contract",
+    "observability baseline",
+    "deployment path verification"
+  ],
+  "next": "B44-FX-011_IDENTITY_ADAPTER_AUTHENTICATED_PRINCIPAL_RUNTIME",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED"
+}

@@ -1,0 +1,21 @@
+{
+  "pack": "B44-FX-010",
+  "status": "CLOSED_PASS",
+  "scope": "PostgreSQL Repository Adapters, Transaction Boundary & First Governed Command",
+  "command": "tenant.location.create",
+  "runtime_dependency": {"pg": "8.23.0", "classification": "INFRASTRUCTURE_ADAPTER_ONLY"},
+  "ports": ["TenantRepository","LocationRepository","TenantDomainRepository","MembershipRepository","RolePermissionResolver","EntitlementRepository","UnitOfWork<LocationMutationTransaction>"],
+  "pipeline": ["trusted routing","identity/membership","permission","entitlement","transaction","RLS context","mutation","audit","outbox","commit"],
+  "security": {"mutation_role":"airen_app NOBYPASSRLS","client_tenant_id_authority":false,"corte_fixture_used":false},
+  "runtime_evidence": "PASS",
+  "primary_github_actions_run_id": 32494752512,
+  "reconciliation_github_actions_run_id": 32494893849,
+  "atomic_mutation_audit_outbox": "PASS",
+  "authorization_denial_no_side_effects": "PASS",
+  "g4": "PENDING_R2_FOUNDATION_COMPLETION",
+  "g4_blockers": ["identity/auth adapter","environment/secrets runtime contract","observability","deployment path"],
+  "next": "B44-FX-011 Identity Adapter & Authenticated Principal Runtime",
+  "t20": "NOT_PASSED",
+  "golden_e2e": "NOT_PASSED",
+  "rule": "B44-FX-010 proves persistent governed mutation; it does not by itself satisfy DOC-020 R2/G4 exit criteria"
+}

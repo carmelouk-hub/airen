@@ -1,0 +1,199 @@
+{
+  "governance_pack": "04.3-CODE-SNAPSHOT-BASELINE",
+  "status": "COMPLETE_INTEGRITY_PASS_THROUGH_B44_FX_014",
+  "source_of_truth": {
+    "code": "GitHub",
+    "canonical_meaning": "AIRenOS Platform Bible",
+    "immutable_milestone_archive": "Google Drive / 04.3"
+  },
+  "drive": {
+    "folder_id": "1CShs_fLvqepKtSO5LpCkzPgiTZ851nrG",
+    "policy_document_id": "1ZJJRPktIhJe1Alwf8KYpsVhK8EubhG4CaiTkN2MhglU",
+    "baseline_register_document_id": "13XwQL5-3YZVMR8N9aCDHI0ICDC2pYNbP50E20TcfoI0"
+  },
+  "retroactive_snapshot_generation": {
+    "github_actions_run_id": 32502373898,
+    "run_number": 47,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_jobs": "4/4 PASS",
+    "internal_sha256sums": "PASS"
+  },
+  "b44_fx_011_r1_snapshot_generation": {
+    "github_actions_run_id": 32505671459,
+    "run_number": 101,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_job": "PASS",
+    "artifact_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+    "internal_sha256sums": "PASS"
+  },
+  "b44_fx_012_snapshot_generation": {
+    "github_actions_run_id": 32508049660,
+    "run_number": 149,
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_job": "PASS",
+    "artifact_sha256": "c8714d4d2c7548e6d648bd80c3fb4e6480da2f5302226fb25215699e656734f1",
+    "source_zip_sha256": "d6e6cf401989dca78f384d4334d342391c210e46fd1305686f78a85f732d4d69",
+    "internal_sha256sums": "PASS"
+  },
+  "b44_fx_013_snapshot_generation": {
+    "github_actions_run_id": 32510154448,
+    "run_number": 189,
+    "application_contracts": "PASS",
+    "observability_tests": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_job": "PASS",
+    "artifact_sha256": "dd3a13f1d28990bb5e6a2301d9153fa186a99d19f8ee828f43cdcd08d90f5fe8",
+    "source_zip_sha256": "b4ec10804fc01fa2d0169f1958dd7a789628d0c1d56272066ae61a94fba8b966",
+    "internal_sha256sums": "PASS"
+  },
+  "b44_fx_014_snapshot_generation": {
+    "github_actions_run_id": 32582045778,
+    "run_number": 259,
+    "application_contracts": "PASS",
+    "deployment_path_runtime": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "snapshot_job": "PASS",
+    "artifact_sha256": "0d54cbc326cab1e2789dfba6324db3020ec4ffc842c7abd6b658fb6cddd6d73b",
+    "source_zip_sha256": "e87242a49fbf9ff5e4ea21e968865ee8089e964c94fc1110501bdf1d59b690a6",
+    "package_lock_sha256": "0624b2b1e62501ad927f54bdf2906be1d843fe05de6a6c02bbdc3a1c2dfff46c",
+    "internal_sha256sums": "PASS"
+  },
+  "latest_post_cleanup_ci": {
+    "milestone": "B44-FX-014",
+    "github_actions_run_id": 32582311060,
+    "run_number": 269,
+    "source_head_sha": "e72833359252e142242d734278b4ea8ecd250a15",
+    "application_contracts": "PASS",
+    "postgres_rls_runtime": "PASS",
+    "deployment_path_runtime": "PASS",
+    "temporary_snapshot_tooling_removed": true
+  },
+  "milestones": [
+    {
+      "id": "B44-FX-007",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "85bda9473395a64050089c3779689f600d8b5214",
+      "tree_sha": "ae987cdb54f921ca58b872fd926261cbc58da541",
+      "package_sha256": "322c5f9d6ae38d0bbbc0f360563b8ecb717d9459afb44dc4b5d80cc1936f3bdd",
+      "drive_folder_id": "1LjxPUhEJxTgpaDzJdl-kORxFz0o1m0-J"
+    },
+    {
+      "id": "B44-FX-008",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "7a222dda07ae9f3060e7c9a4139fbf8a4fadd6b5",
+      "tree_sha": "965057c0fe96e26bd02e85f947b055204bda73ba",
+      "package_sha256": "850600808c4f1bdaaf1dc47ec07952e8c20b4b2e7bcfc9f4394da12e7b03935d",
+      "drive_folder_id": "1Blcamhuha2RK6ZIzbIsZtASBIUfroAhI"
+    },
+    {
+      "id": "B44-FX-009-R1",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "0862251e84b5a8edeebc73bd85b157940b1e8807",
+      "tree_sha": "04cf8239a44b4193793195b573fa859119ae9dec",
+      "package_sha256": "51fe37c4a4fd043c995b5887e0fe9cf3df5d155bb6ac8b062c1af6c0092b6ac6",
+      "drive_folder_id": "10aW58HURY-ZK7OtfO0UoIHFenAW4ZXhg"
+    },
+    {
+      "id": "B44-FX-010",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "d7254ca4218adeafb2eefbc8bdbd998d9e5476c1",
+      "tree_sha": "274df1f96e5e58091bb3a27b82f07d3cec38847f",
+      "package_sha256": "60062f61ced4d0c61cb1213cd53febffcb7c0664b43caad6d1c42440066a2657",
+      "drive_folder_id": "1cYDf2mmBQOkQMc9DPKWvvP4ohqh1OUsu"
+    },
+    {
+      "id": "B44-FX-011",
+      "status": "HISTORICAL_SUPERSEDED_BY_B44_FX_011_R1",
+      "closure_commit": "77855a68c078f435ad4be28064fe33527ad9560e",
+      "tree_sha": "8b911b1f36845391f7801cf6dcab37cd87a6548d",
+      "package_sha256": "030f3b1ffeb066f22d624fdc94c583e590fc6f3c952910ab7ae5f85a4f9824fd",
+      "drive_folder_id": "1gNSustDC9uln-Pgbf5IeuP8JNzg5Idij",
+      "superseded_reason": "Post-archive test exposed Base64URL equivalent-byte encoding malleability in the synthetic session verifier/test surface. Historical evidence retained."
+    },
+    {
+      "id": "B44-FX-011-R1",
+      "status": "ACTIVE_SUPERSEDING_BASELINE",
+      "closure_commit": "2505ccd6bf45ad47d4a63abea9fa9286de0a33fa",
+      "tree_sha": "48ee6a256c411212056081afe5a39b9dadc6732b",
+      "package_sha256": "991eaff851dce33a644d433e927593f2ecb0a2f92b3711295f6c9b03a1308768",
+      "source_zip_sha256": "2abb285383e179ac0b4e134d2183b3acf393c7c9e1e7da7f50d774b0362f6376",
+      "drive_folder_id": "1_Hc7EPJjLKQKOiIdEiwTW9rdD6w_1IK2",
+      "drive_package_id": "1YzFiq1rWY7QDRHrQAhbCRyDg21uU9SCq",
+      "drive_runtime_evidence_id": "1vlKZBZUkDNgpdCJzyeyWMNToT1_SrJVi",
+      "drive_archive_manifest_id": "1wWszx9G0LJgDyjVMuBYghHC8shGkwuD_",
+      "integrity": "PASS"
+    },
+    {
+      "id": "B44-FX-012",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "71d4ea2266fff9fcbb1a5d83b28f2db0182207dd",
+      "tree_sha": "71240417632b25e61602b4c8cdf63f17abf120e1",
+      "package_sha256": "c8714d4d2c7548e6d648bd80c3fb4e6480da2f5302226fb25215699e656734f1",
+      "source_zip_sha256": "d6e6cf401989dca78f384d4334d342391c210e46fd1305686f78a85f732d4d69",
+      "drive_folder_id": "1jbnXvUQ_bD_ajELv5znUAmONpou6GZDI",
+      "drive_package_id": "19bLB-pnf1L9p9l093tLkSw4ERWeLAcV6",
+      "drive_runtime_evidence_id": "1sz51WMwYYB7AmMwb1Qvy9VuCJukLCorO",
+      "drive_archive_manifest_id": "1DAhWW14asXxKwZ1JcFrfvUTiSpwX4FAh",
+      "post_cleanup_run_id": 32508364975,
+      "post_cleanup_run_number": 155,
+      "integrity": "PASS"
+    },
+    {
+      "id": "B44-FX-013",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "a4b6ced261126ab3db3646391b991101ff41f8e3",
+      "tree_sha": "ac75c04452e35256cef1fa62b6dbb6220490ad87",
+      "runtime_run_id": 32509849518,
+      "runtime_run_number": 177,
+      "closure_run_id": 32510040099,
+      "closure_run_number": 187,
+      "snapshot_run_id": 32510154448,
+      "snapshot_run_number": 189,
+      "post_cleanup_run_id": 32510601218,
+      "post_cleanup_run_number": 199,
+      "package_sha256": "dd3a13f1d28990bb5e6a2301d9153fa186a99d19f8ee828f43cdcd08d90f5fe8",
+      "source_zip_sha256": "b4ec10804fc01fa2d0169f1958dd7a789628d0c1d56272066ae61a94fba8b966",
+      "drive_folder_id": "1VYGsiHFAMWuKQErWCHVXV7OzGDD8Wx0A",
+      "drive_package_id": "1Nr7jdu5W0guqsZO-Z6ZsTdRoG4oAdgXh",
+      "drive_runtime_evidence_id": "1OHctIQgyHj1dy4FW6JtW0hx-HldVkHaC",
+      "drive_archive_manifest_id": "17QkipuMhzLNk-HHE9bL5PKO6C98HylId",
+      "integrity": "PASS"
+    },
+    {
+      "id": "B44-FX-014",
+      "status": "ACTIVE_BASELINE",
+      "closure_commit": "74c1766136fa887a6e3cc6818f2ddff71d049290",
+      "tree_sha": "dcc59068326dac62f2809bbc7e2d33cbed213750",
+      "runtime_run_id": 32581856143,
+      "runtime_run_number": 251,
+      "closure_run_id": 32581971279,
+      "closure_run_number": 257,
+      "snapshot_run_id": 32582045778,
+      "snapshot_run_number": 259,
+      "post_cleanup_run_id": 32582311060,
+      "post_cleanup_run_number": 269,
+      "package_sha256": "0d54cbc326cab1e2789dfba6324db3020ec4ffc842c7abd6b658fb6cddd6d73b",
+      "source_zip_sha256": "e87242a49fbf9ff5e4ea21e968865ee8089e964c94fc1110501bdf1d59b690a6",
+      "package_lock_sha256": "0624b2b1e62501ad927f54bdf2906be1d843fe05de6a6c02bbdc3a1c2dfff46c",
+      "drive_folder_id": "115TeD36SbF1HcaFvI13CyUKmABBb4WHG",
+      "drive_package_id": "1qi2I9LEBtj-dZE1us0JWbQhTtoqlVWqy",
+      "drive_runtime_evidence_id": "1IKHM7XAbsI1qaVN4rNFcu4kX-uyH9U9q",
+      "drive_archive_manifest_id": "1Xe5Z_D0SpF-rPzxFAPhEcWV9Ta6VvLq-",
+      "operational_runtime_evidence_04_2_id": "1FIZiquEs1pJk4DRlpFexy-ytz7oVNJaB",
+      "integrity": "PASS"
+    }
+  ],
+  "governance": {
+    "main_modified": false,
+    "corte_production_changed": false,
+    "g4": "PENDING_FINAL_R2_FOUNDATION_COMPLETION_RECONCILIATION",
+    "g4_remaining_blockers": [],
+    "t20": "NOT_PASSED",
+    "golden_e2e": "NOT_PASSED",
+    "next_gate": "G4 — R2 Foundation Completion Reconciliation",
+    "rule": "No repository-changing milestone closes without code snapshot reconciliation in 04.3; superseded snapshots remain immutable historical evidence."
+  }
+}

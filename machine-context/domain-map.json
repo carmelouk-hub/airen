@@ -1,0 +1,10 @@
+{
+  "AIRenOS_CONTROL_PLANE": ["platform-core","identity","tenant","authorization","entitlements","audit-events","observability"],
+  "RISTOAIREN_VERTICAL": ["ristoairen"],
+  "STELLA": ["stella"],
+  "ATMOS": ["atmos"],
+  "SHARED": ["shared-contracts","integrations"],
+  "TENANT_CONFIGURATION": ["brand","content","menu","events","seo","venue-config","custom-domain"],
+  "LEGACY": ["Base44 service-role authority","direct agent entity CRUD","default tenant fallback"],
+  "RESERVED_NEXT": ["Syngraphus","APPWORK","EasyPoint","other future verticals"]
+}

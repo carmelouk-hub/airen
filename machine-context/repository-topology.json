@@ -1,0 +1,9 @@
+{
+  "apps":["web","admin","api"],
+  "packages":["platform-core","identity","tenant","authorization","entitlements","audit-events","ristoairen","stella","atmos","integrations","observability","shared-contracts"],
+  "db":["migrations","seeds","fixtures"],
+  "tests":["unit","integration","t20","golden-e2e","migration"],
+  "rebuild":["forensic","mapping","parity","adr","migration"],
+  "docs":["canonical"],
+  "principle":"Physical topology may evolve; logical boundaries may not be silently fused."
+}
