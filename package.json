@@ -21,7 +21,8 @@
     "test:r3a-tenant-provisioning": "node --experimental-strip-types --test tests/postgres/r3a-tenant-provisioning.test.ts",
     "test:r3a-tenant-lifecycle": "node --experimental-strip-types --test tests/postgres/r3a-tenant-lifecycle.test.ts",
     "test:r3b-location-lifecycle": "node --experimental-strip-types --test tests/postgres/r3b-location-lifecycle.test.ts",
-    "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts"
+    "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts",
+    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts"
   },
   "dependencies": {"pg": "8.23.0"},
   "devDependencies": {"@types/pg": "8.23.1"},
