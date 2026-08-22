@@ -18,7 +18,8 @@
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
     "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
     "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts",
-    "test:r3a-tenant-provisioning": "node --experimental-strip-types --test tests/postgres/r3a-tenant-provisioning.test.ts"
+    "test:r3a-tenant-provisioning": "node --experimental-strip-types --test tests/postgres/r3a-tenant-provisioning.test.ts",
+    "test:r3a-tenant-lifecycle": "node --experimental-strip-types --test tests/postgres/r3a-tenant-lifecycle.test.ts"
   },
   "dependencies": {"pg": "8.23.0"},
   "devDependencies": {"@types/pg": "8.23.1"},

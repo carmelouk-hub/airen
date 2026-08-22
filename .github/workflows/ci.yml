@@ -61,6 +61,8 @@ jobs:
         run: npm run test:identity-auth-runtime
       - name: Execute R3-A Tenant provisioning runtime tests
         run: npm run test:r3a-tenant-provisioning
+      - name: Execute R3-A Tenant lifecycle runtime tests
+        run: npm run test:r3a-tenant-lifecycle
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
