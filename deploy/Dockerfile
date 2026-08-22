@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS runtime-deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund --workspaces=false \
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund --workspaces=false \
     && npm cache clean --force
 
 FROM node:22-bookworm-slim
@@ -13,7 +13,7 @@ ENV HOST=0.0.0.0 \
     PORT=3000
 WORKDIR /app
 COPY --from=runtime-deps /app/node_modules ./node_modules
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY apps ./apps
 COPY packages ./packages
 COPY db ./db
