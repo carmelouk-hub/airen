@@ -90,3 +90,19 @@ jobs:
           name: B44-FX-014-deployment-runtime-evidence
           path: ${{ runner.temp }}/airen-deployment-evidence/B44-FX-014_Deployment_Runtime_Evidence.json
           if-no-files-found: error
+
+  b44-fx-014-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate exact npm dependency lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Upload generated package-lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: B44-FX-014-package-lock
+          path: package-lock.json
+          if-no-files-found: error
