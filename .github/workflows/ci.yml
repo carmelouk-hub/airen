@@ -90,3 +90,29 @@ jobs:
           name: B44-FX-014-deployment-runtime-evidence
           path: ${{ runner.temp }}/airen-deployment-evidence/B44-FX-014_Deployment_Runtime_Evidence.json
           if-no-files-found: error
+
+  b44-fx-014-code-snapshot:
+    needs: [application-contracts, postgres-rls-runtime, deployment-path-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact B44-FX-014 closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: 74c1766136fa887a6e3cc6818f2ddff71d049290
+          fetch-depth: 0
+      - name: Build immutable B44-FX-014 snapshot package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p snapshot
+          git archive --format=zip --output=snapshot/AIRenOS-Foundation-B44-FX-014-source.zip 74c1766136fa887a6e3cc6818f2ddff71d049290
+          node -e 'const fs=require("fs"); fs.writeFileSync("snapshot/commit-manifest.json", JSON.stringify({milestone:"B44-FX-014",closure_commit:"74c1766136fa887a6e3cc6818f2ddff71d049290",tree_sha:"dcc59068326dac62f2809bbc7e2d33cbed213750",closure_ci:{run_id:32581971279,run_number:257,status:"PASS"},definitive_runtime:{run_id:32581856143,run_number:251,status:"PASS"}},null,2)+"\n")'
+          node -e 'const fs=require("fs"),crypto=require("crypto"); const hash=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex"); fs.writeFileSync("snapshot/dependency-manifest.json", JSON.stringify({package_json_sha256:hash("package.json"),package_lock_sha256:hash("package-lock.json")},null,2)+"\n")'
+          cp machine-context/b44-fx-014-deployment-path.json snapshot/B44-FX-014_Runtime_Evidence.json
+          (cd snapshot && sha256sum AIRenOS-Foundation-B44-FX-014-source.zip commit-manifest.json dependency-manifest.json B44-FX-014_Runtime_Evidence.json > SHA256SUMS.txt)
+      - name: Upload B44-FX-014 snapshot package
+        uses: actions/upload-artifact@v4
+        with:
+          name: B44-FX-014-code-snapshot
+          path: snapshot/*
+          if-no-files-found: error
