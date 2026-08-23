@@ -1,0 +1,174 @@
+{
+  "authority_invariants": {
+    "airen_app_lifecycle_mutation": false,
+    "client_tenant_id_resolver_authority": false,
+    "db_permission_recheck": true,
+    "entitlement_is_feature_capability": false,
+    "entitlement_is_permission": false,
+    "runtime_direct_entitlement_table_mutation": false,
+    "subscription_is_entitlement": false,
+    "tenant_admin_implies_platform_entitlement_authority": false,
+    "tenant_role_is_platform_entitlement_authority": false
+  },
+  "branch": "r3/control-plane-20260822",
+  "catalog_state_machine": {
+    "governed_actions": [
+      "create",
+      "update",
+      "retire"
+    ],
+    "hard_delete": false,
+    "key_immutable": true,
+    "retired_terminal": true,
+    "states": [
+      "active",
+      "retired"
+    ]
+  },
+  "date": "2026-08-23",
+  "deployment_evidence_artifact": {
+    "artifact_id": 9485608586,
+    "digest": "sha256:5eed651aafab569ba19c53fda3d4364f9787fcb1e45c3ba1d75659359b1825af",
+    "head_sha": "a98952da7c11c25e2e502e1532c769693d1b82e2",
+    "runtime_status": "RUNTIME_DEPLOYMENT_PATH_PASS"
+  },
+  "effective_resolution": {
+    "active_catalog_required": true,
+    "active_tenant_required": true,
+    "enabled_grant_required": true,
+    "feature_capability_mapping": false,
+    "trusted_tenant_context_only": true,
+    "validity_time_checked": true,
+    "zero_argument_resolver": true
+  },
+  "failure_reconciliation": [
+    {
+      "application_contracts": "success",
+      "authority_impact": "NONE",
+      "conclusion": "failure",
+      "corrective_commit": "a98952da7c11c25e2e502e1532c769693d1b82e2",
+      "corrective_files": [
+        "db/migrations/0021_r3f_tenant_entitlement_lifecycle_capability.sql",
+        "scripts/check-r3f-entitlement-contract.mjs"
+      ],
+      "deployment_path_runtime": "failure",
+      "implementation_commit": "f8d9faff2cdb6af1ac86615cc2e57329db85d8c6",
+      "postgres_rls_runtime": "failure",
+      "root_cause": "PostgreSQL 16 rejected direct string concatenation after a PL/pgSQL RAISE EXCEPTION literal in migration 0021.",
+      "run_id": 32610672049,
+      "run_number": 391
+    }
+  ],
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "governance": {
+    "archive_04_3_required": true,
+    "closure_commit_required": true,
+    "exact_closure_ci_required": true,
+    "final_machine_evidence_04_1_required": true,
+    "rule_doc_15": true
+  },
+  "implementation_ci": {
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "deployment-path-runtime": "success",
+      "postgres-rls-runtime": "success"
+    },
+    "run_id": 32611327269,
+    "run_number": 393,
+    "workflow": "foundation-contract-ci"
+  },
+  "implementation_commit": "a98952da7c11c25e2e502e1532c769693d1b82e2",
+  "implementation_first_ci_pass": false,
+  "implementation_tree": "9f507122492e4ee4ee9d0d2ec5628984ee1b5668",
+  "initial_implementation_commit": "f8d9faff2cdb6af1ac86615cc2e57329db85d8c6",
+  "initial_implementation_tree": "9691c1d0feb048089963dd08aeaa47e9469886f9",
+  "machine_spec": {
+    "drive_id": "1QjqGp-wctE9ULbjRU5EgT0gAt_r3LYkdTdq5MXzsBvk",
+    "title": "MRS-006 — R3-F Entitlement Administration & Effective Resolution Machine Spec — v0.1"
+  },
+  "milestone": "R3-F",
+  "permissions": [
+    "platform.entitlements.read",
+    "platform.entitlements.catalog.create",
+    "platform.entitlements.catalog.update",
+    "platform.entitlements.catalog.retire",
+    "platform.entitlements.grant",
+    "platform.entitlements.revoke",
+    "platform.entitlements.expire",
+    "platform.entitlements.change_limit",
+    "platform.entitlements.change_config",
+    "platform.entitlements.change_validity"
+  ],
+  "r3_e_closure_commit": "46784d03ae8fc17b0bad273b670b8a20d740b13b",
+  "repository": "carmelouk-hub/airen",
+  "runtime_assertions": {
+    "T01": "PASS",
+    "T02": "PASS",
+    "T03": "PASS",
+    "T04": "PASS",
+    "T05": "PASS",
+    "T06": "PASS",
+    "T07": "PASS",
+    "T08": "PASS",
+    "T09": "PASS",
+    "T10": "PASS",
+    "T11": "PASS",
+    "T12": "PASS",
+    "T13": "PASS",
+    "T14": "PASS",
+    "T15": "PASS",
+    "T16": "PASS",
+    "T17": "PASS",
+    "T18": "PASS",
+    "T19": "PASS",
+    "T20": "PASS",
+    "T21": "PASS",
+    "T22": "PASS",
+    "T23": "PASS"
+  },
+  "scope_boundary": {
+    "base44_decommission_complete": false,
+    "corte_production_modified": false,
+    "feature_capability_mapping_introduced": false,
+    "golden_e2e_pass": false,
+    "main_modified": false,
+    "production_cutover_authorized": false,
+    "r3_e_plan_subscription_mutated": false,
+    "r3_f_closed": false,
+    "r3_f_gap_implementation_complete": true,
+    "r3_g_started": false,
+    "t20_pass": false
+  },
+  "scope_document": {
+    "drive_id": "1Ona61lDeJWPBNn27NwEBPZqYb5DRxZeW1EFeTtUfxWk",
+    "title": "R3-F-001 — Entitlement Administration & Effective Resolution Scope & Gap Reconciliation — v0.1"
+  },
+  "source_boundary": {
+    "legacy_source_kind_compatibility": true,
+    "retroactive_closed_source_enum": false,
+    "source_ref_exposed_to_current_tenant_resolver": false,
+    "source_ref_non_secret": true
+  },
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "tenant_entitlement_state_machine": {
+    "derived_states": [
+      "scheduled",
+      "effective",
+      "revoked",
+      "expired",
+      "inactive"
+    ],
+    "governed_actions": [
+      "grant",
+      "regrant",
+      "revoke",
+      "expire",
+      "change_limit",
+      "change_config",
+      "change_validity"
+    ],
+    "hard_delete": false
+  },
+  "title": "Entitlement Administration & Effective Resolution"
+}
