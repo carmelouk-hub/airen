@@ -181,7 +181,17 @@ test("R3I-T13 TenantDomain list/detail/actions preserve R3-C permissions and lif
 });
 
 test("R3I-T14 Platform Principal projection exposes no new unrelated Identity/provider secret fields",async()=>{
-  const source=await readFile("apps/api/src/admin-api.ts","utf8");assert.ok(source.includes("getPlatformPrincipalAdmin"));assert.equal(source.includes("providerSubject:"),false);assert.equal(source.includes("credential"),false);
+  const source=await readFile("apps/api/src/admin-api.ts","utf8");assert.ok(source.includes("getPlatformPrincipalAdmin"));
+  const d=deps() as any;
+  d.platformRoles={
+    ...d.platformRoles,
+    async getPrincipal(){return {identityId:IDENTITY,displayName:"R3I Admin",primaryEmail:"r3i-admin@example.test",status:"active",roleAssignments:[]};}
+  };
+  const r=await dispatchAdminApiRequest(request(`/principals/${IDENTITY}`,"admin"),d);
+  assert.equal(r.status,200);
+  const projection=r.body.principal as any;
+  assert.deepEqual(Object.keys(projection).sort(),["displayName","identityId","primaryEmail","roleAssignments","status"].sort());
+  assert.equal("providerSubject" in projection,false);assert.equal("credential" in projection,false);
 });
 
 test("R3I-T15 Platform role actions preserve R3-D anti-self-escalation/protected-role behavior",async()=>{
