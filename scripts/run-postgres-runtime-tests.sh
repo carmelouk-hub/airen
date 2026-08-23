@@ -30,4 +30,5 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0025_r3g_feature_flag_l
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0026_r3g_capability_query_resolver_capabilities.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0027_r3h_platform_audit_query.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0028_r3h_platform_audit_rls_owner_path.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0029_r3h_reconcile_superseded_owner_policies.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/postgres/rls_runtime.sql

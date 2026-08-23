@@ -75,7 +75,7 @@ test.after(async()=>{await pool.end();});
 // R3H-T01 .. R3H-T26 are explicit proof markers for the frozen R3-H runtime matrix.
 test("R3-H Platform Audit Query is bounded, read-only, sanitized and independently authorized",async()=>{
   // R3H-T01 platform_admin with platform.audit.read can query a bounded platform Audit window.
-  const all=await q({createdFrom:FROM,createdUntil:UNTIL},admin("r3h-t01"));
+  const all=await q({createdFrom:FROM,createdUntil:UNTIL,actionKey:"r3h.alpha"},admin("r3h-t01"));
   assert.ok(all.items.some(x=>x.actionKey==="r3h.alpha"));
 
   // R3H-T02 Application-layer missing platform.audit.read is denied.

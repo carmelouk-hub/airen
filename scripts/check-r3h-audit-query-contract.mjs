@@ -1,25 +1,20 @@
 import { readFile } from "node:fs/promises";
 
 const sql=await readFile("db/migrations/0027_r3h_platform_audit_query.sql","utf8");
-const rlsCorrection=await readFile("db/migrations/0028_r3h_platform_audit_rls_owner_path.sql","utf8");
+const rlsDiagnostic=await readFile("db/migrations/0028_r3h_platform_audit_rls_owner_path.sql","utf8");
+const rlsCleanup=await readFile("db/migrations/0029_r3h_reconcile_superseded_owner_policies.sql","utf8");
 const app=await readFile("packages/audit-events/src/index.ts","utf8");
 const adapter=await readFile("packages/persistence-postgres/src/audit-query-control-plane.ts","utf8");
 const runtimeTest=await readFile("tests/postgres/r3h-platform-audit-query.test.ts","utf8");
 
-
 for(const required of [
-  "CREATE POLICY r3h_audit_owner_select",
-  "ON audit.audit_events",
-  "TO airen_control_plane_owner",
-  "CREATE POLICY r3h_location_owner_select",
-  "ON platform.locations",
-  "platform.audit.read",
-  "current_setting('airen.identity_id', true)"
-]) if(!rlsCorrection.includes(required)) throw new Error(`Missing R3-H permission-gated RLS owner-path fragment: ${required}`);
-if(/\bBYPASSRLS\b/i.test(rlsCorrection)) throw new Error("R3-H correction must not introduce BYPASSRLS");
-if(/GRANT\s+SELECT\s+ON\s+audit\.audit_events\s+TO\s+airen_control_plane\b/i.test(rlsCorrection)) throw new Error("R3-H correction must not grant direct Audit SELECT to airen_control_plane");
-if(/CREATE\s+TABLE/i.test(rlsCorrection)) throw new Error("R3-H RLS correction must not create tables");
-if(/\b(?:INSERT|UPDATE|DELETE|TRUNCATE)\s+(?:INTO\s+|TABLE\s+)?audit\.audit_events\b/i.test(rlsCorrection)) throw new Error("R3-H RLS correction must remain read-only");
+  "DROP POLICY IF EXISTS r3h_audit_owner_select ON audit.audit_events",
+  "DROP POLICY IF EXISTS r3h_location_owner_select ON platform.locations"
+]) if(!rlsCleanup.includes(required)) throw new Error(`Missing R3-H superseded-policy cleanup fragment: ${required}`);
+if(/CREATE\s+POLICY/i.test(rlsCleanup)) throw new Error("R3-H cleanup must not create replacement RLS policy surface");
+if(/GRANT\s+SELECT\s+ON\s+audit\.audit_events\s+TO\s+airen_control_plane\b/i.test(rlsDiagnostic+rlsCleanup)) throw new Error("R3-H must not grant direct Audit SELECT to airen_control_plane");
+if(/\b(?:INSERT|UPDATE|DELETE|TRUNCATE)\s+(?:INTO\s+|TABLE\s+)?audit\.audit_events\b/i.test(rlsDiagnostic+rlsCleanup)) throw new Error("R3-H RLS reconciliation must remain read-only");
+if(!runtimeTest.includes('actionKey:"r3h.alpha"},admin("r3h-t01")')) throw new Error("R3H-T01 must deterministically filter its seeded proof row so prior regression Audit volume cannot evict it from the default page");
 
 for(const required of [
   "platform.audit.read",
@@ -56,21 +51,6 @@ if(!sql.includes("('platform','platform_admin','platform.audit.read','allow')"))
 if(/security_auditor/i.test(sql+app+adapter)) throw new Error("R3-H must not create or special-case a future security_auditor role");
 if(/corte\s+delle\s+stelle|cortedellestelle/i.test(sql+app+adapter)) throw new Error("R3-H must not hardcode Corte delle Stelle");
 if(/packages\/ristoairen|\.\.\/\.\.\/ristoairen/i.test(app+adapter)) throw new Error("R3-H Audit authority must remain platform-owned");
-
-
-for(const required of [
-  "CREATE POLICY r3h_audit_owner_select",
-  "ON audit.audit_events",
-  "TO airen_control_plane_owner",
-  "CREATE POLICY r3h_location_owner_select",
-  "ON platform.locations",
-  "platform.audit.read",
-  "current_setting('airen.identity_id', true)"
-]) if(!rlsCorrection.includes(required)) throw new Error(`Missing R3-H permission-gated RLS owner-path fragment: ${required}`);
-if(/\bBYPASSRLS\b/i.test(rlsCorrection)) throw new Error("R3-H correction must not introduce BYPASSRLS");
-if(/GRANT\s+SELECT\s+ON\s+audit\.audit_events\s+TO\s+airen_control_plane\b/i.test(rlsCorrection)) throw new Error("R3-H correction must not grant direct Audit SELECT to airen_control_plane");
-if(/CREATE\s+TABLE/i.test(rlsCorrection)) throw new Error("R3-H RLS correction must not create tables");
-if(/\b(?:INSERT|UPDATE|DELETE|TRUNCATE)\s+(?:INTO\s+|TABLE\s+)?audit\.audit_events\b/i.test(rlsCorrection)) throw new Error("R3-H RLS correction must remain read-only");
 
 for(const required of [
   "platform.audit.read","31 * 24 * 60 * 60 * 1000","limit<1 || limit>100",
