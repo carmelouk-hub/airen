@@ -1,0 +1,57 @@
+name: r3-i-exact-closure-archive
+on:
+  push:
+    branches:
+      - "archive/r3-i-snapshot-20260823"
+  pull_request:
+    branches:
+      - "foundation/**"
+
+permissions:
+  contents: read
+
+jobs:
+  package-exact-closure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact certified closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: 36681602009bed93dd35d2d69fbc90a061e6eb7a
+          path: source
+          fetch-depth: 1
+      - name: Verify exact source state and create deterministic recovery package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "36681602009bed93dd35d2d69fbc90a061e6eb7a"
+          test "$(git -C source rev-parse HEAD^{tree})" = "83b6dfdfa35f4a41e0bc6977d7db3dffd756e3d0"
+          rm -rf source/.git
+          tar --sort=name --mtime='UTC 2026-08-23' --owner=0 --group=0 --numeric-owner -czf AIRenOS_R3-I_36681602_source.tar.gz source
+          sha256sum AIRenOS_R3-I_36681602_source.tar.gz > AIRenOS_R3-I_36681602_SHA256SUMS.txt
+          printf '%s\n' \
+            'milestone=R3-I' \
+            'closure_commit=36681602009bed93dd35d2d69fbc90a061e6eb7a' \
+            'closure_tree=83b6dfdfa35f4a41e0bc6977d7db3dffd756e3d0' \
+            'foundation_base=2c40af819c93c32538ccd846b4e9eb7474cd5f74' \
+            'r3_h_closure=fa16b2d4329e1a3971fd96fd1311a9c99b706889' \
+            'candidate_manifest_sha256=f939dc96e861890e2c156bf74a2a2a2522cc6fcb932f7130eadf543c30b4f157' \
+            'initial_implementation_commit=a05aca651428af88f00e9defdb5daf7def22bb27' \
+            'initial_implementation_ci_run=32655039170' \
+            'initial_implementation_ci_conclusion=FAILURE' \
+            'test_only_correction_commit=facf3a1a20414998e48606a1cb50a1559a0b55a4' \
+            'implementation_pass_ci_run=32655556545' \
+            'implementation_pass_ci_conclusion=SUCCESS' \
+            'exact_closure_ci_run=32655834195' \
+            'exact_closure_ci_conclusion=SUCCESS' \
+            'archive_kind=exact_closure_source_snapshot' \
+            > AIRenOS_R3-I_36681602_ARCHIVE_MANIFEST.txt
+      - name: Upload immutable source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIRenOS-R3-I-36681602-exact-source-snapshot
+          path: |
+            AIRenOS_R3-I_36681602_source.tar.gz
+            AIRenOS_R3-I_36681602_SHA256SUMS.txt
+            AIRenOS_R3-I_36681602_ARCHIVE_MANIFEST.txt
+          if-no-files-found: error
