@@ -1,0 +1,50 @@
+name: r3-g-exact-closure-archive
+on:
+  push:
+    branches:
+      - "archive/r3-g-snapshot-20260823"
+  pull_request:
+    branches:
+      - "foundation/**"
+
+permissions:
+  contents: read
+
+jobs:
+  package-exact-closure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact certified closure commit
+        uses: actions/checkout@v4
+        with:
+          ref: d4dfb71b4925529e0fbb320451982505b0ceb71d
+          path: source
+          fetch-depth: 1
+      - name: Verify exact source state and create deterministic recovery package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "d4dfb71b4925529e0fbb320451982505b0ceb71d"
+          rm -rf source/.git
+          tar --sort=name --mtime='UTC 2026-08-23' --owner=0 --group=0 --numeric-owner -czf AIRenOS_R3-G_d4dfb71b_source.tar.gz source
+          sha256sum AIRenOS_R3-G_d4dfb71b_source.tar.gz > AIRenOS_R3-G_d4dfb71b_SHA256SUMS.txt
+          printf '%s\n' \
+            'milestone=R3-G' \
+            'closure_commit=d4dfb71b4925529e0fbb320451982505b0ceb71d' \
+            'closure_tree=66dbefa8eae9c34cbd3251763492e86cabed9467' \
+            'foundation_base=2c40af819c93c32538ccd846b4e9eb7474cd5f74' \
+            'r3_f_closure=3592b7878e13e63b9cd97d76c9d98b146cbd7be3' \
+            'implementation_commit=6def5f4f64268c2f1f6de71dd1f19eeb8e1ee317' \
+            'implementation_ci_run=32635404011' \
+            'exact_closure_ci_run=32635801617' \
+            'archive_kind=exact_closure_source_snapshot' \
+            > AIRenOS_R3-G_d4dfb71b_ARCHIVE_MANIFEST.txt
+      - name: Upload immutable source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIRenOS-R3-G-d4dfb71b-exact-source-snapshot
+          path: |
+            AIRenOS_R3-G_d4dfb71b_source.tar.gz
+            AIRenOS_R3-G_d4dfb71b_SHA256SUMS.txt
+            AIRenOS_R3-G_d4dfb71b_ARCHIVE_MANIFEST.txt
+          if-no-files-found: error
