@@ -28,4 +28,5 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0023_r3g_capability_fea
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0024_r3g_capability_lifecycle_capability.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0025_r3g_feature_flag_lifecycle_capabilities.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0026_r3g_capability_query_resolver_capabilities.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0027_r3h_platform_audit_query.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/postgres/rls_runtime.sql

@@ -29,6 +29,7 @@ jobs:
       - run: npm run test:r3e-billing-contract
       - run: npm run test:r3f-entitlement-contract
       - run: npm run test:r3g-capability-contract
+      - run: npm run test:r3h-audit-query-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -78,6 +79,8 @@ jobs:
         run: npm run test:r3f-entitlement-lifecycle
       - name: Execute R3-G Feature and Capability Resolution runtime tests
         run: npm run test:r3g-capability-feature-resolution
+      - name: Execute R3-H Platform Audit Query runtime tests
+        run: npm run test:r3h-platform-audit-query
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
