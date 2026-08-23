@@ -27,6 +27,7 @@ jobs:
       - run: npm run test:deployment-contract
       - run: npm run test:platform-security-context
       - run: npm run test:r3e-billing-contract
+      - run: npm run test:r3f-entitlement-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -72,6 +73,8 @@ jobs:
         run: npm run test:r3d-platform-role-admin
       - name: Execute R3-E Plan and Subscription lifecycle runtime tests
         run: npm run test:r3e-plan-subscription-lifecycle
+      - name: Execute R3-F Entitlement Administration and Effective Resolution runtime tests
+        run: npm run test:r3f-entitlement-lifecycle
 
   deployment-path-runtime:
     runs-on: ubuntu-latest

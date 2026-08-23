@@ -17,7 +17,7 @@
     "test:observability": "node --experimental-strip-types --test tests/integration/observability-baseline.test.ts",
     "test:deployment-contract": "node --experimental-strip-types --test tests/integration/deployment-contract.test.ts",
     "test:platform-security-context": "node --experimental-strip-types --test tests/integration/platform-security-context.test.ts",
-    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs && node scripts/check-r3d-correction.mjs && node scripts/check-r3d-identity-read-correction.mjs && node scripts/check-r3d-role-column-qualification.mjs",
+    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs && node scripts/check-r3d-correction.mjs && node scripts/check-r3d-identity-read-correction.mjs && node scripts/check-r3d-role-column-qualification.mjs && node scripts/check-r3f-entitlement-contract.mjs",
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
     "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
     "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts",
@@ -27,7 +27,9 @@
     "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts",
     "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts && node --experimental-strip-types --test tests/postgres/r3d-platform-role-invalid-state.test.ts",
     "test:r3e-billing-contract": "node --experimental-strip-types --test tests/integration/r3e-billing-contract.test.ts",
-    "test:r3e-plan-subscription-lifecycle": "node --experimental-strip-types --test tests/postgres/r3e-plan-subscription-lifecycle.test.ts"
+    "test:r3e-plan-subscription-lifecycle": "node --experimental-strip-types --test tests/postgres/r3e-plan-subscription-lifecycle.test.ts",
+    "test:r3f-entitlement-contract": "node --experimental-strip-types --test tests/integration/r3f-entitlement-contract.test.ts",
+    "test:r3f-entitlement-lifecycle": "node --experimental-strip-types --test tests/postgres/r3f-entitlement-lifecycle.test.ts"
   },
   "dependencies": {
     "pg": "8.23.0"
