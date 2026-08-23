@@ -28,4 +28,5 @@ if(!/GRANT EXECUTE ON FUNCTION security\.resolve_current_tenant_entitlements\(\)
 if(/resolve_current_tenant_entitlements\s*\(\s*[^)]/i.test(sql)) throw new Error("R3-F Tenant resolver must not accept client tenant_id authority");
 if(/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+billing\.(?:plans|subscriptions|subscription_events|lifecycle_idempotency)/i.test(sql)) throw new Error("R3-F must not mutate R3-E Plan/Subscription state");
 if(/CREATE\s+TABLE\s+(?:billing|platform)\.[a-z0-9_]*(?:feature|capabilit)/i.test(sql)) throw new Error("R3-F must not introduce Feature/Capability mapping tables; that belongs to R3-G");
+if(/RAISE\s+EXCEPTION\s+'[^']*'\s*\|\|/i.test(sql)) throw new Error("R3-F PL/pgSQL RAISE must not concatenate directly after the exception literal; use USING MESSAGE");
 console.log("R3-F Entitlement authority/effective-resolution static contract PASS");

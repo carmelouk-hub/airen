@@ -154,7 +154,7 @@ BEGIN
       WHERE e.tenant_id=p_tenant_id AND e.entitlement_key=p_entitlement_key RETURNING e.* INTO v_row;
       v_event_type:='expired'; v_reason:=COALESCE(p_reason_code,'entitlement.expired');
     ELSE
-      IF NOT v_row.enabled OR (v_row.valid_until IS NOT NULL AND v_row.valid_until <= now()) THEN RAISE EXCEPTION 'AIRENOS_INVALID_ENTITLEMENT_STATE:'||p_action USING ERRCODE='P0001'; END IF;
+      IF NOT v_row.enabled OR (v_row.valid_until IS NOT NULL AND v_row.valid_until <= now()) THEN RAISE EXCEPTION USING ERRCODE='P0001', MESSAGE='AIRENOS_INVALID_ENTITLEMENT_STATE:'||p_action; END IF;
       IF p_action='change_limit' THEN
         UPDATE billing.tenant_entitlements AS e SET limit_value=p_limit_value,updated_at=now()
         WHERE e.tenant_id=p_tenant_id AND e.entitlement_key=p_entitlement_key RETURNING e.* INTO v_row;
