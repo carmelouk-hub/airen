@@ -35,7 +35,10 @@
     "test:r3g-capability-feature-resolution": "node --experimental-strip-types --test tests/postgres/r3g-capability-feature-resolution.test.ts",
     "check:r3h-audit-query-contract": "node scripts/check-r3h-audit-query-contract.mjs",
     "test:r3h-audit-query-contract": "node --experimental-strip-types --test tests/integration/r3h-audit-query-contract.test.ts",
-    "test:r3h-platform-audit-query": "node --experimental-strip-types --test tests/postgres/r3h-platform-audit-query.test.ts"
+    "test:r3h-platform-audit-query": "node --experimental-strip-types --test tests/postgres/r3h-platform-audit-query.test.ts",
+    "check:r3i-admin-surface-contract": "node scripts/check-r3i-admin-surface-contract.mjs",
+    "test:r3i-admin-api-contract": "node --experimental-strip-types --test tests/integration/r3i-admin-api-contract.test.ts",
+    "test:r3i-admin-ui-contract": "node --experimental-strip-types --test tests/integration/r3i-admin-ui-contract.test.ts"
   },
   "dependencies": {
     "pg": "8.23.0"

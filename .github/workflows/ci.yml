@@ -30,6 +30,9 @@ jobs:
       - run: npm run test:r3f-entitlement-contract
       - run: npm run test:r3g-capability-contract
       - run: npm run test:r3h-audit-query-contract
+      - run: npm run check:r3i-admin-surface-contract
+      - run: npm run test:r3i-admin-api-contract
+      - run: npm run test:r3i-admin-ui-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
