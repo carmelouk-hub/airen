@@ -1,0 +1,195 @@
+{
+  "schema_version": "0.1",
+  "artifact_id": "NEXT-AIR-002",
+  "title": "AIRen Relationship Intelligence OS — North Star Proposal",
+  "artifact_class": "WORKING_FUTURE_PROPOSAL_NOT_CANONICAL",
+  "date": "2026-08-24",
+  "state": "DESIGNING",
+  "implementation_authorized": false,
+  "promotion_authorized": false,
+  "certification_claim": false,
+  "repository": {
+    "name": "carmelouk-hub/airen",
+    "branch": "t20/security-certification-20260824",
+    "pre_publication_commit": "d7c6a627772b4d46d09b532aa2b3baf5e4cf196d",
+    "pre_publication_tree": "0c66414a9286189338525e9716b3da1bdd5b24b9"
+  },
+  "drive": {
+    "working_specification_id": "1ZOLUZjSsYbxC2GopMr-C0XPvH_jLbxRMKEHaS8Xd69Q",
+    "working_specification_title": "NEXT-AIR-002 — AIRen Relationship Intelligence OS — North Star Proposal — v0.1",
+    "working_specification_folder_id": "1Mw48_itH3gezN0bsa2Ao-wHPzflBJw_x",
+    "initial_content_revision_id": "AIroW378_fu7C6FIRVlfheYfRo6mPi7us6LU0jMBHVJrfHGKm9P7Xn0J3Yurw0vT4Ds48UXc5RrpFwEdB-49XPUIZ7PG8cxkBpz3z5Nk944",
+    "next_registry_id": "1i3HLJIAItBnXC1MSKV55pscI6nTtdlpei3ndavuBrBM",
+    "next_registry_revision_after_append": "AIroW34h1Ek9vXDGoKmVSOV9gIKSNSYozwgS0CSbz0QKbeezYQn57hUyinN0jLbSlilFPU2K_nvBxzyuYXV5pHe0o4SJq2AUQ-P8oP7gmls",
+    "promotion_policy_id": "1eMTdVlapxR5nsTfCMBiec1q6GgEkQP0S8S00b-CtNwk",
+      "status": "REMOTE_CONTENT_AND_REGISTRY_READBACK_VERIFIED"
+  },
+  "authority_sources": {
+    "platform_bible_drive_id": "1ZlppAFqaJvhWUxwHyUdMJIaREBPzSAsn9hy7kupX9DA",
+    "doc_008_drive_id": "16d_ItmtJgDktWxYQXbZB7FzTJMVIKFSVzYfF5xd8ZLc",
+    "doc_009_drive_id": "1MhfahuVL7M_1APUnzqXZY_9sCBu-1veToHxTBGGw8mY",
+    "doc_010_drive_id": "1686W-gU6L0Pin_xjUg4V2khyeItJ-9PtnRgMlH3Npmw",
+    "t20_specification_drive_id": "1zjrGrHkplrzZvhqn8TbB7XVcPgE5cKFXblgBsmt6jLU",
+    "t20_booking_proposal_drive_id": "1uv84obeoRaj7RVRaHFPIkj1o8gHxH8TFKVQev24fiNc",
+    "rule_doc_21_drive_id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE"
+  },
+  "external_guardrails": [
+    {
+      "name": "GDPR Regulation (EU) 2016/679",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32016R0679"
+    },
+    {
+      "name": "EDPB Automated individual decision-making and Profiling",
+      "url": "https://www.edpb.europa.eu/documents/guideline/automated-decision-making-and-profiling_en"
+    },
+    {
+      "name": "European Commission AI Act overview",
+      "url": "https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai"
+    }
+  ],
+  "grounded_facts": [
+    "CUSTOMER_PROFILE_IS_TENANT_SCOPED",
+    "NO_AUTOMATIC_CUSTOMER_PROFILE_SHARING_ACROSS_TENANTS",
+    "CUSTOMER_ALLERGY_IS_SENSITIVE_PII",
+    "STELLA_MUST_NOT_INFER_UNDECLARED_HEALTH_CONDITIONS",
+    "SUPPLIER_AND_PROCUREMENT_ARE_CONFIDENTIAL_TARGET_DOMAINS",
+    "STELLA_HAS_NO_DIRECT_CORE_WRITE_AUTHORITY",
+    "STELLA_KNOWLEDGE_USES_PROVENANCE_EVIDENCE_CONFIDENCE_AND_FEEDBACK",
+    "NEXT_RST_003_IS_A_COMPLEMENTARY_SUPPLY_CHAIN_DEPENDENCY"
+  ],
+  "candidate_architecture": [
+    "AIRENOS_TRUST_AND_PURPOSE_FABRIC",
+    "VERTICAL_RELATIONSHIP_TWINS",
+    "OBSERVATION_LEDGER",
+    "PURPOSE_AND_AUTHORIZATION_GRAPH",
+    "EVIDENCE_BACKED_CLAIM_GRAPH",
+    "GOVERNED_ACTION_ORCHESTRATOR",
+    "CORRECTION_AND_CONTESTABILITY_LOOP",
+    "FUTURE_SELECTIVE_RELATIONSHIP_PASSPORT"
+  ],
+  "candidate_claim_states": [
+    "PROPOSED",
+    "CONFIRMED",
+    "CORRECTED",
+    "REJECTED",
+    "EXPIRED",
+    "SUPERSEDED"
+  ],
+  "candidate_data_concepts_not_canonical": [
+    "ProcessingPurpose",
+    "LawfulBasisRecord",
+    "ConsentGrant",
+    "DataUseAuthorization",
+    "RelationshipSubjectRef",
+    "RelationshipObservation",
+    "RelationshipEvidence",
+    "RelationshipClaim",
+    "RelationshipFeedbackOrCorrection",
+    "RelationshipActionProposal",
+    "CustomerRelationshipTwin",
+    "SupplierRelationshipTwin",
+    "PortableRelationshipPassport"
+  ],
+  "customer_twin_boundary": {
+    "purpose_specific": true,
+    "universal_person_score_forbidden": true,
+    "sensitive_trait_inference_forbidden": true,
+    "declared_allergy_separate_sensitive_compartment": true,
+    "human_control_required_for_actions": true
+  },
+  "supplier_twin_boundary": {
+    "certified_operational_facts_only": true,
+    "opaque_automatic_penalty_forbidden": true,
+    "automatic_supplier_exclusion_forbidden": true,
+    "contestation_required": true,
+    "purchase_order_send_remains_governed": true
+  },
+  "relationship_passport_boundary": {
+    "future_candidate_only": true,
+    "explicit_opt_in": true,
+    "selective_claim_disclosure": true,
+    "raw_history_sharing_default": false,
+    "automatic_cross_tenant_identity_merge": false,
+    "revocable": true,
+    "additional_purpose_by_implication": false
+  },
+  "stella_boundary": {
+    "authorized_projection_read_only": true,
+    "traceable_hypotheses_allowed": true,
+    "governed_action_proposals_allowed": true,
+    "direct_operational_or_relationship_write": false,
+    "self_confirmation_or_self_approval": false,
+    "scope_permission_entitlement_expansion": false,
+    "sensitive_inference": false,
+    "hidden_social_scoring_or_manipulation": false,
+    "unauthorized_cross_tenant_merge": false
+  },
+  "non_negotiable_invariants": [
+    "PURPOSE_LIMITATION",
+    "DATA_MINIMIZATION",
+    "TRUSTED_TENANT_LOCATION_SCOPE",
+    "FIELD_LEVEL_DTO_MINIMIZATION",
+    "MANDATORY_PROVENANCE",
+    "INFERENCE_CONFIDENCE_VALIDITY_AND_EXPIRY",
+    "NO_SENSITIVE_PROXY_INFERENCE",
+    "ACCESS_CORRECTION_CONTESTATION_REVOCATION_AND_RETENTION",
+    "HUMAN_OVERSIGHT_FOR_SIGNIFICANT_DECISIONS",
+    "NO_RAW_PRIVATE_PUBLIC_PROJECTION",
+    "NO_PROVIDER_SECRETS_IN_RECORDS_LOGS_PROMPTS_FIXTURES_OR_GIT"
+  ],
+  "t20_boundary": {
+    "gap_001_changed": false,
+    "booking_contract_expanded": false,
+    "t20_verdict": "INCOMPLETE",
+    "implementation_authorized": false,
+    "required_tests": 66,
+    "runtime_executed": 0,
+    "all_status": "NOT_RUN"
+  },
+  "change_boundary": {
+    "canonical_doc_changed": false,
+    "accepted_adr_changed": false,
+    "runtime_code_changed": false,
+    "schema_changed": false,
+    "migration_added": false,
+    "executable_test_changed": false,
+    "roadmap_changed": false,
+    "corte_production_changed": false
+  },
+  "acceptance_foundation": [
+    "CLAIM_TRACEABLE_TO_EVIDENCE_AND_METHOD_VERSION",
+    "AI_CLAIM_NOT_RETURNED_AS_CONFIRMED_FACT",
+    "REVOCATION_FAIL_CLOSED_FOR_POLICY_DEFINED_FUTURE_USE",
+    "CROSS_TENANT_DATA_INVISIBLE_TO_STELLA",
+    "PURPOSE_OR_FILTER_CHANGE_INVALIDATES_DERIVED_CURSOR_OR_CACHE",
+    "SENSITIVE_DATA_REQUIRES_DEDICATED_CONTRACT_AND_PERMISSION",
+    "CORRECTION_AND_CONTESTATION_AUDITED_WITH_SUPERSEDE",
+    "CUSTOMER_AND_SUPPLIER_ACTIONS_USE_GOVERNED_APPLICATION_SERVICES",
+    "NO_SIGNIFICANT_DECISION_ONLY_FROM_SCORE",
+    "PASSPORT_SHARES_SELECTED_REVOCABLE_CLAIMS_ONLY",
+    "RETENTION_ANONYMIZATION_AND_EXPORT_TESTABLE",
+    "SYNTHETIC_FIXTURES_ONLY"
+  ],
+  "open_governance_decisions": [
+    "PLATFORM_VERSUS_VERTICAL_BOUNDARY",
+    "PURPOSE_CATALOG_AND_LAWFUL_BASIS_MATRIX",
+    "IDENTITY_DEDUPLICATION_AND_SUBJECT_RIGHTS_MODEL",
+    "FIELD_CLASSIFICATION_AND_ALLOWED_FORBIDDEN_INFERENCE_CATALOG",
+    "RETENTION_EXPIRY_REVOCATION_AND_DELETION_ANONYMIZATION",
+    "RELATIONSHIP_PASSPORT_TRUST_AND_PORTABILITY_PROTOCOL",
+    "HUMAN_APPROVAL_THRESHOLDS_AND_SIGNIFICANT_DECISION_CATEGORIES",
+    "SUPPLIER_CONTESTATION_AND_CORRECTION_POLICY",
+    "ENTITLEMENTS_QUOTAS_PLANS_AND_COMMERCIAL_OWNERSHIP",
+    "DPIA_LEGAL_REVIEW_AND_THREAT_MODEL"
+  ],
+  "evidence_status": {
+    "parity_status": "NOT_APPLICABLE_DESIGN_PROPOSAL",
+    "gap_status": "OPEN_FUTURE_GOVERNANCE_DECISIONS",
+    "adr_impact": "NONE_PROPOSAL_ONLY"
+  },
+  "next_action": {
+    "status": "REVIEW_REQUIRED",
+    "value": "EXPLICITLY_PROMOTE_REVISE_DEFER_OR_REJECT_THROUGH_SECTION_09_PROMOTION_POLICY",
+    "implementation_remains_blocked": true
+  }
+}
