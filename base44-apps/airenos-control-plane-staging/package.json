@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:design-boundary": "node --test tests/relationship-design-boundary.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

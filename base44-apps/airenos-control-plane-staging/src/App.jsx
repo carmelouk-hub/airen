@@ -170,8 +170,8 @@ function GovernanceReview() {
   return (
     <section className="view-stack">
       <header className="view-header">
-        <div><span className="kicker">NEXT-AIR-002 promotion review</span><h1>Evidence before authority.</h1><p>The proposal remains non-canonical. Every acceptance check and open governance decision must be resolved before promotion.</p></div>
-        <span className="read-only warning"><CircleDot size={13} />NOT AUTHORIZED</span>
+        <div><span className="kicker">NEXT-AIR-002 governed design</span><h1>Design authority, without runtime authority.</h1><p>Option A authorizes contracts, governance, DPIA preparation and threat modelling only. The proposal remains non-canonical.</p></div>
+        <span className="read-only"><BadgeCheck size={13} />DESIGN ONLY</span>
       </header>
 
       <div className="review-grid">
@@ -195,7 +195,7 @@ function GovernanceReview() {
 
       <article className="promotion-gate">
         <div><LockKeyhole size={24} /><span>Promotion gate</span></div>
-        <strong>BLOCKED · explicit governance decision required</strong>
+        <strong>RUNTIME BLOCKED · separate governance decision required</strong>
         <button disabled>Promote to implementation</button>
       </article>
     </section>
@@ -221,10 +221,11 @@ function Overview({ onNavigate }) {
         <article className="state-panel">
           <span className="kicker">Governance state</span>
           <h2>{governanceState.state}</h2>
+          <div><span>Design phase</span><strong className="safe-text">Authorized</strong></div>
           <div><span>Implementation</span><strong>Not authorized</strong></div>
-          <div><span>Promotion</span><strong>Not authorized</strong></div>
+          <div><span>Canonical promotion</span><strong>Not authorized</strong></div>
           <div><span>Fixture class</span><strong className="safe-text">Synthetic only</strong></div>
-          <button onClick={() => onNavigate("governance")}>Open promotion review <ArrowRight size={15} /></button>
+          <button onClick={() => onNavigate("governance")}>Open governed design review <ArrowRight size={15} /></button>
         </article>
       </section>
 
@@ -265,7 +266,7 @@ export default function App() {
             <button key={id} className={`nav-item ${activeView === id ? "active" : ""}`} onClick={() => setActiveView(id)}><Icon size={18} /><span>{label}</span></button>
           ))}
         </nav>
-        <div className="rail-state"><CircleDot size={16} /><div><strong>Proposal not canonical</strong><span>Implementation disabled</span></div></div>
+        <div className="rail-state"><BadgeCheck size={16} /><div><strong>Governed design active</strong><span>Implementation disabled</span></div></div>
         <div className="rail-boundary"><ShieldCheck size={18} /><div><strong>Foundation protected</strong><span>Provider-neutral authority</span></div></div>
       </aside>
       <section className="workspace">

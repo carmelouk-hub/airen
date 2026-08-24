@@ -15,6 +15,7 @@ Non-authoritative staging shell for the AIRenOS administrative and Relationship 
 npm install
 npm run dev
 npm run build
+npm run test:design-boundary
 ```
 
 Use the Base44 CLI only through the local package runner:
@@ -34,6 +35,6 @@ The current milestone provides five non-operational review sections:
 - synthetic Customer Relationship Twin;
 - synthetic Supplier Relationship Twin;
 - Purpose & Authorization Graph;
-- NEXT-AIR-002 promotion review.
+- NEXT-AIR-002 governed-design and runtime-gate review.
 
-All content is read-only and synthetic. `NEXT-AIR-002` remains non-canonical with implementation and promotion disabled.
+All content is read-only and synthetic. `NEXT-AIR-002` is authorized for governed design only; it remains non-canonical with implementation and canonical/runtime promotion disabled.

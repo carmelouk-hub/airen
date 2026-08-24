@@ -4,11 +4,13 @@
 
 **Artifact class:** `WORKING_FUTURE_PROPOSAL_NOT_CANONICAL`
 
-**State:** `DESIGNING`
+**State:** `GOVERNED_DESIGN`
 
 **Implementation authorized:** `false`
 
-**Promotion authorized:** `false`
+**Design-phase promotion authorized:** `true`
+
+**Canonical/runtime promotion authorized:** `false`
 
 **Evidence date:** 2026-08-24
 
@@ -231,6 +233,6 @@ These external sources are regulatory guardrails, not a substitute for legal adv
 
 ## Governance state
 
-`NEXT-AIR-002` remains `DESIGNING` in the working backlog. It is not architecture authority, does not authorize implementation and changes no canonical specification.
+`NEXT-AIR-002` is authorized for governed design only. It remains a non-canonical working artifact, is not architecture authority, does not authorize runtime implementation and changes no canonical specification.
 
-Next safe action: review and explicitly promote, revise, defer or reject the North Star through the section 09 Promotion Policy.
+Next safe action: complete the governed design evidence package and submit any proposed canonical contract or runtime implementation to a separate explicit governance decision.

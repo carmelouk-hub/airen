@@ -1,8 +1,9 @@
 export const governanceState = Object.freeze({
   artifactClass: "WORKING_FUTURE_PROPOSAL_NOT_CANONICAL",
-  state: "DESIGNING",
+  state: "GOVERNED_DESIGN",
+  designPhaseAuthorized: true,
   implementationAuthorized: false,
-  promotionAuthorized: false,
+  canonicalPromotionAuthorized: false,
   fixtureClass: "SYNTHETIC_REVIEW_ONLY",
 });
 

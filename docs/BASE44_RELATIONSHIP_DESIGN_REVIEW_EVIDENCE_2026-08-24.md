@@ -45,8 +45,18 @@ Labels, candidate claim states, safety invariants, acceptance checks and open de
 
 The Base44-generated client bootstrap remains available for future accepted contracts but is not imported or invoked by the Relationship Intelligence workspace. The only local-storage references are the template's token-cleanup helper; no relationship data or review state is persisted.
 
-**Gap status:** `AWAITING_EXPLICIT_NEXT_AIR_002_PROMOTION_DECISION`
+## Governed-design decision update
+
+Option A was explicitly accepted on 2026-08-24. The Base44 review workspace now displays `GOVERNED_DESIGN`, design-phase authorization and a separate locked runtime gate.
+
+No operational resource was added by this state change. Acceptance checks remain pending until their specified synthetic contract tests are implemented under a future bounded authorization.
+
+Four executable design-boundary tests verify that design authority cannot imply runtime or canonical authority, fixtures remain synthetic, all governance surfaces remain present and derived examples remain proposals. These tests validate the review shell only; they do not satisfy the thirty future runtime contract cases.
+
+**Gap status:** `GOVERNED_DESIGN_OPEN_DECISIONS_REMAIN`
 
 **ADR impact:** `NONE`
 
-**Promotion state:** unchanged.
+**Design-phase promotion:** `AUTHORIZED`
+
+**Canonical/runtime promotion:** `NOT_AUTHORIZED`

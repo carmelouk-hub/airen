@@ -4,13 +4,15 @@
 
 **Current class:** `WORKING_FUTURE_PROPOSAL_NOT_CANONICAL`
 
-**Current state:** `DESIGNING`
+**Current state:** `GOVERNED_DESIGN`
 
 **Implementation authorized:** `false`
 
-**Promotion authorized:** `false`
+**Design-phase promotion authorized:** `true`
 
-**Decision state:** `AWAITING_EXPLICIT_GOVERNANCE_DECISION`
+**Canonical/runtime promotion authorized:** `false`
+
+**Decision state:** `OPTION_A_ACCEPTED_DESIGN_ONLY`
 
 ## Purpose
 
@@ -77,12 +79,18 @@ Close the proposal without promotion. Preserve evidence and provenance; remove i
 
 ## Decision record
 
-No option is selected by this packet. An explicit governance decision must identify the chosen option, approver, date, scope, conditions and any affected canonical artifacts.
+The project owner explicitly instructed the coding agent to proceed after being presented with the recommended Option A and its design-only boundary.
 
-**Recommended decision:** `OPTION_A_PROMOTE_TO_GOVERNED_DESIGN_PHASE_ONLY`
+**Selected decision:** `OPTION_A_PROMOTE_TO_GOVERNED_DESIGN_PHASE_ONLY`
 
-**Current effective decision:** `NONE`
+**Decision date:** `2026-08-24`
+
+**Approver role:** `AIRen project owner`
+
+**Approval evidence:** direct user response `procedi` to the explicit Option A confirmation request in the active Codex task.
+
+**Decision record:** `NEXT_AIR_002_GOVERNANCE_DECISION_2026-08-24.md`
 
 **Runtime implementation:** `BLOCKED`
 
-**ADR impact:** `PENDING_DECISION`; no accepted ADR is changed by this packet.
+**ADR impact:** `NONE`; no accepted ADR is changed by this design-only decision.
