@@ -53,6 +53,22 @@ No operational resource was added by this state change. Acceptance checks remain
 
 Four executable design-boundary tests verify that design authority cannot imply runtime or canonical authority, fixtures remain synthetic, all governance surfaces remain present and derived examples remain proposals. These tests validate the review shell only; they do not satisfy the thirty future runtime contract cases.
 
+## Purpose and authorization design update
+
+`NEXT_AIR_002_PURPOSE_AUTHORIZATION_MATRIX_v0.1.md` specifies six candidate purpose families, eighteen authorization test cases and typed fail-closed denial outcomes. All six purposes remain disabled, no lawful basis is selected and no processing authority is created.
+
+The Base44 review workspace presents this catalog as read-only design evidence. A fifth design-boundary test proves that every displayed purpose remains disabled with its legal basis marked TBD.
+
+Verification results:
+
+- candidate purpose cards rendered: `6/6`;
+- disabled status rendered: `6/6`;
+- approved lawful bases displayed: `0`;
+- fail-closed gate displayed: `PASS`;
+- design-boundary tests: `5/5 PASS`;
+- local optimized build: `PASS`;
+- browser errors or warnings after the update: `0`.
+
 **Gap status:** `GOVERNED_DESIGN_OPEN_DECISIONS_REMAIN`
 
 **ADR impact:** `NONE`

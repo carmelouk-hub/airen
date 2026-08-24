@@ -34,7 +34,7 @@ The current milestone provides five non-operational review sections:
 - overview;
 - synthetic Customer Relationship Twin;
 - synthetic Supplier Relationship Twin;
-- Purpose & Authorization Graph;
+- Purpose & Authorization Graph with six disabled candidate purposes;
 - NEXT-AIR-002 governed-design and runtime-gate review.
 
 All content is read-only and synthetic. `NEXT-AIR-002` is authorized for governed design only; it remains non-canonical with implementation and canonical/runtime promotion disabled.

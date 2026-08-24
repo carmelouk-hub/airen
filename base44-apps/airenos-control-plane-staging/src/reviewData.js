@@ -49,6 +49,57 @@ export const supplierReviewClaims = Object.freeze([
   },
 ]);
 
+export const purposeReviewCatalog = Object.freeze([
+  {
+    id: "PUR-CUST-SERVICE-CONTINUITY-v0",
+    label: "Service continuity",
+    subject: "Customer · trusted Tenant/Location workflow",
+    operation: "Minimized read · action proposal",
+    legalBasis: "TBD legal review",
+    status: "DISABLED",
+  },
+  {
+    id: "PUR-CUST-DECLARED-PREFERENCE-v0",
+    label: "Declared preference",
+    subject: "Verified customer · same-Tenant relationship",
+    operation: "Declare · read own · correct",
+    legalBasis: "TBD legal review",
+    status: "DISABLED",
+  },
+  {
+    id: "PUR-CUST-FEEDBACK-CORRECTION-v0",
+    label: "Feedback & correction",
+    subject: "Verified customer · governed case",
+    operation: "Feedback · contest · revoke",
+    legalBasis: "TBD legal review",
+    status: "DISABLED",
+  },
+  {
+    id: "PUR-SUP-DELIVERY-QUALITY-v0",
+    label: "Delivery quality",
+    subject: "Supplier · same-Tenant evidence",
+    operation: "Read evidence · propose claim",
+    legalBasis: "TBD where personal data applies",
+    status: "DISABLED",
+  },
+  {
+    id: "PUR-SUP-DOCUMENT-VALIDITY-v0",
+    label: "Document validity",
+    subject: "Supplier · verified document context",
+    operation: "Read validity · propose alert",
+    legalBasis: "TBD where personal data applies",
+    status: "DISABLED",
+  },
+  {
+    id: "PUR-SUP-PROCUREMENT-SCENARIO-v0",
+    label: "Procurement scenario",
+    subject: "Supplier · minimized organizational data",
+    operation: "Read Twin · explain proposal",
+    legalBasis: "TBD where personal data applies",
+    status: "DISABLED",
+  },
+]);
+
 export const acceptanceChecks = Object.freeze([
   "Every claim is traceable to evidence and method/version",
   "An AI claim is never returned as a confirmed fact",

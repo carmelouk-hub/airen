@@ -5,6 +5,7 @@ import {
   customerReviewClaims,
   governanceState,
   openDecisions,
+  purposeReviewCatalog,
   supplierReviewClaims,
 } from "../src/reviewData.js";
 
@@ -37,4 +38,10 @@ test("derived review examples are proposals, not confirmed facts", () => {
 
   assert.ok(derivedClaims.length > 0);
   assert.ok(derivedClaims.every((claim) => claim.state === "PROPOSED"));
+});
+
+test("candidate purposes remain disabled until legal and governance review", () => {
+  assert.equal(purposeReviewCatalog.length, 6);
+  assert.ok(purposeReviewCatalog.every((purpose) => purpose.status === "DISABLED"));
+  assert.ok(purposeReviewCatalog.every((purpose) => purpose.legalBasis.toLowerCase().includes("tbd")));
 });

@@ -216,7 +216,7 @@ Base44 may host a review or future adapter experience, but it is not Foundation 
 
 ## 13. Open design decisions
 
-1. approved purpose catalog and lawful-basis matrix;
+1. legal/privacy approval of the six disabled candidates in `NEXT_AIR_002_PURPOSE_AUTHORIZATION_MATRIX_v0.1.md`;
 2. exact claim taxonomy and typed values;
 3. retention schedule by field class and jurisdiction;
 4. subject identity-verification procedure;

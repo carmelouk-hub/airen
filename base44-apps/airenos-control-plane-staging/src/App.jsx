@@ -31,6 +31,7 @@ import {
   customerReviewClaims,
   governanceState,
   openDecisions,
+  purposeReviewCatalog,
   supplierReviewClaims,
 } from "./reviewData";
 
@@ -147,6 +148,26 @@ function AuthorizationReview() {
         ))}
       </div>
 
+      <section className="purpose-catalog" aria-label="Candidate purpose catalog">
+        <div className="section-heading">
+          <div><span className="kicker">Purpose catalog v0.1</span><h2>Six candidates. Zero active purposes.</h2></div>
+          <span>LEGAL BASIS APPROVED · 0</span>
+        </div>
+        <div className="purpose-grid">
+          {purposeReviewCatalog.map((purpose) => (
+            <article key={purpose.id} className="purpose-card">
+              <div><span>{purpose.id}</span><strong>{purpose.status}</strong></div>
+              <h3>{purpose.label}</h3>
+              <p>{purpose.subject}</p>
+              <dl>
+                <div><dt>Candidate operations</dt><dd>{purpose.operation}</dd></div>
+                <div><dt>Lawful basis</dt><dd>{purpose.legalBasis}</dd></div>
+              </dl>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="authorization-grid">
         <article className="matrix-card">
           <span className="kicker">Candidate binding</span>
@@ -159,7 +180,7 @@ function AuthorizationReview() {
           <LockKeyhole size={30} />
           <span>Current result</span>
           <h2>FAIL CLOSED</h2>
-          <p>No purpose catalog or lawful-basis matrix has been approved. The design cannot grant access or execute an action.</p>
+          <p>The candidate catalog is specified but every purpose remains disabled. No lawful basis is approved, so the design cannot grant access or execute an action.</p>
         </article>
       </div>
     </section>
