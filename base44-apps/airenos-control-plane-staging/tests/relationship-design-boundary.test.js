@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   acceptanceChecks,
   customerReviewClaims,
+  declaredPreferenceEvidenceStatus,
   governanceState,
   openDecisions,
   purposeReviewCatalog,
@@ -64,4 +65,18 @@ test("a ready decision form is not a qualified decision or an activation", () =>
   assert.equal(declaredPreference.qualifiedDecision, "NOT RECORDED");
   assert.equal(declaredPreference.status, "DISABLED");
   assert.notEqual(declaredPreference.qualifiedDecision, "APPROVED");
+});
+
+test("an indexed evidence bundle remains incomplete and fail-closed", () => {
+  assert.equal(declaredPreferenceEvidenceStatus.indexState, "INDEX READY");
+  assert.equal(declaredPreferenceEvidenceStatus.required, 12);
+  assert.equal(
+    declaredPreferenceEvidenceStatus.ready + declaredPreferenceEvidenceStatus.partial + declaredPreferenceEvidenceStatus.missing,
+    declaredPreferenceEvidenceStatus.required,
+  );
+  assert.equal(declaredPreferenceEvidenceStatus.ready, 0);
+  assert.equal(declaredPreferenceEvidenceStatus.partial, 4);
+  assert.equal(declaredPreferenceEvidenceStatus.missing, 8);
+  assert.equal(declaredPreferenceEvidenceStatus.qualifiedDecision, "NOT RECORDED");
+  assert.equal(declaredPreferenceEvidenceStatus.purposeState, "DISABLED");
 });

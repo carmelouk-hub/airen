@@ -29,6 +29,7 @@ import {
 import {
   acceptanceChecks,
   customerReviewClaims,
+  declaredPreferenceEvidenceStatus,
   governanceState,
   openDecisions,
   purposeReviewCatalog,
@@ -176,6 +177,17 @@ function AuthorizationReview() {
             <div><dt>Lawful basis</dt><dd>TBD · 0 APPROVED</dd></div>
             <div><dt>Qualified sign-off</dt><dd>MISSING</dd></div>
             <div><dt>Purpose</dt><dd>DISABLED</dd></div>
+          </dl>
+        </article>
+        <article className="evidence-bundle-band">
+          <div><DatabaseZap size={21} /><span><small>Evidence bundle index</small><strong>{declaredPreferenceEvidenceStatus.indexState}</strong></span></div>
+          <dl>
+            <div><dt>Required slots</dt><dd>{declaredPreferenceEvidenceStatus.required}</dd></div>
+            <div><dt>Ready</dt><dd>{declaredPreferenceEvidenceStatus.ready}</dd></div>
+            <div><dt>Partial</dt><dd>{declaredPreferenceEvidenceStatus.partial}</dd></div>
+            <div><dt>Missing</dt><dd>{declaredPreferenceEvidenceStatus.missing}</dd></div>
+            <div><dt>Decision</dt><dd>{declaredPreferenceEvidenceStatus.qualifiedDecision}</dd></div>
+            <div><dt>Purpose</dt><dd>{declaredPreferenceEvidenceStatus.purposeState}</dd></div>
           </dl>
         </article>
       </section>

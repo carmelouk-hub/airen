@@ -97,6 +97,28 @@ Verification results:
 - Base44 entities, functions, agents or connectors added: `0`;
 - runtime or canonical authority created: `false`.
 
+## Evidence bundle index update
+
+`NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_EVIDENCE_BUNDLE_INDEX_v0.1.md` records verifiable local file digests, Git commit identities and controlled Drive document identities/revisions without copying Drive content or production data into the repository.
+
+The index separates source existence from review sufficiency. Of the twelve evidence slots required by the qualified-review record, zero are ready, four are partial and eight are missing. Existing design documents cannot be treated as a completed service journey, field-level data flow, approved taxonomy, legal-role conclusion, privacy notice, retention schedule, full DPIA or ROPA linkage.
+
+The Base44 design workspace now presents this exact result as `INDEX READY · 0 READY · 4 PARTIAL · 8 MISSING`, while the qualified decision remains `NOT RECORDED` and the purpose remains `DISABLED`.
+
+Verification results:
+
+- indexed local artifacts: `9`;
+- verified Git evidence commits: `4`;
+- controlled Drive document identities verified: `7`;
+- required evidence slots: `12`;
+- ready evidence slots: `0`;
+- partial evidence slots: `4`;
+- missing evidence slots: `8`;
+- executable design-boundary tests: `8/8 PASS`;
+- local optimized build: `PASS`;
+- Base44 entities, functions, agents or connectors added: `0`;
+- runtime or canonical authority created: `false`.
+
 ## Qualified-review decision record update
 
 `NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_QUALIFIED_REVIEW_DECISION_RECORD_v0.1.md` provides a blank, versioned decision record for the actual qualified reviewers. It requires reviewer identity and capacity, verified evidence, operation-level lawful-basis conclusions, factual role allocation, rights, retention, DPIA, residual risk, security controls, reasoned outcome and separate attestations.

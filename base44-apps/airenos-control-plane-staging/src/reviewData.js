@@ -108,6 +108,16 @@ export const purposeReviewCatalog = Object.freeze([
   },
 ]);
 
+export const declaredPreferenceEvidenceStatus = Object.freeze({
+  indexState: "INDEX READY",
+  required: 12,
+  ready: 0,
+  partial: 4,
+  missing: 8,
+  qualifiedDecision: "NOT RECORDED",
+  purposeState: "DISABLED",
+});
+
 export const acceptanceChecks = Object.freeze([
   "Every claim is traceable to evidence and method/version",
   "An AI claim is never returned as a confirmed fact",

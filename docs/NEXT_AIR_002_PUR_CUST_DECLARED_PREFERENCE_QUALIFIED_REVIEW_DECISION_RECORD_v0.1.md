@@ -22,6 +22,7 @@ This template records the evidence-backed decision of qualified legal and privac
 
 Before completing it, reviewers must read:
 
+- `NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_EVIDENCE_BUNDLE_INDEX_v0.1.md`;
 - `NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_LEGAL_PRIVACY_REVIEW_PACKET_v0.1.md`;
 - `NEXT_AIR_002_PURPOSE_AUTHORIZATION_MATRIX_v0.1.md`;
 - `NEXT_AIR_002_DPIA_SCREENING_AND_THREAT_MODEL_v0.1.md`;
