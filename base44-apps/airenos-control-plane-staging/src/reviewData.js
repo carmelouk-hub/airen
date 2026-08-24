@@ -66,6 +66,8 @@ export const purposeReviewCatalog = Object.freeze([
     operation: "Declare · read own · correct",
     legalBasis: "TBD legal review",
     reviewState: "PACKET READY",
+    decisionFormState: "FORM READY",
+    qualifiedDecision: "NOT RECORDED",
     status: "DISABLED",
   },
   {

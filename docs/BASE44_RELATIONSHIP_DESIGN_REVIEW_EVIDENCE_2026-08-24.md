@@ -96,3 +96,22 @@ Verification results:
 - local optimized build: `PASS`;
 - Base44 entities, functions, agents or connectors added: `0`;
 - runtime or canonical authority created: `false`.
+
+## Qualified-review decision record update
+
+`NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_QUALIFIED_REVIEW_DECISION_RECORD_v0.1.md` provides a blank, versioned decision record for the actual qualified reviewers. It requires reviewer identity and capacity, verified evidence, operation-level lawful-basis conclusions, factual role allocation, rights, retention, DPIA, residual risk, security controls, reasoned outcome and separate attestations.
+
+The template contains no reviewer name, signature, conclusion or approval. An incomplete field, missing evidence reference or unrecorded capacity preserves `NOT_RECORDED`. Even a completed qualified review can only recommend a separate canonical-design proposal; it cannot activate processing.
+
+The Base44 design workspace now shows `DECISION FORM READY` together with `DECISION NOT RECORDED`, `QUALIFIED SIGN-OFF MISSING` and `PURPOSE DISABLED`. It remains a non-persistent review surface.
+
+Verification results:
+
+- decision-record templates prepared: `1`;
+- qualified decisions recorded: `0`;
+- completed signatories: `0`;
+- enabled purposes: `0/6`;
+- executable design-boundary tests: `7/7 PASS`;
+- local optimized build: `PASS`;
+- Base44 entities, functions, agents or connectors added: `0`;
+- runtime or canonical authority created: `false`.

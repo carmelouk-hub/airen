@@ -232,6 +232,8 @@ No outcome in this packet activates processing or authorizes implementation.
 
 ## 12. Reviewer decision form
 
+The operational blank record is maintained separately in `NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_QUALIFIED_REVIEW_DECISION_RECORD_v0.1.md`. It must be copied to a new versioned record and completed by the actual qualified reviewers; the blank template cannot be treated as a decision.
+
 **Outcome:** `TBD`
 
 **Approved exact purpose/version:** `TBD`

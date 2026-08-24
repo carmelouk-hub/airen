@@ -171,6 +171,8 @@ function AuthorizationReview() {
           <div><Scale size={21} /><span><small>Selected review packet</small><strong>PUR-CUST-DECLARED-PREFERENCE-v0</strong></span></div>
           <dl>
             <div><dt>Packet</dt><dd>READY</dd></div>
+            <div><dt>Decision form</dt><dd>READY</dd></div>
+            <div><dt>Decision</dt><dd>NOT RECORDED</dd></div>
             <div><dt>Lawful basis</dt><dd>TBD · 0 APPROVED</dd></div>
             <div><dt>Qualified sign-off</dt><dd>MISSING</dd></div>
             <div><dt>Purpose</dt><dd>DISABLED</dd></div>

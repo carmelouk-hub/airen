@@ -54,3 +54,14 @@ test("a ready review packet does not activate the declared-preference purpose", 
   assert.equal(packetReadyPurposes[0].status, "DISABLED");
   assert.match(packetReadyPurposes[0].legalBasis, /TBD/i);
 });
+
+test("a ready decision form is not a qualified decision or an activation", () => {
+  const declaredPreference = purposeReviewCatalog.find(
+    (purpose) => purpose.id === "PUR-CUST-DECLARED-PREFERENCE-v0",
+  );
+
+  assert.equal(declaredPreference.decisionFormState, "FORM READY");
+  assert.equal(declaredPreference.qualifiedDecision, "NOT RECORDED");
+  assert.equal(declaredPreference.status, "DISABLED");
+  assert.notEqual(declaredPreference.qualifiedDecision, "APPROVED");
+});
