@@ -18,6 +18,8 @@ import {
 
 const lifecycle = ["Requested", "Pending", "Confirmed", "Arrived", "Seated", "Completed"];
 
+const airenIconUrl = "https://raw.githubusercontent.com/carmelouk-hub/airen/cd9b3db1de61f3898f835078a8fe9af991a62060/base44-apps/airenos-control-plane-staging/public/airenos-icon.png";
+
 const modules = [
   { icon: CalendarClock, name: "Booking", copy: "Portable contract pending T20", status: "Gated" },
   { icon: UsersRound, name: "Guest relationships", copy: "Consent-aware design surface", status: "Design" },
@@ -46,7 +48,7 @@ export default function App() {
 
       <header className="main-header">
         <div className="brand">
-          <img src="/airenos-icon.png" alt="AIRenOS" />
+          <img src={airenIconUrl} alt="AIRenOS" />
           <div><strong>Risto<span>AIRen</span></strong><small>Powered by AIRenOS</small></div>
         </div>
         <nav>
@@ -74,7 +76,7 @@ export default function App() {
           <div className="orbital-card">
             <div className="orbital-ring ring-one" />
             <div className="orbital-ring ring-two" />
-            <img src="/airenos-icon.png" alt="" />
+            <img src={airenIconUrl} alt="" />
             <div className="orbit-label label-one"><ShieldCheck size={14} />Trusted context</div>
             <div className="orbit-label label-two"><UserRoundCheck size={14} />Human authority</div>
             <div className="orbit-label label-three"><Sparkles size={14} />Governed intelligence</div>
