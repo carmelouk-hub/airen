@@ -53,3 +53,9 @@ The generated template's sample `Task` entity, task agent, weekly-report skill, 
 **Gap status:** `OPEN_T20_AND_GOLDEN_BLOCKING_OPERATIONAL_PROMOTION`  
 **ADR impact:** `NONE`  
 **Next authorized scope:** iterative staging UX and contract-first adapter design only.
+
+## 2026-08-25 historical reconciliation note
+
+The statement that neither application was deployed remains true for the 2026-08-24 milestone and no production publication has occurred. On 2026-08-25, both staging sandboxes were reconciled through Base44's persistent native file-write path: AIRenOS matched `17/17` text files and RistoAIRen matched `15/15`. Local and remote builds passed, the AIRenOS test suite passed `9/9`, and both previews rendered the intended staging interfaces with zero console errors.
+
+The later preview checks recorded platform/environment warnings rather than hiding them: the Tailwind CDN production advisory, the Base44 BuilderBridge missing-parent notice and, during the RistoAIRen remote build, an outdated Browserslist-data advisory. Full checkpoints and the distinction between GitHub publication, sandbox synchronization and production publication are recorded in `BASE44_SANDBOX_PARITY_RECONCILIATION_2026-08-25.md`.

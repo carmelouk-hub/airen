@@ -157,3 +157,9 @@ Verification results:
 - local optimized build: `PASS`;
 - Base44 entities, functions, agents or connectors added: `0`;
 - runtime or canonical authority created: `false`.
+
+## 2026-08-25 remote sandbox reconciliation note
+
+The AIRenOS design-review workspace was subsequently synchronized to Base44 application `6a8c9e874818cd5b11c8cc72` through Base44's persistent native file-write path. Native read-back matched the local manifest `17/17`; the remote design-boundary suite passed `9/9`; the remote optimized build passed; and the sandbox preview showed the intended governed-design experience with zero console errors.
+
+The reconciliation created no custom domain entity, function, agent or connector and did not publish the application to production. Base44 materialized its platform-managed default `User` schema; it is not treated as AIRenOS domain or Foundation authority. Full checkpoints, warnings, boundary findings and the mandatory synchronization-gate answers are recorded in `BASE44_SANDBOX_PARITY_RECONCILIATION_2026-08-25.md`.
