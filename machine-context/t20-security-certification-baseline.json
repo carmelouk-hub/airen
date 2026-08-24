@@ -1,8 +1,8 @@
 {
   "schema_version": "0.1",
   "gate": "T20",
-  "phase": "T20-0_SCOPE_EXECUTABILITY_RECONCILIATION",
-  "state": "DESIGN_FROZEN",
+  "phase": "T20-0A_EXACT_FILE_CONTRACT_CENSUS",
+  "state": "CENSUS_COMPLETE_FAIL_CLOSED",
   "authorized_at": "2026-08-24",
   "repository": "carmelouk-hub/airen",
   "branch": "t20/security-certification-20260824",
@@ -54,7 +54,22 @@
     "gap_status": "OPEN_PRIVATE_BOOKING_READ_CONTRACT",
     "adr_impact": "NONE_AT_FREEZE"
   },
-  "next_action": "RULE_DOC_15_EXACT_PORTABLE_BOOKING_SECURITY_SLICE_FILE_CENSUS",
+  "file_contract_census": {
+    "human_drive_id": "1ewgenwG38RdQzd6yecjAxdqmrI4JZ2ZTdF9ebJWTv00",
+    "machine_drive_id": "1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE",
+    "repository_evidence": "machine-context/t20-portable-booking-file-contract-census.json",
+    "state": "CENSUS_COMPLETE_FAIL_CLOSED",
+    "implementation_authorized": false,
+    "blocking_gap_count": 13,
+    "runtime_code_changed": false,
+    "schema_or_migration_changed": false,
+    "executable_t20_test_changed": false,
+    "parity_status": "NOT_MEASURED_NO_RUNTIME",
+    "gap_status": "OPEN_BLOCKING",
+    "adr_impact": "NARROW_GOVERNANCE_AMENDMENT_REQUIRED_NO_ACCEPTED_ADR_CHANGED"
+  },
+  "next_action": "NARROW_GOVERNANCE_AMENDMENT_FOR_BOOKING_CONTRACT_GAPS",
+  "next_action_status": "PROPOSED_NOT_CANONICAL",
   "tests": [
     {
       "id": "T20-A01",

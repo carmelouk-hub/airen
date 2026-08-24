@@ -1,0 +1,175 @@
+{
+  "schema_version": "0.1",
+  "artifact_id": "T20_PORTABLE_BOOKING_FILE_CONTRACT_CENSUS",
+  "artifact_class": "REPOSITORY_EVIDENCE_NOT_CANONICAL_CONTRACT",
+  "gate": "T20",
+  "slice_id": "T20-S01-PORTABLE-BOOKING",
+  "date": "2026-08-24",
+  "state": "CENSUS_COMPLETE_FAIL_CLOSED",
+  "implementation_authorized": false,
+  "current_verdict": "INCOMPLETE",
+  "certification_claim": false,
+  "repository": "carmelouk-hub/airen",
+  "branch": "t20/security-certification-20260824",
+  "census_input_commit": "b435b35d07c0e448b874e4ef1d43d00dc63fa0e9",
+  "census_input_tree": "e6ad32f86aa3f9421b314c2b464c2e920f565c6a",
+  "authorities": {
+    "human_scope_freeze_drive_id": "17JADehm20AN9V6ew3IB-TwC64l8qq3UWzYM1nPTdK30",
+    "machine_scope_freeze_drive_id": "1XLcmWw5dcQBeqETwCVfTfKmHNB_j3_Cj1zVCF5lbNZQ",
+    "human_census_drive_id": "1ewgenwG38RdQzd6yecjAxdqmrI4JZ2ZTdF9ebJWTv00",
+    "machine_census_drive_id": "1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE",
+    "rule_doc_21_drive_id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE",
+    "doc_008_drive_id": "16d_ItmtJgDktWxYQXbZB7FzTJMVIKFSVzYfF5xd8ZLc",
+    "doc_009_drive_id": "1MhfahuVL7M_1APUnzqXZY_9sCBu-1veToHxTBGGw8mY",
+    "doc_010_drive_id": "1686W-gU6L0Pin_xjUg4V2khyeItJ-9PtnRgMlH3Npmw",
+    "b44_fx_004_human_drive_id": "1C_lGwx5vQaE-a-i4KP3Yr4nuywUujOCOb0csHpvL0Ww",
+    "b44_fx_004_machine_drive_id": "1S8qS7TRfK7XwJdL3hnb2bQUzEhKAV22ZMYpgnOGdG8M"
+  },
+  "live_precheck": {
+    "github_drive_status": "MATCH",
+    "pr4_open": true,
+    "pr4_draft": true,
+    "pr4_merged": false,
+    "fail_closed_applied": true
+  },
+  "exact_existing_file_counts": {
+    "present_reusable": 15,
+    "present_reference_only": 8,
+    "absent_runtime_check": 1
+  },
+  "present_reusable": [
+    "packages/shared-contracts/src/index.ts",
+    "packages/identity/src/index.ts",
+    "packages/authorization/src/index.ts",
+    "packages/entitlements/src/index.ts",
+    "packages/platform-core/src/index.ts",
+    "packages/persistence-postgres/src/index.ts",
+    "apps/api/src/security-context.ts",
+    "db/migrations/0001_foundation_runtime_core.sql",
+    "db/migrations/0002_request_context_contract.sql",
+    "db/migrations/0003_foundation_rls.sql",
+    "db/migrations/0004_authentication_bootstrap.sql",
+    "db/migrations/0005_runtime_role_grants.sql",
+    "tests/postgres/governed-command.test.ts",
+    "machine-context/t20-portable-booking-slice.json",
+    "machine-context/t20-security-certification-baseline.json"
+  ],
+  "present_reference_only": [
+    "packages/ristoairen/README.md",
+    "packages/ristoairen/src/index.ts",
+    "apps/api/src/server.ts",
+    "machine-context/permissions.initial.json",
+    "machine-context/entitlements.initial.json",
+    "db/fixtures/t20/README.md",
+    "tests/t20/README.md",
+    "tests/integration/foundation-runtime.test.ts"
+  ],
+  "canonical_booking_contracts": {
+    "entity": "RST-E003",
+    "scope": "LOCATION_SCOPED",
+    "permissions_named": [
+      "booking.read",
+      "booking.create",
+      "booking.update",
+      "booking.status.update"
+    ],
+    "mutation_functions": [
+      "RST-F-BKG-001",
+      "RST-F-BKG-002",
+      "RST-F-BKG-003"
+    ],
+    "availability_function": "RST-F-BKG-005",
+    "availability_is_private_booking_read": false,
+    "private_read_function": null,
+    "private_read_status": "UNRESOLVED_DO_NOT_INVENT"
+  },
+  "forensic_reference_only": [
+    {
+      "source": "B44-FX-003",
+      "path": "base44/entities/Booking.jsonc",
+      "sha256": "12fda70814482c1c41fe1862c75ce2937f0beb92e27debd271c8f4c7a74515fe",
+      "decision": "TRANSFORM"
+    },
+    {
+      "source": "B44-FX-003",
+      "path": "base44/functions/create-booking/entry.ts",
+      "machine_register_row": 6,
+      "decision": "TRANSFORM"
+    },
+    {
+      "source": "B44-FX-003",
+      "path": "base44/functions/fetch-customer-bookings/entry.ts",
+      "machine_register_row": 14,
+      "decision": "REFERENCE_ONLY_NOT_CANONICAL_PRIVATE_READ"
+    },
+    {
+      "source": "B44-FX-003",
+      "path": "base44/functions/update-booking-details/entry.ts",
+      "machine_register_row": 48,
+      "decision": "TRANSFORM"
+    },
+    {
+      "source": "B44-FX-003",
+      "path": "base44/functions/update-booking-status/entry.ts",
+      "machine_register_row": 49,
+      "decision": "TRANSFORM"
+    }
+  ],
+  "blocking_gaps": [
+    { "id": "GAP-001", "status": "UNRESOLVED", "subject": "PRIVATE_BOOKING_READ_LIST_CONTRACT" },
+    { "id": "GAP-002", "status": "UNRESOLVED", "subject": "RST_F_BKG_003_EXACT_PERMISSION" },
+    { "id": "GAP-003", "status": "UNRESOLVED", "subject": "EXACT_ROLE_PERMISSION_GRANTS" },
+    { "id": "GAP-004", "status": "UNRESOLVED", "subject": "BOOKING_ENTITLEMENT_APPLICABILITY_AND_KEY" },
+    { "id": "GAP-005", "status": "UNRESOLVED", "subject": "TENANT_CONTEXT_CONTRACT" },
+    { "id": "GAP-006", "status": "ABSENT", "subject": "BOOKING_SQL_SCHEMA_AND_MIGRATION" },
+    { "id": "GAP-007", "status": "ABSENT", "subject": "BOOKING_IDEMPOTENCY" },
+    { "id": "GAP-008", "status": "ABSENT", "subject": "TYPED_VERSIONED_AUDIT_OUTBOX_MAPPING" },
+    { "id": "GAP-009", "status": "ABSENT", "subject": "BOOKING_PERSISTENCE_AND_RLS" },
+    { "id": "GAP-010", "status": "ABSENT", "subject": "PRIVATE_BOOKING_API_AND_DTO" },
+    { "id": "GAP-011", "status": "ABSENT", "subject": "T20_AUTHENTICATED_FIXTURES_TESTS_AND_CLEANUP" },
+    { "id": "GAP-012", "status": "ABSENT", "subject": "LOCAL_FORENSIC_SOURCE_FILES" },
+    { "id": "GAP-013", "status": "UNRESOLVED", "subject": "CANONICAL_NEW_IMPLEMENTATION_FILE_PATHS" }
+  ],
+  "validation": {
+    "foundation_runtime_tests": { "status": "PASS", "passed": 11, "total": 11 },
+    "platform_security_context_tests": { "status": "PASS", "passed": 2, "total": 2 },
+    "sql_runtime_static_contracts": "PASS",
+    "ristoairen_runtime_exports": [],
+    "booking_runtime_reference": "ABSENT",
+    "booking_table": "ABSENT",
+    "booking_permission_migration": "ABSENT",
+    "executable_t20_test_or_fixture": "ABSENT"
+  },
+  "test_status": {
+    "required": 66,
+    "mapped_to_slice": 32,
+    "remaining_mandatory": 34,
+    "runtime_executed": 0,
+    "all_status": "NOT_RUN",
+    "waived": 0
+  },
+  "change_boundary": {
+    "runtime_code_changed": false,
+    "schema_changed": false,
+    "migration_added": false,
+    "executable_t20_test_added": false,
+    "repository_created": [
+      "docs/T20_PORTABLE_BOOKING_EXACT_FILE_CONTRACT_CENSUS.md",
+      "machine-context/t20-portable-booking-file-contract-census.json"
+    ],
+    "repository_modified": [
+      "machine-context/t20-security-certification-baseline.json",
+      "tests/t20/README.md"
+    ]
+  },
+  "evidence_status": {
+    "parity_status": "NOT_MEASURED_NO_RUNTIME",
+    "gap_status": "OPEN_BLOCKING",
+    "adr_impact": "NARROW_GOVERNANCE_AMENDMENT_REQUIRED_NO_ACCEPTED_ADR_CHANGED"
+  },
+  "next_action": {
+    "status": "PROPOSED_NOT_CANONICAL",
+    "value": "NARROW_GOVERNANCE_AMENDMENT_FOR_BOOKING_CONTRACT_GAPS",
+    "implementation_remains_blocked": true
+  }
+}
