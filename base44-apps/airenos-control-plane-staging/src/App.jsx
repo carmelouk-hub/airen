@@ -44,6 +44,8 @@ const navigation = [
   { id: "governance", label: "Promotion Review", icon: ShieldCheck },
 ];
 
+const airenIconUrl = "https://raw.githubusercontent.com/carmelouk-hub/airen/cd9b3db1de61f3898f835078a8fe9af991a62060/base44-apps/airenos-control-plane-staging/public/airenos-icon.png";
+
 const architectureLayers = [
   { icon: Activity, name: "Observation Ledger", note: "Authorized events remain observations" },
   { icon: Fingerprint, name: "Purpose & Authorization Graph", note: "Purpose never replaces permission" },
@@ -314,7 +316,7 @@ export default function App() {
     <main className="app-shell">
       <div className="ambient ambient-one" /><div className="ambient ambient-two" />
       <aside className="rail">
-        <div className="brand-lockup"><img src="/airenos-icon.png" alt="AIRenOS" /><div><strong>AIRenOS</strong><span>Design Review</span></div></div>
+        <div className="brand-lockup"><img src={airenIconUrl} alt="AIRenOS" /><div><strong>AIRenOS</strong><span>Design Review</span></div></div>
         <nav aria-label="Design review sections">
           {navigation.map(({ id, label, icon: Icon }) => (
             <button key={id} className={`nav-item ${activeView === id ? "active" : ""}`} onClick={() => setActiveView(id)}><Icon size={18} /><span>{label}</span></button>

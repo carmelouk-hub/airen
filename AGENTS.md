@@ -28,3 +28,17 @@ Validate input -> resolve actor -> resolve trusted Tenant/Location -> permission
 
 ## Required evidence
 Every milestone produces code, tests, schema/migration changes, evidence, parity status, gap status and ADR impact.
+
+## Base44 implementation synchronization gate
+For every Base44 implementation or review-surface change, ask and answer the same questions before completion:
+1. Is the change authorized for its exact design, sandbox, staging or runtime scope?
+2. Is the intended implementation complete and verified locally?
+3. Is the exact local state committed and pushed to GitHub with a recorded commit SHA?
+4. Has the correct Base44 app received the same in-scope files, including prior unsynchronized changes discovered during the milestone?
+5. Do remote file evidence or hashes prove parity with the committed local state?
+6. Do the required tests and optimized build pass both locally and in the Base44 sandbox?
+7. Does the Base44 preview show the intended interface without browser or console errors?
+8. Were any entity, function, agent, connector, auth setting, secret or production deployment added, changed or intentionally left unchanged?
+9. Is a Base44 checkpoint recorded, and are all parity gaps, governance boundaries and publication states documented?
+
+GitHub publication is not evidence of Base44 synchronization. Sandbox synchronization is not production publication. A milestone remains incomplete while any required answer is unknown or contradicted.
