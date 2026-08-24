@@ -119,6 +119,26 @@ Verification results:
 - Base44 entities, functions, agents or connectors added: `0`;
 - runtime or canonical authority created: `false`.
 
+## EBI-R01 service-journey evidence capture update
+
+`NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_SERVICE_JOURNEY_EVIDENCE_RECORD_v0.1.md` separates source-grounded candidate design statements from the factual evidence required to verify the exact service journey and intended outcome.
+
+The record traces the candidate outcome, actors, operations, recipient boundary, exclusions, authority pipeline and correction semantics to versioned repository sources. It does not promote that candidate skeleton to a real product journey. The exact trigger, product/vertical, deployment context, entry channel, actual actors and identity method, service owner, frequency, intended operational result, consequences, factual recipients and user-expectation evidence remain missing or partial.
+
+The Base44 design workspace therefore shows `EBI-R01 · CAPTURE READY · PARTIAL · EXACT JOURNEY NOT VERIFIED · FACTUAL OWNER UNASSIGNED`. The evidence-bundle totals remain `0 READY · 4 PARTIAL · 8 MISSING`, the qualified decision remains `NOT RECORDED` and the purpose remains `DISABLED`.
+
+Verification results:
+
+- EBI-R01 capture records prepared: `1`;
+- source-grounded candidate boundary recorded: `true`;
+- exact service journeys verified: `0`;
+- factual service owners assigned: `0`;
+- ready evidence slots: `0/12`;
+- executable design-boundary tests: `9/9 PASS` after this milestone;
+- local optimized build: `PASS` after this milestone;
+- Base44 entities, functions, agents or connectors added: `0`;
+- runtime or canonical authority created: `false`.
+
 ## Qualified-review decision record update
 
 `NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_QUALIFIED_REVIEW_DECISION_RECORD_v0.1.md` provides a blank, versioned decision record for the actual qualified reviewers. It requires reviewer identity and capacity, verified evidence, operation-level lawful-basis conclusions, factual role allocation, rights, retention, DPIA, residual risk, security controls, reasoned outcome and separate attestations.

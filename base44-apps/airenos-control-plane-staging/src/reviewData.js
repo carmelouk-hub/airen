@@ -109,11 +109,15 @@ export const purposeReviewCatalog = Object.freeze([
 ]);
 
 export const declaredPreferenceEvidenceStatus = Object.freeze({
-  indexState: "INDEX READY",
+  indexState: "INDEX v0.2 READY",
   required: 12,
   ready: 0,
   partial: 4,
   missing: 8,
+  r01CaptureState: "CAPTURE READY",
+  r01RequirementState: "PARTIAL",
+  exactJourneyVerified: false,
+  factualOwnerState: "UNASSIGNED",
   qualifiedDecision: "NOT RECORDED",
   purposeState: "DISABLED",
 });

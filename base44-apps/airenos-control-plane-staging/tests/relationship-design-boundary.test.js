@@ -68,7 +68,7 @@ test("a ready decision form is not a qualified decision or an activation", () =>
 });
 
 test("an indexed evidence bundle remains incomplete and fail-closed", () => {
-  assert.equal(declaredPreferenceEvidenceStatus.indexState, "INDEX READY");
+  assert.equal(declaredPreferenceEvidenceStatus.indexState, "INDEX v0.2 READY");
   assert.equal(declaredPreferenceEvidenceStatus.required, 12);
   assert.equal(
     declaredPreferenceEvidenceStatus.ready + declaredPreferenceEvidenceStatus.partial + declaredPreferenceEvidenceStatus.missing,
@@ -78,5 +78,13 @@ test("an indexed evidence bundle remains incomplete and fail-closed", () => {
   assert.equal(declaredPreferenceEvidenceStatus.partial, 4);
   assert.equal(declaredPreferenceEvidenceStatus.missing, 8);
   assert.equal(declaredPreferenceEvidenceStatus.qualifiedDecision, "NOT RECORDED");
+  assert.equal(declaredPreferenceEvidenceStatus.purposeState, "DISABLED");
+});
+
+test("a prepared EBI-R01 capture record is not a verified service journey", () => {
+  assert.equal(declaredPreferenceEvidenceStatus.r01CaptureState, "CAPTURE READY");
+  assert.equal(declaredPreferenceEvidenceStatus.r01RequirementState, "PARTIAL");
+  assert.equal(declaredPreferenceEvidenceStatus.exactJourneyVerified, false);
+  assert.equal(declaredPreferenceEvidenceStatus.factualOwnerState, "UNASSIGNED");
   assert.equal(declaredPreferenceEvidenceStatus.purposeState, "DISABLED");
 });

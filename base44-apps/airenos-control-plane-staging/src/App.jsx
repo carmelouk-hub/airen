@@ -190,6 +190,15 @@ function AuthorizationReview() {
             <div><dt>Purpose</dt><dd>{declaredPreferenceEvidenceStatus.purposeState}</dd></div>
           </dl>
         </article>
+        <article className="journey-evidence-band">
+          <div><GitBranch size={21} /><span><small>EBI-R01 · service journey</small><strong>{declaredPreferenceEvidenceStatus.r01CaptureState}</strong></span></div>
+          <dl>
+            <div><dt>Requirement</dt><dd>{declaredPreferenceEvidenceStatus.r01RequirementState}</dd></div>
+            <div><dt>Exact journey</dt><dd>{declaredPreferenceEvidenceStatus.exactJourneyVerified ? "VERIFIED" : "NOT VERIFIED"}</dd></div>
+            <div><dt>Factual owner</dt><dd>{declaredPreferenceEvidenceStatus.factualOwnerState}</dd></div>
+            <div><dt>Purpose</dt><dd>{declaredPreferenceEvidenceStatus.purposeState}</dd></div>
+          </dl>
+        </article>
       </section>
 
       <div className="authorization-grid">
