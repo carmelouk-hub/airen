@@ -56,6 +56,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Customer · trusted Tenant/Location workflow",
     operation: "Minimized read · action proposal",
     legalBasis: "TBD legal review",
+    reviewState: "NOT STARTED",
     status: "DISABLED",
   },
   {
@@ -64,6 +65,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Verified customer · same-Tenant relationship",
     operation: "Declare · read own · correct",
     legalBasis: "TBD legal review",
+    reviewState: "PACKET READY",
     status: "DISABLED",
   },
   {
@@ -72,6 +74,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Verified customer · governed case",
     operation: "Feedback · contest · revoke",
     legalBasis: "TBD legal review",
+    reviewState: "NOT STARTED",
     status: "DISABLED",
   },
   {
@@ -80,6 +83,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Supplier · same-Tenant evidence",
     operation: "Read evidence · propose claim",
     legalBasis: "TBD where personal data applies",
+    reviewState: "NOT STARTED",
     status: "DISABLED",
   },
   {
@@ -88,6 +92,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Supplier · verified document context",
     operation: "Read validity · propose alert",
     legalBasis: "TBD where personal data applies",
+    reviewState: "NOT STARTED",
     status: "DISABLED",
   },
   {
@@ -96,6 +101,7 @@ export const purposeReviewCatalog = Object.freeze([
     subject: "Supplier · minimized organizational data",
     operation: "Read Twin · explain proposal",
     legalBasis: "TBD where personal data applies",
+    reviewState: "NOT STARTED",
     status: "DISABLED",
   },
 ]);

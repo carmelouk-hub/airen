@@ -113,6 +113,15 @@ h1, h2, h3, p, dl, dd { margin-top: 0; }
 .purpose-card dl div { padding: 8px 0; border-top: 1px solid rgba(83, 166, 201, .09); }
 .purpose-card dt { color: #4d7084; font-size: 7px; letter-spacing: .09em; text-transform: uppercase; }
 .purpose-card dd { margin: 4px 0 0; color: #8cabb9; font-size: 8px; }
+.purpose-card dd.packet-ready { color: #65ddba; font-weight: 700; letter-spacing: .06em; }
+.review-packet-band { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 12px; padding: 15px 17px; border: 1px solid rgba(84, 221, 179, .16); border-radius: 14px; background: linear-gradient(110deg, rgba(14, 71, 61, .29), rgba(5, 30, 43, .72)); }
+.review-packet-band > div { display: flex; align-items: center; gap: 11px; color: #65ddba; }
+.review-packet-band > div span { display: grid; gap: 3px; }
+.review-packet-band small, .review-packet-band dt { color: #587b85; font-size: 7px; letter-spacing: .09em; text-transform: uppercase; }
+.review-packet-band strong { color: #caeee4; font-size: 10px; }
+.review-packet-band dl { display: grid; grid-template-columns: repeat(4, auto); gap: 24px; margin: 0; }
+.review-packet-band dl div { display: grid; gap: 4px; }
+.review-packet-band dd { margin: 0; color: #d7b273; font-size: 8px; font-weight: 700; }
 .matrix-card, .fail-card { padding: 22px; }
 .matrix-card h2, .fail-card h2 { margin: 7px 0 17px; font: 600 20px "Space Grotesk"; }
 .matrix-row { display: flex; justify-content: space-between; gap: 15px; padding: 10px 0; border-top: 1px solid rgba(83, 166, 201, .1); color: #68869a; font-size: 9px; }
@@ -146,6 +155,7 @@ footer { max-width: 1370px; margin: 28px auto 0; padding-top: 17px; display: fle
   .workspace { padding-inline: 28px; }
   .architecture-grid, .claim-grid, .purpose-grid { grid-template-columns: repeat(2, 1fr); }
   .authorization-flow { grid-template-columns: repeat(3, 1fr); }
+  .review-packet-band { align-items: flex-start; flex-direction: column; }
   .flow-arrow { display: none; }
 }
 @media (max-width: 760px) {
@@ -165,6 +175,7 @@ footer { max-width: 1370px; margin: 28px auto 0; padding-top: 17px; display: fle
   .subject-band { align-items: flex-start; flex-wrap: wrap; }
   .subject-boundary { width: 100%; margin-left: 56px; }
   .authorization-flow { grid-template-columns: 1fr 1fr; }
+  .review-packet-band dl { grid-template-columns: 1fr 1fr; width: 100%; }
   .foundation-flow { align-items: flex-start; flex-direction: column; }
   .foundation-flow > svg { transform: rotate(90deg); }
   .promotion-gate { align-items: flex-start; flex-direction: column; }

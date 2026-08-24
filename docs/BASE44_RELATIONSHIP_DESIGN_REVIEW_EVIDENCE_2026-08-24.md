@@ -76,3 +76,23 @@ Verification results:
 **Design-phase promotion:** `AUTHORIZED`
 
 **Canonical/runtime promotion:** `NOT_AUTHORIZED`
+
+## Declared-preference legal and privacy review packet update
+
+`NEXT_AIR_002_PUR_CUST_DECLARED_PREFERENCE_LEGAL_PRIVACY_REVIEW_PACKET_v0.1.md` prepares one narrowly bounded purpose for qualified review. It records operation-level necessity questions, lawful-basis tests, role-allocation questions, transparency and rights requirements, retention decisions, minimum controls and accountable sign-offs.
+
+The packet selects no lawful basis, assigns no controller or processor role and approves no field taxonomy, retention period or runtime flow. The purpose remains `DISABLED`, with `0` approved lawful bases. The governing full-DPIA requirement and separate AIRenOS canonical decision remain unchanged.
+
+The Base44 design workspace now distinguishes `PACKET READY` from legal approval. Exactly one candidate shows that review-preparation state; all six purpose cards remain disabled and the fail-closed gate remains in force.
+
+Verification results:
+
+- qualified-review packets prepared: `1`;
+- qualified legal/privacy decisions completed: `0`;
+- enabled purposes: `0/6`;
+- approved lawful bases: `0`;
+- approved controller/processor role assignments: `0`;
+- executable design-boundary tests: `6/6 PASS`;
+- local optimized build: `PASS`;
+- Base44 entities, functions, agents or connectors added: `0`;
+- runtime or canonical authority created: `false`.

@@ -45,3 +45,12 @@ test("candidate purposes remain disabled until legal and governance review", () 
   assert.ok(purposeReviewCatalog.every((purpose) => purpose.status === "DISABLED"));
   assert.ok(purposeReviewCatalog.every((purpose) => purpose.legalBasis.toLowerCase().includes("tbd")));
 });
+
+test("a ready review packet does not activate the declared-preference purpose", () => {
+  const packetReadyPurposes = purposeReviewCatalog.filter((purpose) => purpose.reviewState === "PACKET READY");
+
+  assert.equal(packetReadyPurposes.length, 1);
+  assert.equal(packetReadyPurposes[0].id, "PUR-CUST-DECLARED-PREFERENCE-v0");
+  assert.equal(packetReadyPurposes[0].status, "DISABLED");
+  assert.match(packetReadyPurposes[0].legalBasis, /TBD/i);
+});

@@ -162,10 +162,20 @@ function AuthorizationReview() {
               <dl>
                 <div><dt>Candidate operations</dt><dd>{purpose.operation}</dd></div>
                 <div><dt>Lawful basis</dt><dd>{purpose.legalBasis}</dd></div>
+                <div><dt>Qualified review</dt><dd className={purpose.reviewState === "PACKET READY" ? "packet-ready" : ""}>{purpose.reviewState}</dd></div>
               </dl>
             </article>
           ))}
         </div>
+        <article className="review-packet-band">
+          <div><Scale size={21} /><span><small>Selected review packet</small><strong>PUR-CUST-DECLARED-PREFERENCE-v0</strong></span></div>
+          <dl>
+            <div><dt>Packet</dt><dd>READY</dd></div>
+            <div><dt>Lawful basis</dt><dd>TBD · 0 APPROVED</dd></div>
+            <div><dt>Qualified sign-off</dt><dd>MISSING</dd></div>
+            <div><dt>Purpose</dt><dd>DISABLED</dd></div>
+          </dl>
+        </article>
       </section>
 
       <div className="authorization-grid">
