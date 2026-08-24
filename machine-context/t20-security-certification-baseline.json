@@ -1,0 +1,439 @@
+{
+  "schema_version": "0.1",
+  "gate": "T20",
+  "phase": "T20-0_SCOPE_EXECUTABILITY_RECONCILIATION",
+  "state": "OPEN_RECONCILIATION",
+  "authorized_at": "2026-08-24",
+  "repository": "carmelouk-hub/airen",
+  "branch": "t20/security-certification-20260824",
+  "baseline_commit": "3d32b53bde2191c7718606cf9d3fe3497ae3f626",
+  "baseline_tree": "d1855a0a8e28f67342cf401e589f433277af10f3",
+  "human_authority_drive_id": "1zjrGrHkplrzZvhqn8TbB7XVcPgE5cKFXblgBsmt6jLU",
+  "handoff_drive_id": "1Juh6ENbOC_we5eL3OvmVRg0AM5t_0Fvnm2PAJYQHu5o",
+  "rule_doc_21_drive_id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE",
+  "required_test_count": 66,
+  "distribution": {
+    "tenant_admin": 27,
+    "manager": 20,
+    "responsabile": 18,
+    "cross_role_system": 1
+  },
+  "current_verdict": "INCOMPLETE",
+  "certification_claim": false,
+  "reconciliation": {
+    "control_plane_r3_a_through_r3_j": "CLOSED_PASS",
+    "portable_ristoairen_vertical_runtime": "NOT_PRESENT_AT_BASELINE",
+    "booking_crm_menu_production_stella_surfaces": "NOT_PRESENT_AT_BASELINE",
+    "real_role_authenticated_t20_environment": "NOT_PROVISIONED",
+    "synthetic_fixture_environment": "NOT_PROVISIONED",
+    "cleanup_executed": false
+  },
+  "protection_boundaries": {
+    "pr4_must_remain_open_draft_unmerged": true,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "base44_decommission_authorized": false,
+    "golden_restaurant_e2e_authorized": false,
+    "production_cutover_authorized": false,
+    "synthetic_test_data_only": true
+  },
+  "next_action": "FREEZE_T20_0_HUMAN_AND_MACHINE_SCOPE_THEN_DEFINE_FIRST_PORTABLE_VERTICAL_SECURITY_SLICE",
+  "tests": [
+    {
+      "id": "T20-A01",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A02",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A03",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A04",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A05",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A06",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A07",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A08",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A09",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A10",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A11",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A12",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A13",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A14",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A15",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A16",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A17",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A18",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A19",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A20",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A21",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A22",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A23",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A24",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A25",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A26",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-A27",
+      "role": "tenant_admin",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M01",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M02",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M03",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M04",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M05",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M06",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M07",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M08",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M09",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M10",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M11",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M12",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M13",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M14",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M15",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M16",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M17",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M18",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M19",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-M20",
+      "role": "manager",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R01",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R02",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R03",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R04",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R05",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R06",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R07",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R08",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R09",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R10",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R11",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R12",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R13",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R14",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R15",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R16",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R17",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-R18",
+      "role": "responsabile",
+      "status": "NOT_RUN",
+      "reason": "PORTABLE_RISTOAIREN_VERTICAL_RUNTIME_NOT_PRESENT"
+    },
+    {
+      "id": "T20-X01",
+      "role": "cross_role_system",
+      "status": "NOT_RUN",
+      "reason": "T20_CONTROLLED_RUNTIME_NOT_PROVISIONED"
+    }
+  ]
+}
