@@ -1,0 +1,177 @@
+{
+  "schema_version": "0.1",
+  "artifact_id": "T20-S01-PORTABLE-BOOKING",
+  "gate": "T20",
+  "phase": "T20-0_SCOPE_EXECUTABILITY_RECONCILIATION",
+  "state": "DESIGN_FROZEN_NOT_IMPLEMENTED",
+  "date": "2026-08-24",
+  "repository": "carmelouk-hub/airen",
+  "branch": "t20/security-certification-20260824",
+  "r3_certified_baseline_commit": "3d32b53bde2191c7718606cf9d3fe3497ae3f626",
+  "r3_certified_baseline_tree": "d1855a0a8e28f67342cf401e589f433277af10f3",
+  "t20_opening_commit": "0da21040f1d113dab2da6a30eeeed459b03fc33e",
+  "authorities": {
+    "security_specification_drive_id": "1zjrGrHkplrzZvhqn8TbB7XVcPgE5cKFXblgBsmt6jLU",
+    "human_scope_freeze_drive_id": "17JADehm20AN9V6ew3IB-TwC64l8qq3UWzYM1nPTdK30",
+    "machine_scope_freeze_drive_id": "1XLcmWw5dcQBeqETwCVfTfKmHNB_j3_Cj1zVCF5lbNZQ",
+    "rule_doc_21_drive_id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE",
+    "doc_008_drive_id": "16d_ItmtJgDktWxYQXbZB7FzTJMVIKFSVzYfF5xd8ZLc",
+    "doc_009_drive_id": "1MhfahuVL7M_1APUnzqXZY_9sCBu-1veToHxTBGGw8mY",
+    "doc_010_drive_id": "1686W-gU6L0Pin_xjUg4V2khyeItJ-9PtnRgMlH3Npmw",
+    "b44_fx_004_drive_id": "1C_lGwx5vQaE-a-i4KP3Yr4nuywUujOCOb0csHpvL0Ww",
+    "b44_fx_005_drive_id": "1RFBWDvghBvmo4fIMaYzllqYvmOAq09qZBT0jOFN-HiM"
+  },
+  "certification": {
+    "current_verdict": "INCOMPLETE",
+    "certification_claim": false,
+    "implementation_started": false,
+    "implementation_pass": false,
+    "pass": false,
+    "closed": false,
+    "runtime_tests_executed": 0,
+    "required_test_count": 66,
+    "cleanup_executed": false
+  },
+  "slice": {
+    "domain": "Booking / Reservation",
+    "entity_id": "RST-E003",
+    "entity_name": "Booking",
+    "scope": "LOCATION_SCOPED",
+    "permissions": [
+      "booking.read",
+      "booking.create",
+      "booking.update",
+      "booking.status.update"
+    ],
+    "mutation_functions": [
+      "RST-F-BKG-001",
+      "RST-F-BKG-002",
+      "RST-F-BKG-003"
+    ],
+    "private_read_function": null,
+    "private_read_function_status": "CANONICAL_GAP_DO_NOT_INVENT"
+  },
+  "required_mutation_pipeline": [
+    "validate_input",
+    "resolve_actor",
+    "resolve_trusted_tenant_and_location",
+    "permission",
+    "entitlement_if_applicable",
+    "transaction",
+    "domain_validation",
+    "idempotency",
+    "audit",
+    "outbox",
+    "typed_result"
+  ],
+  "security_invariants": [
+    "CLIENT_TENANT_ID_IS_NEVER_AUTHORITY",
+    "CLIENT_LOCATION_ID_IS_NEVER_AUTHORITY",
+    "UNKNOWN_HOST_FAILS_CLOSED",
+    "TENANT_ADMIN_IS_NOT_PLATFORM_ADMIN",
+    "TRUSTED_TENANT_LOCATION_RESOLUTION_PRECEDES_PERMISSION",
+    "CROSS_TENANT_ACCESS_DENIED",
+    "CROSS_LOCATION_ACCESS_DENIED_UNLESS_CANONICALLY_AUTHORIZED",
+    "REAL_AUTHENTICATED_ROLE_SESSIONS_REQUIRED",
+    "SYNTHETIC_TEMPORARY_FIXTURES_ONLY",
+    "PRODUCTION_DATA_FOR_FIXTURES_FORBIDDEN",
+    "NO_BASE44_DEPENDENCY_IN_FOUNDATION_CORE",
+    "NO_PROVIDER_SDK_IN_DOMAIN_PACKAGES",
+    "NO_DIRECT_STELLA_DB_WRITES",
+    "NO_PROVIDER_SECRET_IN_GIT_DB_LOG_FIXTURE_OR_PROMPT",
+    "NO_SCHEMA_CHANGE_WITHOUT_VERSIONED_MIGRATION",
+    "NO_SECURITY_BYPASS_FOR_E2E",
+    "AUDIT_REQUIRED_FOR_GOVERNED_MUTATIONS",
+    "OUTBOX_REQUIRED_FOR_GOVERNED_MUTATIONS",
+    "IDEMPOTENCY_REQUIRED_FOR_GOVERNED_MUTATIONS",
+    "TYPED_RESULTS_REQUIRED",
+    "PR4_REMAINS_OPEN_DRAFT_UNMERGED",
+    "MAIN_AND_PRODUCTION_REMAIN_UNCHANGED",
+    "GOLDEN_E2E_AND_CUTOVER_REMAIN_UNAUTHORIZED",
+    "NO_AIRENOS_NEXT_PROMOTION_WITHOUT_GOVERNANCE"
+  ],
+  "test_mapping": {
+    "mapped_count": 32,
+    "remaining_mandatory_count": 34,
+    "mapped_ids": [
+      "T20-A01",
+      "T20-A02",
+      "T20-A03",
+      "T20-A12",
+      "T20-A13",
+      "T20-A14",
+      "T20-A15",
+      "T20-A20",
+      "T20-A21",
+      "T20-A22",
+      "T20-A27",
+      "T20-M01",
+      "T20-M02",
+      "T20-M03",
+      "T20-M10",
+      "T20-M11",
+      "T20-M12",
+      "T20-M13",
+      "T20-M14",
+      "T20-M15",
+      "T20-M19",
+      "T20-M20",
+      "T20-R01",
+      "T20-R02",
+      "T20-R03",
+      "T20-R09",
+      "T20-R11",
+      "T20-R12",
+      "T20-R13",
+      "T20-R14",
+      "T20-R15",
+      "T20-R18"
+    ],
+    "unmapped_tests_waived": false
+  },
+  "fixture_topology": {
+    "required": true,
+    "provisioned": false,
+    "synthetic_only": true,
+    "minimum_tenants": 2,
+    "distinct_locations_required": true,
+    "authenticated_roles": [
+      "tenant_admin",
+      "manager",
+      "responsabile_cucina"
+    ],
+    "cleanup_verification_required": true
+  },
+  "change_boundary": {
+    "repository_artifact_count": 4,
+    "created": [
+      "docs/T20-0_SECURITY_CERTIFICATION_SCOPE_FREEZE.md",
+      "machine-context/t20-portable-booking-slice.json"
+    ],
+    "modified": [
+      "machine-context/t20-security-certification-baseline.json",
+      "tests/t20/README.md"
+    ],
+    "runtime_code_changed": false,
+    "schema_changed": false,
+    "migration_added": false,
+    "executable_t20_test_added": false
+  },
+  "evidence": {
+    "runtime_evidence": "NOT_PRESENT",
+    "parity_status": "DESIGN_ONLY_NOT_MEASURED",
+    "gap_status": "OPEN_PRIVATE_BOOKING_READ_CONTRACT",
+    "adr_impact": "NONE_AT_FREEZE",
+    "github_drive_reconciliation": "MATCH_REQUIRED_AND_VERIFIED_BEFORE_STEP_COMPLETION"
+  },
+  "out_of_scope": [
+    "MAIN_MODIFICATION",
+    "PR4_MERGE",
+    "CORTE_PRODUCTION_MODIFICATION",
+    "BASE44_DECOMMISSION",
+    "GOLDEN_RESTAURANT_E2E",
+    "PRODUCTION_CUTOVER",
+    "AIRENOS_NEXT_PROMOTION"
+  ],
+  "next_action": "RULE_DOC_15_EXACT_PORTABLE_BOOKING_SECURITY_SLICE_FILE_CENSUS"
+}
