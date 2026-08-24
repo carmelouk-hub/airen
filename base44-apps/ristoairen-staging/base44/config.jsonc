@@ -1,0 +1,20 @@
+// Base44 Project Configuration
+// JSONC enables inline documentation and discoverability directly in config files.
+// Full-stack template with backend and client configuration.
+
+{
+  "name": "ristoairen-staging",
+
+  "description": "Tenant/Location-scoped RistoAIRen staging shell",
+
+  "visibility": "public",
+
+  // Site/hosting configuration for the client application
+  // Docs: https://docs.base44.com/configuration/hosting
+  "site": {
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "serveCommand": "npm run dev",
+    "outputDirectory": "./dist"
+  }
+}
