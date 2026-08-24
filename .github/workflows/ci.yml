@@ -144,6 +144,7 @@ jobs:
       MIGRATION_DATABASE_URL_SECRET_REF: secret://env/AIREN_R3J_MIGRATION_DATABASE_URL
       AIREN_R3J_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_r3j_test
       R3J_BASELINE_SHA: 36681602009bed93dd35d2d69fbc90a061e6eb7a
+      R3J_CORRECTIVE_BASELINE_SHA: d8615ed0346eab73fae58c85f0d3342567ab8522
       R3J_REGRESSION_GATE: PASS
       R3J_PRODUCTION_SIDE_EFFECTS: FORBIDDEN
     steps:
@@ -155,28 +156,46 @@ jobs:
           node-version: 22
       - name: Install locked Node PostgreSQL adapter dependency
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
-      - name: Enforce exact RULE-DOC-15 R3-J three-file census
+      - name: Enforce original and corrective RULE-DOC-15 R3-J censuses
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t actual < <(git diff --name-only "$R3J_BASELINE_SHA" "$GITHUB_SHA" | sort)
-          expected=(
-            ".github/workflows/ci.yml"
-            "package.json"
+
+          verify_exact_delta() {
+            local base="$1"
+            local head="$2"
+            local label="$3"
+            shift 3
+            local -a expected=("$@")
+            local -a actual expected_sorted
+            mapfile -t actual < <(git diff --name-only "$base" "$head" | sort)
+            mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+            if [[ "${#actual[@]}" -ne "${#expected_sorted[@]}" ]]; then
+              printf '%s expected %s files, got %s\n' "$label" "${#expected_sorted[@]}" "${#actual[@]}" >&2
+              printf 'actual: %s\n' "${actual[*]}" >&2
+              exit 1
+            fi
+            if [[ "$(printf '%s\n' "${actual[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
+              printf '%s changed-file census mismatch\n' "$label" >&2
+              printf 'expected: %s\n' "${expected_sorted[*]}" >&2
+              printf 'actual: %s\n' "${actual[*]}" >&2
+              exit 1
+            fi
+          }
+
+          verify_exact_delta "$R3J_BASELINE_SHA" "$R3J_CORRECTIVE_BASELINE_SHA" "R3-J original census" \
+            ".github/workflows/ci.yml" \
+            "package.json" \
             "tests/integration/r3j-integrated-control-plane-runtime.test.ts"
-          )
-          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
-          if [[ "${#actual[@]}" -ne 3 ]]; then
-            printf 'R3-J census expected 3 files, got %s\n' "${#actual[@]}" >&2
-            printf 'actual: %s\n' "${actual[*]}" >&2
-            exit 1
-          fi
-          if [[ "$(printf '%s\n' "${actual[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
-            printf 'R3-J changed-file census mismatch\n' >&2
-            printf 'expected: %s\n' "${expected_sorted[*]}" >&2
-            printf 'actual: %s\n' "${actual[*]}" >&2
-            exit 1
-          fi
+
+          verify_exact_delta "$R3J_CORRECTIVE_BASELINE_SHA" "$GITHUB_SHA" "R3-J corrective census" \
+            ".github/workflows/ci.yml" \
+            "apps/api/src/server.ts" \
+            "apps/api/src/security-context.ts" \
+            "deploy/README.md" \
+            "packages/persistence-postgres/src/index.ts" \
+            "tests/deployment/provision_runtime_login.sql"
+
           echo "R3J_CENSUS_GUARD=PASS" >> "$GITHUB_ENV"
       - name: Apply canonical migration chain
         run: node --experimental-strip-types deploy/migrate.ts

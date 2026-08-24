@@ -120,7 +120,7 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     logSink: new StdoutJsonLogSink(),
     metricSink: new StdoutJsonMetricSink()
   });
-  const pool = runtime.withDatabaseConnectionString((connectionString) => new Pool({ connectionString, max: 5, application_name: "airenos-api" }));
+  const pool = runtime.withDatabaseConnectionString((connectionString) => new Pool({ connectionString, max: 5, application_name: "airenos-api", options: "-c role=airen_app" }));
 
   const foundationReads = new PostgresFoundationReadStore(pool);
   const authentication = new ProviderNeutralAuthenticationAdapter(
@@ -156,11 +156,32 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     name: "postgres.runtime",
     critical: true,
     run: async () => {
-      const role = await pool.query<{ rolsuper: boolean; rolbypassrls: boolean }>("SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname=current_user");
-      if (!role.rowCount || role.rows[0].rolsuper || role.rows[0].rolbypassrls) return { ok: false, code: "privileged_runtime_role" };
-      const membership = await pool.query<{ app_member: boolean; auth_member: boolean }>("SELECT pg_has_role(current_user,'airen_app','MEMBER') AS app_member, pg_has_role(current_user,'airen_auth','MEMBER') AS auth_member");
-      const ok = Boolean(membership.rows[0]?.app_member && membership.rows[0]?.auth_member);
-      return { ok, code: ok ? "ok" : "runtime_role_membership_missing" };
+      const runtimeRole = await pool.query<{
+        session_role: string;
+        active_role: string;
+        rolsuper: boolean;
+        rolbypassrls: boolean;
+        app_member: boolean;
+        auth_member: boolean;
+        control_plane_member: boolean;
+        owner_member: boolean;
+      }>(`SELECT
+          session_user AS session_role,
+          current_user AS active_role,
+          r.rolsuper,
+          r.rolbypassrls,
+          pg_has_role(session_user,'airen_app','MEMBER') AS app_member,
+          pg_has_role(session_user,'airen_auth','MEMBER') AS auth_member,
+          pg_has_role(session_user,'airen_control_plane','MEMBER') AS control_plane_member,
+          pg_has_role(session_user,'airen_control_plane_owner','MEMBER') AS owner_member
+        FROM pg_roles r
+        WHERE r.rolname=session_user`);
+      const role = runtimeRole.rows[0];
+      if (!role) return { ok: false, code: "runtime_session_role_missing" };
+      if (role.rolsuper || role.rolbypassrls || role.owner_member) return { ok: false, code: "privileged_runtime_role" };
+      if (!role.app_member || !role.auth_member || !role.control_plane_member) return { ok: false, code: "runtime_role_membership_missing" };
+      if (role.active_role !== "airen_app") return { ok: false, code: "runtime_application_role_not_active" };
+      return { ok: true, code: "ok" };
     }
   } as const;
 

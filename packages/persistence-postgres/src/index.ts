@@ -1,6 +1,6 @@
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
 import type { SecurityContext, UUID } from "../../shared-contracts/src/index.ts";
-import type { TenantRepository, LocationRepository, TenantDomainRepository, Tenant, Location, TenantDomain } from "../../tenant/src/index.ts";
+import type { TenantRepository, LocationRepository, TenantDomainRepository, PublicRouteLookup, Tenant, Location, TenantDomain } from "../../tenant/src/index.ts";
 import type { LocationMutationTransaction } from "../../tenant/src/commands/create-location.ts";
 import type { MembershipRepository, RolePermissionResolver, TenantMembership, LocationMembership } from "../../authorization/src/index.ts";
 import type { EntitlementRepository } from "../../entitlements/src/index.ts";
@@ -11,7 +11,7 @@ import type { AuthenticationIdentityDirectory, AuthenticationIdentityRecord } fr
 function oneOrNull<T extends QueryResultRow>(rows: T[]): T | null { return rows[0] ?? null; }
 function assertRoleIdentifier(role: string): string { if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier"); return role; }
 
-export class PostgresFoundationReadStore implements TenantDomainRepository, MembershipRepository, RolePermissionResolver, EntitlementRepository {
+export class PostgresFoundationReadStore implements TenantDomainRepository, PublicRouteLookup, MembershipRepository, RolePermissionResolver, EntitlementRepository {
   private readonly pool: Pool;
   constructor(pool: Pool) { this.pool = pool; }
   async findTenantById(id: UUID): Promise<Tenant | null> { const r=await this.pool.query("SELECT id, slug, name, status FROM platform.tenants WHERE id=$1",[id]); return oneOrNull(r.rows) as Tenant | null; }
@@ -19,6 +19,25 @@ export class PostgresFoundationReadStore implements TenantDomainRepository, Memb
   async findLocationById(id: UUID): Promise<Location | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", slug, name, status FROM platform.locations WHERE id=$1",[id]); return oneOrNull(r.rows) as Location | null; }
   async findPrimaryForTenant(tenantId: UUID): Promise<Location | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", slug, name, status FROM platform.locations WHERE tenant_id=$1 AND is_primary=true",[tenantId]); return oneOrNull(r.rows) as Location | null; }
   async findActiveByHostname(hostname: string): Promise<TenantDomain | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", location_id AS \"locationId\", hostname, status FROM platform.tenant_domains WHERE hostname=$1 AND status='active'",[hostname]); return oneOrNull(r.rows) as TenantDomain | null; }
+  async findCustomDomainRoute(hostname: string): Promise<{ domain: TenantDomain; tenant: Tenant; location: Location } | null> {
+    const r=await this.pool.query("SELECT * FROM security.resolve_active_tenant_domain_route($1)",[hostname]);
+    const row=oneOrNull(r.rows) as Record<string, unknown> | null;
+    if(!row)return null;
+    return {
+      domain:{id:String(row.domain_id),tenantId:String(row.domain_tenant_id),locationId:row.domain_location_id==null?undefined:String(row.domain_location_id),hostname:String(row.domain_hostname),status:String(row.domain_status) as TenantDomain["status"]},
+      tenant:{id:String(row.tenant_id_out),slug:String(row.tenant_slug),name:String(row.tenant_name),status:String(row.tenant_status) as Tenant["status"]},
+      location:{id:String(row.location_id_out),tenantId:String(row.location_tenant_id),slug:String(row.location_slug),name:String(row.location_name),status:String(row.location_status) as Location["status"]}
+    };
+  }
+  async findTrustedSubdomainRoute(slug: string): Promise<{ tenant: Tenant; location: Location } | null> {
+    const r=await this.pool.query("SELECT * FROM security.resolve_active_tenant_slug_route($1)",[slug]);
+    const row=oneOrNull(r.rows) as Record<string, unknown> | null;
+    if(!row)return null;
+    return {
+      tenant:{id:String(row.tenant_id_out),slug:String(row.tenant_slug),name:String(row.tenant_name),status:String(row.tenant_status) as Tenant["status"]},
+      location:{id:String(row.location_id_out),tenantId:String(row.location_tenant_id),slug:String(row.location_slug),name:String(row.location_name),status:String(row.location_status) as Location["status"]}
+    };
+  }
   async findTenantMembership(tenantId: UUID, identityId: UUID): Promise<TenantMembership | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", identity_id AS \"identityId\", role_key AS \"roleKey\", status FROM authz.tenant_memberships WHERE tenant_id=$1 AND identity_id=$2",[tenantId,identityId]); return oneOrNull(r.rows) as TenantMembership | null; }
   async findLocationMembership(tenantMembershipId: UUID, locationId: UUID): Promise<LocationMembership | null> { const r=await this.pool.query("SELECT id, tenant_membership_id AS \"tenantMembershipId\", tenant_id AS \"tenantId\", location_id AS \"locationId\", role_key AS \"roleKey\", status FROM authz.location_memberships WHERE tenant_membership_id=$1 AND location_id=$2",[tenantMembershipId,locationId]); return oneOrNull(r.rows) as LocationMembership | null; }
   async platformPermissions(platformRoles: readonly string[]): Promise<readonly string[]> { if (!platformRoles.length) return []; const r=await this.pool.query("SELECT DISTINCT permission_key FROM authz.role_permission_grants WHERE scope_kind='platform' AND role_key = ANY($1::text[]) AND effect='allow'",[platformRoles]); return r.rows.map((x)=>String(x.permission_key)); }

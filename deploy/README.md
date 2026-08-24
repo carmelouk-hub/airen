@@ -8,7 +8,7 @@ The API starts only after typed runtime configuration and SecretRef resolution s
 
 The container runs as the non-root `node` user, exposes `/health/live` and `/health/ready`, emits structured redacted telemetry to stdout, and handles SIGTERM/SIGINT with bounded graceful shutdown.
 
-`/health/ready` verifies PostgreSQL connectivity and rejects a runtime database principal that is superuser, BYPASSRLS, or not a member of both `airen_app` and `airen_auth` group roles.
+`/health/ready` verifies PostgreSQL connectivity and rejects a runtime database login that is superuser, BYPASSRLS, a member of `airen_control_plane_owner`, missing any required invocation membership (`airen_app`, `airen_auth`, `airen_control_plane`), or not actively running ordinary pooled reads as `airen_app`.
 
 ## Database deployment contract
 
@@ -24,7 +24,7 @@ The second execution of the same release must be a checksum-verified no-op.
 
 1. build the OCI image from the exact Git commit;
 2. execute migrations and prove second-run idempotency;
-3. provision a synthetic least-privilege LOGIN role that is a member of `airen_app` and `airen_auth`;
+3. provision a synthetic least-privilege `NOINHERIT` LOGIN role that is a member of `airen_app`, `airen_auth` and `airen_control_plane`, never `airen_control_plane_owner`; ordinary pooled reads activate `airen_app`, while authenticated identity and governed Control Plane adapters use transaction-local `SET LOCAL ROLE airen_auth` / `airen_control_plane`;
 4. prove missing required configuration fails closed;
 5. prove the container runs non-root;
 6. prove liveness and readiness;
