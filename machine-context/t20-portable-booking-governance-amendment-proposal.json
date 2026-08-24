@@ -1,0 +1,270 @@
+{
+  "schema_version": "0.1",
+  "artifact_id": "T20_PORTABLE_BOOKING_GOVERNANCE_AMENDMENT_PROPOSAL",
+  "artifact_class": "PROPOSAL_NOT_CANONICAL",
+  "gate": "T20",
+  "slice_id": "T20-S01-PORTABLE-BOOKING",
+  "date": "2026-08-24",
+  "state": "DECISION_PACKET_READY_UNAPPROVED",
+  "implementation_authorized": false,
+  "current_verdict": "INCOMPLETE",
+  "certification_claim": false,
+  "repository": "carmelouk-hub/airen",
+  "branch": "t20/security-certification-20260824",
+  "source_checkpoint": {
+    "commit": "10d64077b7a78db91b071c0e1f20a8982789ac86",
+    "tree": "db0a0488931cb40cfe32d3ba0802a155d17b60a6"
+  },
+  "drive_evidence": {
+    "document_id": "1uv84obeoRaj7RVRaHFPIkj1o8gHxH8TFKVQev24fiNc",
+    "document_title": "T20 Portable Booking — Governance Amendment Decision Packet — PROPOSAL v0.1",
+    "initial_content_revision_id": "AIroW37A6mD5YFT-hWiBJ_t7PFkir03GZl5WPbOQmhO37SsxDC86tWaPenvqh2K8BpUVnOXrt3EE47DWhaVngsovQVs8jIbHvJbd_BKAnvE",
+    "document_folder_id": "1KmdO5XnRlrxP1m9BPkAkAe96MYYh7ATG",
+    "status": "REMOTE_CONTENT_READBACK_VERIFIED"
+  },
+  "authorities": {
+    "rule_doc_21_drive_id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE",
+    "doc_008_drive_id": "16d_ItmtJgDktWxYQXbZB7FzTJMVIKFSVzYfF5xd8ZLc",
+    "doc_009_drive_id": "1MhfahuVL7M_1APUnzqXZY_9sCBu-1veToHxTBGGw8mY",
+    "doc_010_drive_id": "1686W-gU6L0Pin_xjUg4V2khyeItJ-9PtnRgMlH3Npmw",
+    "doc_014_drive_id": "1zjrGrHkplrzZvhqn8TbB7XVcPgE5cKFXblgBsmt6jLU",
+    "b44_fx_005_drive_id": "1RFBWDvghBvmo4fIMaYzllqYvmOAq09qZBT0jOFN-HiM",
+    "human_scope_freeze_drive_id": "17JADehm20AN9V6ew3IB-TwC64l8qq3UWzYM1nPTdK30",
+    "machine_scope_freeze_drive_id": "1XLcmWw5dcQBeqETwCVfTfKmHNB_j3_Cj1zVCF5lbNZQ",
+    "human_census_drive_id": "1ewgenwG38RdQzd6yecjAxdqmrI4JZ2ZTdF9ebJWTv00",
+    "machine_census_drive_id": "1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE"
+  },
+  "live_precheck": {
+    "github_drive_status": "MATCH",
+    "github_commit_readback": true,
+    "pr4_open": true,
+    "pr4_draft": true,
+    "pr4_merged": false,
+    "fail_closed_applied": true
+  },
+  "newly_detected_discrepancies": [
+    {
+      "id": "DISC-001",
+      "subject": "RESPONSABILE_ROLE_KEY",
+      "canonical_drive_and_t20_value": "responsabile",
+      "repository_mirror_values": [
+        "responsabile_cucina"
+      ],
+      "alias_authority_found": false,
+      "status": "BLOCKING_RECONCILIATION_REQUIRED"
+    }
+  ],
+  "decision_requests": [
+    {
+      "gap_id": "GAP-001",
+      "subject": "PRIVATE_BOOKING_READ_LIST_CONTRACT",
+      "status": "BLOCKING_UNDECIDED_NO_DEFAULT",
+      "required_decisions": [
+        "function_id",
+        "function_name",
+        "permission",
+        "input_contract",
+        "output_projection",
+        "filters",
+        "ordering",
+        "pagination",
+        "not_found_or_empty_behavior",
+        "tenant_location_scope"
+      ],
+      "recommended_candidate": null
+    },
+    {
+      "gap_id": "GAP-002",
+      "subject": "RST_F_BKG_003_EXACT_PERMISSION",
+      "status": "PROPOSED_UNAPPROVED",
+      "recommended_candidate": "booking.status.update",
+      "rationale": "Existing registered permission and least-privilege separation from general booking.update"
+    },
+    {
+      "gap_id": "GAP-003",
+      "subject": "EXACT_ROLE_PERMISSION_GRANTS",
+      "status": "PROPOSED_UNAPPROVED",
+      "recommended_candidate": {
+        "tenant_admin": [
+          "booking.read",
+          "booking.create",
+          "booking.update",
+          "booking.status.update"
+        ],
+        "manager": [
+          "booking.read",
+          "booking.create",
+          "booking.update",
+          "booking.status.update"
+        ],
+        "responsabile": [
+          "booking.read",
+          "booking.status.update"
+        ]
+      },
+      "unresolved": "responsabile versus responsabile_cucina role-key discrepancy"
+    },
+    {
+      "gap_id": "GAP-004",
+      "subject": "BOOKING_ENTITLEMENT_APPLICABILITY_AND_KEY",
+      "status": "BLOCKING_UNDECIDED_NO_DEFAULT",
+      "required_decisions": [
+        "applicable_or_not_applicable",
+        "canonical_key_if_applicable",
+        "command_and_query_binding",
+        "denial_result"
+      ],
+      "recommended_candidate": null
+    },
+    {
+      "gap_id": "GAP-005",
+      "subject": "APPLICATION_CONTEXT_CONTRACT",
+      "status": "PROPOSED_UNAPPROVED",
+      "recommended_candidate": "USE_EXISTING_SECURITY_CONTEXT",
+      "rationale": "SecurityContext exists and aligns with the trusted context concepts required by DOC-010; TenantContext is absent"
+    },
+    {
+      "gap_id": "GAP-006",
+      "subject": "BOOKING_SQL_SCHEMA_AND_MIGRATION",
+      "status": "IMPLEMENTATION_SPEC_BLOCKED_BY_GOVERNANCE",
+      "recommended_candidate": null,
+      "must_not_infer": [
+        "physical_table_name",
+        "sql_types",
+        "nullability",
+        "constraints",
+        "indexes",
+        "foreign_keys",
+        "migration_path"
+      ]
+    },
+    {
+      "gap_id": "GAP-007",
+      "subject": "BOOKING_IDEMPOTENCY",
+      "status": "PROPOSED_UNAPPROVED",
+      "recommended_candidate": {
+        "commands": [
+          "RST-F-BKG-001",
+          "RST-F-BKG-002",
+          "RST-F-BKG-003"
+        ],
+        "scope_components": [
+          "trusted_tenant",
+          "trusted_location",
+          "command",
+          "idempotency_key"
+        ],
+        "payload_mismatch_result": "IDEMPOTENCY_CONFLICT",
+        "durable": true
+      },
+      "unresolved": [
+        "retention",
+        "storage_schema",
+        "key_syntax",
+        "in_progress_retry_behavior",
+        "replay_result_shape"
+      ]
+    },
+    {
+      "gap_id": "GAP-008",
+      "subject": "TYPED_VERSIONED_AUDIT_OUTBOX_MAPPING",
+      "status": "BLOCKING_UNDECIDED_PARTIAL_AUTHORITY",
+      "known_audit_events": [
+        "BOOKING_CREATED",
+        "BOOKING_UPDATED",
+        "BOOKING_STATUS_CHANGED"
+      ],
+      "required_decisions": [
+        "payload_fields",
+        "payload_version",
+        "redaction_rules",
+        "outbox_event_names"
+      ],
+      "recommended_candidate": null
+    },
+    {
+      "gap_id": "GAP-009",
+      "subject": "BOOKING_PERSISTENCE_AND_RLS",
+      "status": "IMPLEMENTATION_SPEC_BLOCKED_BY_GOVERNANCE",
+      "dependencies": [
+        "GAP-001",
+        "GAP-003",
+        "GAP-004",
+        "GAP-005",
+        "GAP-006"
+      ],
+      "recommended_candidate": null
+    },
+    {
+      "gap_id": "GAP-010",
+      "subject": "PRIVATE_BOOKING_API_AND_DTO",
+      "status": "IMPLEMENTATION_SPEC_BLOCKED_BY_GAP_001",
+      "dependencies": [
+        "GAP-001",
+        "GAP-005"
+      ],
+      "recommended_candidate": null
+    },
+    {
+      "gap_id": "GAP-011",
+      "subject": "T20_AUTHENTICATED_FIXTURES_TESTS_AND_CLEANUP",
+      "status": "PROPOSED_UNAPPROVED_ROLE_KEY_RECONCILIATION_REQUIRED",
+      "recommended_candidate": {
+        "role_key": "responsabile",
+        "synthetic_only": true,
+        "minimum_tenants": 2,
+        "distinct_locations": true,
+        "real_authenticated_sessions": true,
+        "deterministic_cleanup": true,
+        "orphan_residue_check": true
+      }
+    },
+    {
+      "gap_id": "GAP-012",
+      "subject": "LOCAL_FORENSIC_SOURCE_FILES",
+      "status": "PROPOSED_UNAPPROVED",
+      "recommended_candidate": "REFERENCE_REGISTRY_SUFFICIENT_UNLESS_EXPLICIT_PARITY_INVESTIGATION_REQUIRES_SOURCE_BYTES"
+    },
+    {
+      "gap_id": "GAP-013",
+      "subject": "CANONICAL_NEW_IMPLEMENTATION_FILE_PATHS",
+      "status": "BLOCKING_UNDECIDED_NO_DEFAULT",
+      "required_decision": "Post-amendment implementation plan must assign exact paths",
+      "recommended_candidate": null
+    }
+  ],
+  "approval_boundary": {
+    "proposal_accepted": false,
+    "accepted_adr_changed": false,
+    "canonical_contract_changed": false,
+    "new_canonical_id_assigned": false,
+    "implementation_plan_authorized": false,
+    "runtime_implementation_authorized": false
+  },
+  "test_status": {
+    "required": 66,
+    "mapped_to_slice": 32,
+    "remaining_mandatory": 34,
+    "runtime_executed": 0,
+    "all_status": "NOT_RUN",
+    "waived": 0
+  },
+  "change_boundary": {
+    "runtime_code_changed": false,
+    "schema_changed": false,
+    "migration_added": false,
+    "executable_t20_test_added": false,
+    "accepted_adr_changed": false,
+    "canonical_contract_changed": false
+  },
+  "evidence_status": {
+    "parity_status": "NOT_MEASURED_NO_RUNTIME",
+    "gap_status": "OPEN_GOVERNANCE_DECISIONS_REQUIRED",
+    "adr_impact": "PROPOSAL_ONLY_NO_ACCEPTED_ADR_CHANGED"
+  },
+  "next_action": {
+    "status": "GOVERNANCE_DECISION_REQUIRED",
+    "value": "REVIEW_AND_EXPLICITLY_ACCEPT_OR_REVISE_DECISION_REQUESTS",
+    "implementation_remains_blocked": true
+  }
+}
