@@ -25,3 +25,15 @@ npx base44 deploy
 ```
 
 Deployment is not authorized by the current Creation Gate.
+
+## Relationship Intelligence design review
+
+The current milestone provides five non-operational review sections:
+
+- overview;
+- synthetic Customer Relationship Twin;
+- synthetic Supplier Relationship Twin;
+- Purpose & Authorization Graph;
+- NEXT-AIR-002 promotion review.
+
+All content is read-only and synthetic. `NEXT-AIR-002` remains non-canonical with implementation and promotion disabled.
