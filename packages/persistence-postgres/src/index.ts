@@ -1,5 +1,5 @@
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
-import type { SecurityContext, UUID } from "../../shared-contracts/src/index.ts";
+import { AppError, type SecurityContext, type UUID } from "../../shared-contracts/src/index.ts";
 import type { TenantRepository, LocationRepository, TenantDomainRepository, PublicRouteLookup, Tenant, Location, TenantDomain } from "../../tenant/src/index.ts";
 import type { LocationMutationTransaction } from "../../tenant/src/commands/create-location.ts";
 import type { MembershipRepository, RolePermissionResolver, TenantMembership, LocationMembership } from "../../authorization/src/index.ts";
@@ -11,9 +11,58 @@ import type { AuthenticationIdentityDirectory, AuthenticationIdentityRecord } fr
 function oneOrNull<T extends QueryResultRow>(rows: T[]): T | null { return rows[0] ?? null; }
 function assertRoleIdentifier(role: string): string { if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier"); return role; }
 
+type TrustedRequestScope = Readonly<{ actorIdentityId: UUID; tenantId: UUID; locationId: UUID; correlationId: string }>;
+
+class PostgresTrustedRequestReadStore implements MembershipRepository, EntitlementRepository {
+  private readonly client: PoolClient;
+  private readonly scope: TrustedRequestScope;
+  constructor(client: PoolClient, scope: TrustedRequestScope) { this.client = client; this.scope = scope; }
+  async findTenantMembership(tenantId: UUID, identityId: UUID): Promise<TenantMembership | null> {
+    if (tenantId !== this.scope.tenantId || identityId !== this.scope.actorIdentityId) throw new AppError("TENANT_SCOPE_VIOLATION", "Trusted request Tenant/Identity scope mismatch");
+    const r=await this.client.query("SELECT id, tenant_id AS \"tenantId\", identity_id AS \"identityId\", role_key AS \"roleKey\", status FROM authz.tenant_memberships WHERE tenant_id=$1 AND identity_id=$2",[tenantId,identityId]);
+    return oneOrNull(r.rows) as TenantMembership | null;
+  }
+  async findLocationMembership(tenantMembershipId: UUID, locationId: UUID): Promise<LocationMembership | null> {
+    if (locationId !== this.scope.locationId) throw new AppError("LOCATION_SCOPE_VIOLATION", "Trusted request Location scope mismatch");
+    const r=await this.client.query("SELECT lm.id, lm.tenant_membership_id AS \"tenantMembershipId\", lm.tenant_id AS \"tenantId\", lm.location_id AS \"locationId\", lm.role_key AS \"roleKey\", lm.status FROM authz.location_memberships lm JOIN authz.tenant_memberships tm ON tm.id=lm.tenant_membership_id WHERE lm.tenant_membership_id=$1 AND lm.location_id=$2 AND lm.tenant_id=$3 AND tm.identity_id=$4",[tenantMembershipId,locationId,this.scope.tenantId,this.scope.actorIdentityId]);
+    return oneOrNull(r.rows) as LocationMembership | null;
+  }
+  async enabledForTenant(tenantId: UUID): Promise<readonly string[]> {
+    if (tenantId !== this.scope.tenantId) throw new AppError("TENANT_SCOPE_VIOLATION", "Trusted request Entitlement scope mismatch");
+    const r=await this.client.query("SELECT e.entitlement_key FROM billing.tenant_entitlements e JOIN billing.entitlement_catalog c ON c.entitlement_key=e.entitlement_key JOIN platform.tenants t ON t.id=e.tenant_id WHERE e.tenant_id=$1 AND t.status='active' AND c.status='active' AND e.enabled=true AND COALESCE(e.valid_from,'-infinity'::timestamptz) <= now() AND (e.valid_until IS NULL OR e.valid_until > now()) ORDER BY e.entitlement_key",[tenantId]);
+    return r.rows.map((x)=>String(x.entitlement_key));
+  }
+}
+
+type TrustedRequestScopedAccess = Readonly<{ memberships: MembershipRepository; entitlements: EntitlementRepository; release(): Promise<void> }>;
+
 export class PostgresFoundationReadStore implements TenantDomainRepository, PublicRouteLookup, MembershipRepository, RolePermissionResolver, EntitlementRepository {
   private readonly pool: Pool;
   constructor(pool: Pool) { this.pool = pool; }
+  async forTrustedRequestScope(input: TrustedRequestScope): Promise<TrustedRequestScopedAccess> {
+    if (!input.actorIdentityId || !input.tenantId || !input.locationId || !input.correlationId?.trim()) throw new AppError("VALIDATION_FAILED", "Trusted request scope is incomplete");
+    const client=await this.pool.connect();
+    let released=false;
+    try {
+      await client.query("BEGIN");
+      await client.query("SET TRANSACTION READ ONLY");
+      await client.query(`SET LOCAL ROLE ${assertRoleIdentifier("airen_app")}`);
+      await client.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.tenant_id',$2,true), set_config('airen.location_id',$3,true), set_config('airen.correlation_id',$4,true)",[input.actorIdentityId,input.tenantId,input.locationId,input.correlationId]);
+      const scoped=new PostgresTrustedRequestReadStore(client,input);
+      return {
+        memberships:scoped,
+        entitlements:scoped,
+        release:async()=>{
+          if(released)return;
+          released=true;
+          try { await client.query("ROLLBACK"); } finally { client.release(); }
+        }
+      };
+    } catch(error) {
+      try { await client.query("ROLLBACK"); } finally { client.release(); }
+      throw error;
+    }
+  }
   async findTenantById(id: UUID): Promise<Tenant | null> { const r=await this.pool.query("SELECT id, slug, name, status FROM platform.tenants WHERE id=$1",[id]); return oneOrNull(r.rows) as Tenant | null; }
   async findBySlug(slug: string): Promise<Tenant | null> { const r=await this.pool.query("SELECT id, slug, name, status FROM platform.tenants WHERE slug=$1",[slug]); return oneOrNull(r.rows) as Tenant | null; }
   async findLocationById(id: UUID): Promise<Location | null> { const r=await this.pool.query("SELECT id, tenant_id AS \"tenantId\", slug, name, status FROM platform.locations WHERE id=$1",[id]); return oneOrNull(r.rows) as Location | null; }
