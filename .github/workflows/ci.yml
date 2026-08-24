@@ -117,3 +117,89 @@ jobs:
           name: B44-FX-014-deployment-runtime-evidence
           path: ${{ runner.temp }}/airen-deployment-evidence/B44-FX-014_Deployment_Runtime_Evidence.json
           if-no-files-found: error
+
+  integrated-control-plane-runtime:
+    needs:
+      - application-contracts
+      - postgres-rls-runtime
+      - deployment-path-runtime
+    if: ${{ needs['application-contracts'].result == 'success' && needs['postgres-rls-runtime'].result == 'success' && needs['deployment-path-runtime'].result == 'success' }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_r3j_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_r3j_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_r3j_test
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/AIREN_R3J_MIGRATION_DATABASE_URL
+      AIREN_R3J_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_r3j_test
+      R3J_BASELINE_SHA: 36681602009bed93dd35d2d69fbc90a061e6eb7a
+      R3J_REGRESSION_GATE: PASS
+      R3J_PRODUCTION_SIDE_EFFECTS: FORBIDDEN
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node PostgreSQL adapter dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Enforce exact RULE-DOC-15 R3-J three-file census
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t actual < <(git diff --name-only "$R3J_BASELINE_SHA" "$GITHUB_SHA" | sort)
+          expected=(
+            ".github/workflows/ci.yml"
+            "package.json"
+            "tests/integration/r3j-integrated-control-plane-runtime.test.ts"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          if [[ "${#actual[@]}" -ne 3 ]]; then
+            printf 'R3-J census expected 3 files, got %s\n' "${#actual[@]}" >&2
+            printf 'actual: %s\n' "${actual[*]}" >&2
+            exit 1
+          fi
+          if [[ "$(printf '%s\n' "${actual[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
+            printf 'R3-J changed-file census mismatch\n' >&2
+            printf 'expected: %s\n' "${expected_sorted[*]}" >&2
+            printf 'actual: %s\n' "${actual[*]}" >&2
+            exit 1
+          fi
+          echo "R3J_CENSUS_GUARD=PASS" >> "$GITHUB_ENV"
+      - name: Apply canonical migration chain
+        run: node --experimental-strip-types deploy/migrate.ts
+      - name: Verify canonical migration checksum/idempotency second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/r3j-migration-second.log"
+          node --experimental-strip-types deploy/migrate.ts | tee "$log"
+          expected="$(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | wc -l | tr -d ' ')"
+          skips="$(grep -c '"event":"migration.skip"' "$log" || true)"
+          if [[ "$skips" -ne "$expected" ]]; then
+            echo "R3-J migration second pass expected $expected checksum-verified skips, got $skips" >&2
+            exit 1
+          fi
+          echo "R3J_MIGRATION_SECOND_PASS=PASS" >> "$GITHUB_ENV"
+          echo "R3J_MIGRATION_EXPECTED_COUNT=$expected" >> "$GITHUB_ENV"
+      - name: Execute R3-J integrated Control Plane certification
+        run: npm run test:r3j-integrated-control-plane-runtime
+      - name: Upload R3-J integrated runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3-J-integrated-control-plane-runtime-evidence
+          path: ${{ runner.temp }}/airen-r3j-evidence/AIRenOS_R3-J_INTEGRATED_RUNTIME_EVIDENCE.json
+          if-no-files-found: warn
