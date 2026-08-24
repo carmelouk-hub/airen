@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AIRenOS Control Plane</title>
+  <link rel="stylesheet" href="/admin/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Navigazione Control Plane">
+      <div class="brand">
+        <span class="brand-mark">A</span>
+        <div>
+          <strong>AIRenOS</strong>
+          <small>Governed Control Plane</small>
+        </div>
+      </div>
+      <nav id="navigation">
+        <button data-view="overview" class="nav-item active">Overview</button>
+        <button data-view="tenants" class="nav-item">Tenants</button>
+        <button data-view="principals" class="nav-item">Principals & Roles</button>
+        <button data-view="billing" class="nav-item">Plans & Subscriptions</button>
+        <button data-view="entitlements" class="nav-item">Entitlements</button>
+        <button data-view="capabilities" class="nav-item">Capabilities & Flags</button>
+        <button data-view="audit" class="nav-item">Audit</button>
+        <button data-view="system" class="nav-item">System / API</button>
+      </nav>
+      <p class="authority-note">UI guards are UX only. Server and PostgreSQL remain authoritative.</p>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AIRenOS / R3-I</p>
+          <h1 id="view-title">Overview</h1>
+        </div>
+        <div class="status-wrap">
+          <span id="api-state" class="status neutral">Checking</span>
+          <span id="identity" class="identity">Unauthenticated</span>
+        </div>
+      </header>
+
+      <section id="banner" class="banner hidden" role="status" aria-live="polite"></section>
+      <section id="content" class="content" aria-live="polite"></section>
+    </main>
+  </div>
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

@@ -12,6 +12,7 @@ export type AppErrorCode =
   | "RUNTIME_CONFIGURATION_INVALID"
   | "SECRET_RESOLUTION_FAILED"
   | "VALIDATION_FAILED"
+  | "NOT_FOUND"
   | "CONFLICT"
   | "IDEMPOTENCY_CONFLICT"
   | "INTERNAL_ERROR";
@@ -47,6 +48,13 @@ export type SecurityContext = Readonly<{
   locationRole?: string;
   permissions: readonly string[];
   entitlements: readonly string[];
+}>;
+export type PlatformSecurityContext = Readonly<{
+  scopeKind: "platform";
+  correlationId: string;
+  actorIdentityId: UUID;
+  platformRoles: readonly string[];
+  platformPermissions: readonly string[];
 }>;
 export type DomainEvent = Readonly<{ eventType: string; aggregateType: string; aggregateId: string; payloadVersion: number; payload: Readonly<Record<string, unknown>> }>;
 export function hasPermission(context: SecurityContext, permissionKey: string): boolean { return context.permissions.includes(permissionKey) || context.platformPermissions.includes(permissionKey); }

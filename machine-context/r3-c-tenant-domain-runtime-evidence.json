@@ -1,0 +1,134 @@
+{
+  "milestone": "R3-C",
+  "title": "TenantDomain Registry Lifecycle",
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "date": "2026-08-22",
+  "repository": "carmelouk-hub/airen",
+  "branch": "r3/control-plane-20260822",
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "r3_b_closure_commit": "c40d42dbdec58c3401d231744cc5bcf5e08e6ff3",
+  "implementation_commit": "dcb7982852eb1fac1cc8dbe05ddbb1a3b77ba146",
+  "implementation_tree": "78e198b3975bf115a54b1190329b7ffde1b6ec8a",
+  "implementation_ci": {
+    "workflow": "foundation-contract-ci",
+    "run_number": 336,
+    "run_id": 32589576068,
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "postgres-rls-runtime": "success",
+      "deployment-path-runtime": "success"
+    }
+  },
+  "deployment_evidence_artifact": {
+    "artifact_id": 9479945318,
+    "digest": "sha256:d02fd7db9a671fa524a1984eacf45fbf82599d6e25b7f3b1bbf18d4599dd8dcf"
+  },
+  "permissions": [
+    "platform.domains.read",
+    "platform.domains.register",
+    "platform.domains.verify",
+    "platform.domains.activate",
+    "platform.domains.disable",
+    "platform.domains.bind_location"
+  ],
+  "identity_invariants": {
+    "tenant_id_immutable": true,
+    "hostname_immutable": true,
+    "tenant_slug_remains_logical_saas_identity": true,
+    "hard_delete": false
+  },
+  "state_machine": {
+    "domain_states": ["pending", "verified", "active", "disabled", "error"],
+    "verification_states": ["unverified", "pending", "verified", "failed"],
+    "verified_required_for_activation": true,
+    "failed_verification_requires_governed_retry": true
+  },
+  "hostname_rules": {
+    "global_case_insensitive_collision_protection": true,
+    "trusted_ristoairen_namespace_reserved": true,
+    "unknown_hostname_fail_closed": true,
+    "default_tenant_fallback": false
+  },
+  "location_binding": {
+    "same_tenant_only": true,
+    "bound_location_must_be_active": true,
+    "unbound_active_domain_uses_active_primary_location": true,
+    "tenant_ownership_rebind": false
+  },
+  "authority_cutover": {
+    "airen_app_direct_insert_revoked": true,
+    "airen_app_direct_update_revoked": true,
+    "airen_app_direct_delete_revoked": true,
+    "airen_control_plane_direct_table_mutation": false,
+    "db_platform_permission_recheck": true,
+    "rls_preserved": true
+  },
+  "public_route_capabilities": {
+    "custom_domain": "security.resolve_active_tenant_domain_route(text)",
+    "trusted_subdomain": "security.resolve_active_tenant_slug_route(text)",
+    "invocation_role": "airen_app",
+    "tenant_context_required": false,
+    "private_authorization_granted": false
+  },
+  "query_surface": {
+    "detail": "security.platform_get_tenant_domain(uuid)",
+    "list": "security.platform_list_tenant_domains(tenant_id,status,after,limit)",
+    "tenant_filter_required": true,
+    "limit_max": 100,
+    "raw_table_projection": false
+  },
+  "runtime_assertions": {
+    "migration_applies": "PASS",
+    "registration": "PASS",
+    "hostname_normalization": "PASS",
+    "registration_idempotent_replay": "PASS",
+    "changed_payload_idempotency_conflict": "PASS",
+    "reserved_platform_namespace_denied": "PASS",
+    "hostname_collision_denied": "PASS",
+    "verification_start": "PASS",
+    "verification_pass": "PASS",
+    "activation": "PASS",
+    "custom_domain_resolution": "PASS",
+    "trusted_subdomain_resolution": "PASS",
+    "unknown_hostname_fail_closed": "PASS",
+    "detail_query": "PASS",
+    "tenant_filtered_list_query": "PASS",
+    "same_tenant_location_rebind": "PASS",
+    "cross_tenant_location_rebind_denied": "PASS",
+    "location_detach_to_primary": "PASS",
+    "verification_failure": "PASS",
+    "invalid_verification_restart_denied": "PASS",
+    "verification_retry": "PASS",
+    "forced_partial_failure_rollback": "PASS",
+    "disable_removes_public_route": "PASS",
+    "verified_reactivation": "PASS",
+    "suspended_tenant_removes_public_route": "PASS",
+    "tenant_actor_platform_authority_denied": "PASS",
+    "db_permission_recheck": "PASS",
+    "airen_app_direct_update_denied": "PASS",
+    "airen_app_direct_insert_denied": "PASS",
+    "airen_app_platform_mutation_capability_denied": "PASS",
+    "transition_history": "PASS",
+    "audit_event": "PASS",
+    "outbox_event": "PASS",
+    "foundation_rls_regression": "PASS",
+    "r3_a_regression": "PASS",
+    "r3_b_regression": "PASS",
+    "deployment_path_regression": "PASS"
+  },
+  "failure_reconciliation": [],
+  "scope_boundary": {
+    "r3_c_gap_complete": true,
+    "r3_c_closed": false,
+    "r3_d_open": false,
+    "production_dns_provider_integrated": false,
+    "production_ssl_lifecycle_integrated": false,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "production_cutover_authorized": false,
+    "t20_pass": false,
+    "golden_e2e_pass": false,
+    "base44_decommission_complete": false
+  }
+}

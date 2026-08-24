@@ -1,0 +1,125 @@
+{
+  "assertions": {
+    "auditMutationDenied": true,
+    "corteSpecificHardcoding": false,
+    "cursorBoundToNormalizedFilters": true,
+    "directControlPlaneAuditSelectDenied": true,
+    "existingAuditAuthorityReused": true,
+    "keysetOnlyNoOffset": true,
+    "locationRequiresTenantOwnershipValidation": true,
+    "metadataOversizeDeterministicRedaction": true,
+    "metadataRecursiveSanitization": true,
+    "platformPermission": "platform.audit.read",
+    "postgresPlatformPermissionRecheck": true,
+    "querySideEffectFree": true,
+    "r3AThroughR3GRegressionGreen": true,
+    "safeProjectionNoIdentityPiiJoin": true,
+    "secondAuditTableCreated": false,
+    "tenantLocationAreFiltersNotAuthority": true,
+    "timeWindowHalfOpen": true,
+    "timeWindowMaxDays": 31
+  },
+  "baseline": {
+    "r3GClosureCommit": "d4dfb71b4925529e0fbb320451982505b0ceb71d",
+    "r3GClosureTree": "66dbefa8eae9c34cbd3251763492e86cabed9467"
+  },
+  "boundaries": {
+    "base44DecommissionAuthorized": false,
+    "corteProductionModified": false,
+    "goldenRestaurantE2ePassed": false,
+    "mainModified": false,
+    "r3IImplementationAuthorized": false,
+    "t20Passed": false
+  },
+  "closure": {
+    "archivePending": true,
+    "closed": false,
+    "exactCiPending": true,
+    "finalMachineEvidencePending": true,
+    "pass": false
+  },
+  "date": "2026-08-23",
+  "design": {
+    "humanDriveId": "11HJcrM9-2bH9riGb65IYw6c6hd4QrdW5ZgQsuRfW2jk",
+    "invariants": 18,
+    "machineDriveId": "1rVKejVktQh6VyLm7gohIm1QEfxF62pEfXlbW4ivzMdw",
+    "mandatoryTests": 26,
+    "permissions": 1,
+    "queryInputFields": 13,
+    "transitions": 0
+  },
+  "forensicReconciliation": {
+    "ci403Preserved": true,
+    "ci405Preserved": true,
+    "foundationOwnerAlreadyBypassRls": true,
+    "migration0028HistoryPreserved": true,
+    "migration0029RemovesOnlyR3HDiagnosticPolicies": true,
+    "supersededRlsDiagnosisRecorded": true,
+    "t01DeterministicActionFilter": true
+  },
+  "implementation": {
+    "ciConclusion": "SUCCESS",
+    "ciNumber": 407,
+    "ciRun": 32641742153,
+    "commit": "3a6819fe133c9ba653c7aeff3d29ed083035fc4c",
+    "deploymentArtifactDigest": "sha256:d97ef99ec60460bf194dcb8d47ac4223604b85cce74835ad5d95637361b04271",
+    "deploymentArtifactId": 9493785516,
+    "historicalFailedRuns": [
+      {
+        "ciNumber": 403,
+        "ciRun": 32641067153,
+        "conclusion": "FAILURE",
+        "terminalFailure": "R3H-T01"
+      },
+      {
+        "ciNumber": 405,
+        "ciRun": 32641381285,
+        "conclusion": "FAILURE",
+        "terminalFailure": "R3H-T01"
+      }
+    ],
+    "jobs": {
+      "application-contracts": "SUCCESS",
+      "deployment-path-runtime": "SUCCESS",
+      "postgres-rls-runtime": "SUCCESS"
+    },
+    "tree": "e74c2b9ca8e9e2c6e00c53e8d4f83994918ae77a"
+  },
+  "milestone": "R3-H",
+  "runtimeTest": {
+    "gitBlob": "ad8c5ffe68d661c44356929f9014a883a9c7dc32",
+    "mandatoryMarkers": [
+      "R3H-T01",
+      "R3H-T02",
+      "R3H-T03",
+      "R3H-T04",
+      "R3H-T05",
+      "R3H-T06",
+      "R3H-T07",
+      "R3H-T08",
+      "R3H-T09",
+      "R3H-T10",
+      "R3H-T11",
+      "R3H-T12",
+      "R3H-T13",
+      "R3H-T14",
+      "R3H-T15",
+      "R3H-T16",
+      "R3H-T17",
+      "R3H-T18",
+      "R3H-T19",
+      "R3H-T20",
+      "R3H-T21",
+      "R3H-T22",
+      "R3H-T23",
+      "R3H-T24",
+      "R3H-T25",
+      "R3H-T26"
+    ],
+    "path": "tests/postgres/r3h-platform-audit-query.test.ts",
+    "sha256": "129cf7e97b406388bb8172a14de48159915628c19a8e03f2bfb7428cafa9dfea"
+  },
+  "schema": "airenos.r3.runtime_evidence.v1",
+  "state": "CLOSURE_CANDIDATE_EXACT_CI_PENDING",
+  "title": "Platform Audit Query Surface Runtime Evidence"
+}

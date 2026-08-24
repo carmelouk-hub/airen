@@ -1,0 +1,95 @@
+{
+  "assertions": {
+    "availabilityAndAuthorizationSeparated": true,
+    "capabilityEntitlementFeaturePermissionSeparated": true,
+    "corteSpecificHardcoding": false,
+    "directRuntimeDmlDenied": true,
+    "entitlementCannotGrantMissingPermission": true,
+    "featureFlagCannotGrantMissingEntitlement": true,
+    "logicalOverrideRemoval": true,
+    "overridePrecedence": "location>tenant>default",
+    "postgresPlatformPermissionRecheck": true,
+    "r3AThroughR3FRegressionGreen": true,
+    "resolverSideEffectFreeForSubscriptionEntitlement": true,
+    "trustedTenantLocationContext": true
+  },
+  "baseline": {
+    "r3FClosureCommit": "3592b7878e13e63b9cd97d76c9d98b146cbd7be3",
+    "r3FClosureTree": "1a23c89a57202b2585a926a8162758a7d07d419e"
+  },
+  "boundaries": {
+    "base44DecommissionAuthorized": false,
+    "corteProductionModified": false,
+    "goldenRestaurantE2ePassed": false,
+    "mainModified": false,
+    "t20Passed": false
+  },
+  "closure": {
+    "archivePending": true,
+    "closed": false,
+    "exactCiPending": true,
+    "finalMachineEvidencePending": true,
+    "pass": false
+  },
+  "date": "2026-08-23",
+  "design": {
+    "humanDriveId": "1Gf6NUU3XAtETuHnke6pFZESI-bOGu0u5xZp2UGANzeU",
+    "invariants": 16,
+    "machineDriveId": "1TvOTK4aMNTNw4lUG3OJcmcn1S2H3eabm48H3UBoLRN0",
+    "mandatoryTests": 26,
+    "permissions": 12,
+    "transitions": 11
+  },
+  "implementation": {
+    "changedArtifacts": 13,
+    "ciConclusion": "SUCCESS",
+    "ciNumber": 398,
+    "ciRun": 32635404011,
+    "commit": "6def5f4f64268c2f1f6de71dd1f19eeb8e1ee317",
+    "deploymentArtifactDigest": "sha256:a490d1df0b194d58b7a2e84a267b8e8bc30e5b48266dc913b8cff9fc2d54bbeb",
+    "deploymentArtifactId": 9492162397,
+    "jobs": {
+      "application-contracts": "SUCCESS",
+      "deployment-path-runtime": "SUCCESS",
+      "postgres-rls-runtime": "SUCCESS"
+    },
+    "tree": "0cdd593a69b4823ae3ba20389eeb2406fc2edf05"
+  },
+  "milestone": "R3-G",
+  "runtimeTest": {
+    "gitBlob": "0cf6cf4102b1085c64d2a44fa1be5027e6f19ddb",
+    "mandatoryMarkers": [
+      "R3G-T01",
+      "R3G-T02",
+      "R3G-T03",
+      "R3G-T04",
+      "R3G-T05",
+      "R3G-T06",
+      "R3G-T07",
+      "R3G-T08",
+      "R3G-T09",
+      "R3G-T10",
+      "R3G-T11",
+      "R3G-T12",
+      "R3G-T13",
+      "R3G-T14",
+      "R3G-T15",
+      "R3G-T16",
+      "R3G-T17",
+      "R3G-T18",
+      "R3G-T19",
+      "R3G-T20",
+      "R3G-T21",
+      "R3G-T22",
+      "R3G-T23",
+      "R3G-T24",
+      "R3G-T25",
+      "R3G-T26"
+    ],
+    "path": "tests/postgres/r3g-capability-feature-resolution.test.ts",
+    "sha256": "9ea199137de7d18e83c2cb16465d892bf7e305cc32de3c4956d70f7b740db2e9"
+  },
+  "schema": "airenos.r3.runtime_evidence.v1",
+  "state": "CLOSURE_CANDIDATE_EXACT_CI_PENDING",
+  "title": "Feature / Capability Resolution Runtime Evidence"
+}

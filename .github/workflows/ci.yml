@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "foundation/**"
+      - "r3/**"
 
 jobs:
   application-contracts:
@@ -24,6 +25,14 @@ jobs:
       - run: npm run test:runtime-secrets
       - run: npm run test:observability
       - run: npm run test:deployment-contract
+      - run: npm run test:platform-security-context
+      - run: npm run test:r3e-billing-contract
+      - run: npm run test:r3f-entitlement-contract
+      - run: npm run test:r3g-capability-contract
+      - run: npm run test:r3h-audit-query-contract
+      - run: npm run check:r3i-admin-surface-contract
+      - run: npm run test:r3i-admin-api-contract
+      - run: npm run test:r3i-admin-ui-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -57,6 +66,24 @@ jobs:
         run: npm run test:governed-command
       - name: Execute authenticated principal runtime tests
         run: npm run test:identity-auth-runtime
+      - name: Execute R3-A Tenant provisioning runtime tests
+        run: npm run test:r3a-tenant-provisioning
+      - name: Execute R3-A Tenant lifecycle runtime tests
+        run: npm run test:r3a-tenant-lifecycle
+      - name: Execute R3-B Location lifecycle runtime tests
+        run: npm run test:r3b-location-lifecycle
+      - name: Execute R3-C TenantDomain lifecycle runtime tests
+        run: npm run test:r3c-tenant-domain-lifecycle
+      - name: Execute R3-D Platform Principal and Role Administration runtime tests
+        run: npm run test:r3d-platform-role-admin
+      - name: Execute R3-E Plan and Subscription lifecycle runtime tests
+        run: npm run test:r3e-plan-subscription-lifecycle
+      - name: Execute R3-F Entitlement Administration and Effective Resolution runtime tests
+        run: npm run test:r3f-entitlement-lifecycle
+      - name: Execute R3-G Feature and Capability Resolution runtime tests
+        run: npm run test:r3g-capability-feature-resolution
+      - name: Execute R3-H Platform Audit Query runtime tests
+        run: npm run test:r3h-platform-audit-query
 
   deployment-path-runtime:
     runs-on: ubuntu-latest
@@ -90,3 +117,115 @@ jobs:
           name: B44-FX-014-deployment-runtime-evidence
           path: ${{ runner.temp }}/airen-deployment-evidence/B44-FX-014_Deployment_Runtime_Evidence.json
           if-no-files-found: error
+
+  integrated-control-plane-runtime:
+    needs:
+      - application-contracts
+      - postgres-rls-runtime
+      - deployment-path-runtime
+    if: ${{ needs['application-contracts'].result == 'success' && needs['postgres-rls-runtime'].result == 'success' && needs['deployment-path-runtime'].result == 'success' }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_r3j_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_r3j_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_r3j_test
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/AIREN_R3J_MIGRATION_DATABASE_URL
+      AIREN_R3J_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_r3j_test
+      R3J_BASELINE_SHA: 36681602009bed93dd35d2d69fbc90a061e6eb7a
+      R3J_CORRECTIVE_BASELINE_SHA: d8615ed0346eab73fae58c85f0d3342567ab8522
+      R3J_SECOND_CORRECTIVE_BASELINE_SHA: 204a7ab043bad46a50e3aae249727df9c5a5b7c3
+      R3J_REGRESSION_GATE: PASS
+      R3J_PRODUCTION_SIDE_EFFECTS: FORBIDDEN
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node PostgreSQL adapter dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Enforce original and corrective RULE-DOC-15 R3-J censuses
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          verify_exact_delta() {
+            local base="$1"
+            local head="$2"
+            local label="$3"
+            shift 3
+            local -a expected=("$@")
+            local -a actual expected_sorted
+            mapfile -t actual < <(git diff --name-only "$base" "$head" | sort)
+            mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+            if [[ "${#actual[@]}" -ne "${#expected_sorted[@]}" ]]; then
+              printf '%s expected %s files, got %s\n' "$label" "${#expected_sorted[@]}" "${#actual[@]}" >&2
+              printf 'actual: %s\n' "${actual[*]}" >&2
+              exit 1
+            fi
+            if [[ "$(printf '%s\n' "${actual[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
+              printf '%s changed-file census mismatch\n' "$label" >&2
+              printf 'expected: %s\n' "${expected_sorted[*]}" >&2
+              printf 'actual: %s\n' "${actual[*]}" >&2
+              exit 1
+            fi
+          }
+
+          verify_exact_delta "$R3J_BASELINE_SHA" "$R3J_CORRECTIVE_BASELINE_SHA" "R3-J original census" \
+            ".github/workflows/ci.yml" \
+            "package.json" \
+            "tests/integration/r3j-integrated-control-plane-runtime.test.ts"
+
+          verify_exact_delta "$R3J_CORRECTIVE_BASELINE_SHA" "$R3J_SECOND_CORRECTIVE_BASELINE_SHA" "R3-J first corrective census" \
+            ".github/workflows/ci.yml" \
+            "apps/api/src/server.ts" \
+            "apps/api/src/security-context.ts" \
+            "deploy/README.md" \
+            "packages/persistence-postgres/src/index.ts" \
+            "tests/deployment/provision_runtime_login.sql"
+
+          verify_exact_delta "$R3J_SECOND_CORRECTIVE_BASELINE_SHA" "$GITHUB_SHA" "R3-J second corrective census V4.1" \
+            ".github/workflows/ci.yml" \
+            "apps/api/src/security-context.ts" \
+            "packages/persistence-postgres/src/index.ts" \
+            "tests/integration/r3j-integrated-control-plane-runtime.test.ts"
+
+          echo "R3J_CENSUS_GUARD=PASS" >> "$GITHUB_ENV"
+      - name: Apply canonical migration chain
+        run: node --experimental-strip-types deploy/migrate.ts
+      - name: Verify canonical migration checksum/idempotency second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/r3j-migration-second.log"
+          node --experimental-strip-types deploy/migrate.ts | tee "$log"
+          expected="$(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | wc -l | tr -d ' ')"
+          skips="$(grep -c '"event":"migration.skip"' "$log" || true)"
+          if [[ "$skips" -ne "$expected" ]]; then
+            echo "R3-J migration second pass expected $expected checksum-verified skips, got $skips" >&2
+            exit 1
+          fi
+          echo "R3J_MIGRATION_SECOND_PASS=PASS" >> "$GITHUB_ENV"
+          echo "R3J_MIGRATION_EXPECTED_COUNT=$expected" >> "$GITHUB_ENV"
+      - name: Execute R3-J integrated Control Plane certification
+        run: npm run test:r3j-integrated-control-plane-runtime
+      - name: Upload R3-J integrated runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: R3-J-integrated-control-plane-runtime-evidence
+          path: ${{ runner.temp }}/airen-r3j-evidence/AIRenOS_R3-J_INTEGRATED_RUNTIME_EVIDENCE.json
+          if-no-files-found: warn

@@ -2,7 +2,10 @@
   "name": "airenos-foundation",
   "private": true,
   "version": "0.0.0-foundation-deployment-path",
-  "workspaces": ["apps/*","packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check:machine-context": "node -e \"for (const f of require('fs').readdirSync('machine-context').filter(x=>x.endsWith('.json'))) JSON.parse(require('fs').readFileSync('machine-context/'+f,'utf8')); console.log('Machine context JSON PASS')\"",
@@ -13,12 +16,36 @@
     "test:runtime-secrets": "node --experimental-strip-types --test tests/integration/runtime-environment-secrets.test.ts",
     "test:observability": "node --experimental-strip-types --test tests/integration/observability-baseline.test.ts",
     "test:deployment-contract": "node --experimental-strip-types --test tests/integration/deployment-contract.test.ts",
-    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs",
+    "test:platform-security-context": "node --experimental-strip-types --test tests/integration/platform-security-context.test.ts",
+    "check:sql-runtime": "node scripts/check-sql-runtime-contract.mjs && node scripts/check-r3d-correction.mjs && node scripts/check-r3d-identity-read-correction.mjs && node scripts/check-r3d-role-column-qualification.mjs && node scripts/check-r3f-entitlement-contract.mjs && node scripts/check-r3g-capability-contract.mjs && node scripts/check-r3h-audit-query-contract.mjs",
     "test:postgres-runtime": "bash scripts/run-postgres-runtime-tests.sh",
     "test:governed-command": "node --experimental-strip-types --test tests/postgres/governed-command.test.ts",
-    "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts"
+    "test:identity-auth-runtime": "node --experimental-strip-types --test tests/postgres/identity-authenticated-runtime.test.ts",
+    "test:r3a-tenant-provisioning": "node --experimental-strip-types --test tests/postgres/r3a-tenant-provisioning.test.ts",
+    "test:r3a-tenant-lifecycle": "node --experimental-strip-types --test tests/postgres/r3a-tenant-lifecycle.test.ts",
+    "test:r3b-location-lifecycle": "node --experimental-strip-types --test tests/postgres/r3b-location-lifecycle.test.ts",
+    "test:r3c-tenant-domain-lifecycle": "node --experimental-strip-types --test tests/postgres/r3c-tenant-domain-lifecycle.test.ts",
+    "test:r3d-platform-role-admin": "node --experimental-strip-types --test tests/postgres/r3d-platform-role-admin.test.ts && node --experimental-strip-types --test tests/postgres/r3d-platform-role-invalid-state.test.ts",
+    "test:r3e-billing-contract": "node --experimental-strip-types --test tests/integration/r3e-billing-contract.test.ts",
+    "test:r3e-plan-subscription-lifecycle": "node --experimental-strip-types --test tests/postgres/r3e-plan-subscription-lifecycle.test.ts",
+    "test:r3f-entitlement-contract": "node --experimental-strip-types --test tests/integration/r3f-entitlement-contract.test.ts",
+    "test:r3f-entitlement-lifecycle": "node --experimental-strip-types --test tests/postgres/r3f-entitlement-lifecycle.test.ts",
+    "check:r3g-capability-contract": "node scripts/check-r3g-capability-contract.mjs",
+    "test:r3g-capability-contract": "node --experimental-strip-types --test tests/integration/r3g-capability-contract.test.ts",
+    "test:r3g-capability-feature-resolution": "node --experimental-strip-types --test tests/postgres/r3g-capability-feature-resolution.test.ts",
+    "check:r3h-audit-query-contract": "node scripts/check-r3h-audit-query-contract.mjs",
+    "test:r3h-audit-query-contract": "node --experimental-strip-types --test tests/integration/r3h-audit-query-contract.test.ts",
+    "test:r3h-platform-audit-query": "node --experimental-strip-types --test tests/postgres/r3h-platform-audit-query.test.ts",
+    "check:r3i-admin-surface-contract": "node scripts/check-r3i-admin-surface-contract.mjs",
+    "test:r3i-admin-api-contract": "node --experimental-strip-types --test tests/integration/r3i-admin-api-contract.test.ts",
+    "test:r3i-admin-ui-contract": "node --experimental-strip-types --test tests/integration/r3i-admin-ui-contract.test.ts",
+    "test:r3j-integrated-control-plane-runtime": "node --experimental-strip-types --test tests/integration/r3j-integrated-control-plane-runtime.test.ts"
   },
-  "dependencies": {"pg": "8.23.0"},
-  "devDependencies": {"@types/pg": "8.23.1"},
+  "dependencies": {
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
+  },
   "type": "module"
 }

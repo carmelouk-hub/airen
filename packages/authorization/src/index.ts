@@ -1,4 +1,4 @@
-import { AppError, assertResourceScope, hasPermission, type ResourceScope, type SecurityContext, type UUID } from "../../shared-contracts/src/index.ts";
+import { AppError, assertResourceScope, hasPermission, type PlatformSecurityContext, type ResourceScope, type SecurityContext, type UUID } from "../../shared-contracts/src/index.ts";
 import type { AuthenticatedPrincipal } from "../../identity/src/index.ts";
 import type { ResolvedTenantRoute } from "../../tenant/src/index.ts";
 export type TenantMembership = Readonly<{ id: UUID; tenantId: UUID; identityId: UUID; roleKey: string; status: "invited" | "active" | "suspended" | "revoked" }>;
@@ -6,6 +6,19 @@ export type LocationMembership = Readonly<{ id: UUID; tenantMembershipId: UUID; 
 export interface MembershipRepository { findTenantMembership(tenantId: UUID, identityId: UUID): Promise<TenantMembership | null>; findLocationMembership(tenantMembershipId: UUID, locationId: UUID): Promise<LocationMembership | null>; }
 export interface RolePermissionResolver { platformPermissions(platformRoles: readonly string[]): Promise<readonly string[]>; tenantPermissions(roleKey: string): Promise<readonly string[]>; locationPermissions(roleKey: string): Promise<readonly string[]>; }
 export function correlationId(input?: string): string { return input?.trim() || crypto.randomUUID(); }
+export async function buildPlatformSecurityContext(input: { principal: AuthenticatedPrincipal; roles: RolePermissionResolver; correlationId?: string }): Promise<PlatformSecurityContext> {
+  const platformPermissions = await input.roles.platformPermissions(input.principal.platformRoles);
+  return {
+    scopeKind: "platform",
+    correlationId: correlationId(input.correlationId),
+    actorIdentityId: input.principal.identityId,
+    platformRoles: input.principal.platformRoles,
+    platformPermissions
+  };
+}
+export function requirePlatformPermission(context: PlatformSecurityContext, permissionKey: string): void {
+  if (!context.platformPermissions.includes(permissionKey)) throw new AppError("PERMISSION_DENIED", `Missing platform permission: ${permissionKey}`);
+}
 export async function buildSecurityContext(input: { principal: AuthenticatedPrincipal; route: ResolvedTenantRoute; memberships: MembershipRepository; roles: RolePermissionResolver; entitlements: readonly string[]; correlationId?: string }): Promise<SecurityContext> {
   const platformPermissions = await input.roles.platformPermissions(input.principal.platformRoles);
   const tenantMembership = await input.memberships.findTenantMembership(input.route.tenant.id, input.principal.identityId);

@@ -6,6 +6,10 @@ export type ResolvedTenantRoute = Readonly<{ tenant: Tenant; location: Location;
 export interface TenantRepository { findById(id: UUID): Promise<Tenant | null>; findBySlug(slug: string): Promise<Tenant | null>; }
 export interface LocationRepository { findById(id: UUID): Promise<Location | null>; findPrimaryForTenant(tenantId: UUID): Promise<Location | null>; }
 export interface TenantDomainRepository { findActiveByHostname(hostname: string): Promise<TenantDomain | null>; }
+export interface PublicRouteLookup {
+  findTrustedSubdomainRoute(slug: string): Promise<{ tenant: Tenant; location: Location } | null>;
+  findCustomDomainRoute(hostname: string): Promise<{ domain: TenantDomain; tenant: Tenant; location: Location } | null>;
+}
 const HOST_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 export function normalizeHostname(rawHostname: string): string {
   let hostname = rawHostname.trim().toLowerCase();
@@ -17,18 +21,28 @@ export function normalizeHostname(rawHostname: string): string {
   if (hostname.split(".").some((label) => !HOST_LABEL.test(label))) throw new AppError("TENANT_RESOLUTION_FAILED", "Invalid hostname syntax");
   return hostname;
 }
-export async function resolveTenantRoute(input: { hostname: string; trustedBaseDomain: string; tenants: TenantRepository; locations: LocationRepository; domains: TenantDomainRepository }): Promise<ResolvedTenantRoute> {
+export async function resolveTenantRoute(input: { hostname: string; trustedBaseDomain: string; tenants: TenantRepository; locations: LocationRepository; domains: TenantDomainRepository; publicRoutes?: PublicRouteLookup }): Promise<ResolvedTenantRoute> {
   const hostname = normalizeHostname(input.hostname);
   const trustedBaseDomain = normalizeHostname(input.trustedBaseDomain);
   const suffix = `.${trustedBaseDomain}`;
   if (hostname.endsWith(suffix)) {
     const prefix = hostname.slice(0, -suffix.length);
     if (!prefix || prefix.includes(".")) throw new AppError("TENANT_RESOLUTION_FAILED", "Platform hostname must contain exactly one tenant slug label");
+    if (input.publicRoutes) {
+      const route = await input.publicRoutes.findTrustedSubdomainRoute(prefix);
+      if (!route) throw new AppError("TENANT_RESOLUTION_FAILED", "Unknown tenant slug");
+      return { ...route, source: "trusted-platform-subdomain", hostname };
+    }
     const tenant = await input.tenants.findBySlug(prefix);
     if (!tenant || tenant.status !== "active") throw new AppError("TENANT_RESOLUTION_FAILED", "Unknown tenant slug");
     const location = await input.locations.findPrimaryForTenant(tenant.id);
     if (!location || location.status !== "active") throw new AppError("TENANT_RESOLUTION_FAILED", "Tenant has no active primary location");
     return { tenant, location, source: "trusted-platform-subdomain", hostname };
+  }
+  if (input.publicRoutes) {
+    const route = await input.publicRoutes.findCustomDomainRoute(hostname);
+    if (route) return { tenant: route.tenant, location: route.location, source: "custom-domain", hostname };
+    throw new AppError("TENANT_RESOLUTION_FAILED", "Hostname is not registered for any active tenant route");
   }
   const customDomain = await input.domains.findActiveByHostname(hostname);
   if (customDomain) {

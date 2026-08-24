@@ -1,0 +1,149 @@
+{
+  "milestone": "R3-E",
+  "title": "Plan & Subscription Lifecycle",
+  "status": "IMPLEMENTATION_RUNTIME_PASS_CLOSURE_CANDIDATE",
+  "date": "2026-08-23",
+  "repository": "carmelouk-hub/airen",
+  "branch": "r3/control-plane-20260822",
+  "foundation_base_commit": "2c40af819c93c32538ccd846b4e9eb7474cd5f74",
+  "r3_d_closure_commit": "f6792bbfa3ed0b7ef40f047bbce6112cc13066e0",
+  "implementation_commit": "4ddaa93f1b1bec13a7b50100083b11b539f13b1f",
+  "implementation_tree": "6122f21f04ba709d723337d619f9e059fb2a0429",
+  "implementation_ci": {
+    "workflow": "foundation-contract-ci",
+    "run_number": 386,
+    "run_id": 32605121768,
+    "conclusion": "success",
+    "jobs": {
+      "application-contracts": "success",
+      "postgres-rls-runtime": "success",
+      "deployment-path-runtime": "success"
+    }
+  },
+  "deployment_evidence_artifact": {
+    "artifact_id": 9483925916,
+    "digest": "sha256:52a7d3ca061c40f9671db55abbb6bc9dcaa4ea17a41caf859866c861306535c5",
+    "runtime_status": "RUNTIME_DEPLOYMENT_PATH_PASS"
+  },
+  "scope_document": {
+    "title": "R3-E-001 — Plan & Subscription Lifecycle Scope & Gap Reconciliation — v0.1",
+    "drive_id": "1gs4HU4iyB0_hC3tWDnY7wqTX9fHEa3c65P4irqMWcPM"
+  },
+  "machine_spec": {
+    "title": "MRS-005 — R3-E Plan & Subscription Lifecycle Machine Spec — v0.1",
+    "drive_id": "1LOvSAzjvVPOyq2AfBUw9qruqRX_x3kf2nlVK2HL5MDo"
+  },
+  "permissions": [
+    "platform.plans.read",
+    "platform.plans.create",
+    "platform.plans.update",
+    "platform.plans.activate",
+    "platform.plans.retire",
+    "platform.subscriptions.read",
+    "platform.subscriptions.create",
+    "platform.subscriptions.change_plan",
+    "platform.subscriptions.activate",
+    "platform.subscriptions.suspend",
+    "platform.subscriptions.reactivate",
+    "platform.subscriptions.schedule_cancel",
+    "platform.subscriptions.unschedule_cancel",
+    "platform.subscriptions.cancel",
+    "platform.subscriptions.expire"
+  ],
+  "authority_invariants": {
+    "commercial_state_is_authorization": false,
+    "subscription_state_is_entitlement_state": false,
+    "entitlement_state_is_permission_state": false,
+    "tenant_role_is_platform_billing_authority": false,
+    "tenant_admin_implies_platform_billing_authority": false,
+    "db_permission_recheck": true,
+    "runtime_direct_billing_table_mutation": false,
+    "airen_app_lifecycle_mutation": false,
+    "client_tenant_id_resolver_authority": false
+  },
+  "plan_state_machine": {
+    "states": ["draft", "active", "retired"],
+    "governed_actions": ["create", "update_draft", "activate", "retire"],
+    "slug_immutable": true,
+    "active_commercial_terms_immutable": true,
+    "hard_delete": false
+  },
+  "subscription_state_machine": {
+    "states": ["scheduled", "trialing", "active", "suspended", "cancel_pending", "canceled", "expired"],
+    "cancel_modes": ["immediate", "finalize_scheduled"],
+    "terminal_states": ["canceled", "expired"],
+    "one_current_nonterminal_per_tenant": true,
+    "hard_delete": false
+  },
+  "provider_boundary": {
+    "non_secret_refs_only": true,
+    "provider_subscription_ref_unique_within_provider": true,
+    "provider_sdk_called": false,
+    "webhooks_ingested": false,
+    "provider_credentials_stored": false
+  },
+  "entitlement_boundary": {
+    "tenant_entitlements_mutated": false,
+    "entitlement_lifecycle_owner": "R3-F"
+  },
+  "runtime_assertions": {
+    "clean_migration_chain_0014_through_0018": "PASS",
+    "plan_create_update_activate_retire": "PASS",
+    "active_plan_terms_immutable": "PASS",
+    "retired_plan_new_subscription_denied": "PASS",
+    "plan_queries": "PASS",
+    "subscription_state_derivation": "PASS",
+    "default_trial_derivation": "PASS",
+    "one_current_subscription_concurrency": "PASS",
+    "scheduled_start_guard": "PASS",
+    "trial_activation": "PASS",
+    "suspend_reactivate": "PASS",
+    "cancel_schedule_unschedule": "PASS",
+    "immediate_cancel": "PASS",
+    "scheduled_cancel_effective_time_guard": "PASS",
+    "scheduled_cancel_finalize": "PASS",
+    "expiration_time_guard": "PASS",
+    "terminal_reactivation_denied": "PASS",
+    "plan_change_active_only": "PASS",
+    "cancel_pending_plan_change_denied": "PASS",
+    "tenant_active_service_grant_guard": "PASS",
+    "restrictive_action_nonactive_tenant": "PASS",
+    "provider_ref_uniqueness": "PASS",
+    "safe_tenant_resolver": "PASS",
+    "provider_refs_excluded_from_tenant_resolver": "PASS",
+    "identical_retry_replay": "PASS",
+    "replay_no_duplicate_audit": "PASS",
+    "changed_payload_idempotency_conflict": "PASS",
+    "forced_partial_failure_rollback": "PASS",
+    "tenant_role_platform_authority_shortcut_denied": "PASS",
+    "db_permission_recheck": "PASS",
+    "direct_control_plane_billing_dml_denied": "PASS",
+    "airen_app_lifecycle_capability_denied": "PASS",
+    "no_secret_columns": "PASS",
+    "tenant_entitlements_unchanged": "PASS",
+    "subscription_event_history": "PASS",
+    "audit_event": "PASS",
+    "outbox_event": "PASS",
+    "foundation_rls_regression": "PASS",
+    "authenticated_principal_regression": "PASS",
+    "r3_a_regression": "PASS",
+    "r3_b_regression": "PASS",
+    "r3_c_regression": "PASS",
+    "r3_d_regression": "PASS",
+    "deployment_path_regression": "PASS"
+  },
+  "failure_reconciliation": [],
+  "implementation_first_ci_pass": true,
+  "scope_boundary": {
+    "r3_e_gap_complete": true,
+    "r3_e_closed": false,
+    "r3_f_open": false,
+    "main_modified": false,
+    "corte_production_modified": false,
+    "production_billing_migration_performed": false,
+    "production_cutover_authorized": false,
+    "t20_pass": false,
+    "golden_e2e_pass": false,
+    "base44_decommission_complete": false
+  }
+}
