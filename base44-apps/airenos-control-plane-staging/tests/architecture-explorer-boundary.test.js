@@ -29,21 +29,50 @@ test('Explorer declares read-only Base44 boundary', () => {
   assert.match(html, /R3 PROTECTED/);
 });
 
-test('Explorer v0.2 exposes six native code drawers without JavaScript', () => {
-  assert.match(html, /v0\.2 · CODE INSIDE/);
-  assert.match(html, /SOURCE BLOBS PINNED/);
-  assert.equal((html.match(/class="code-drawer"/g) ?? []).length, 6);
-  assert.equal((html.match(/<details class="code-drawer">/g) ?? []).length, 6);
+test('Explorer v0.3 exposes RistoAIRen as a connected vertical without JavaScript', () => {
+  assert.match(html, /v0\.3 · RISTOAIREN CONNECTED/);
+  assert.match(html, /RistoAIRen Vertical Connection/);
+  assert.match(html, /RISTOAIREN VERTICAL/);
+  assert.equal((html.match(/class="vnode /g) ?? []).length, 5);
   assert.doesNotMatch(html, /<script\b/i);
 });
 
-test('Explorer exposes all six real architecture paths', () => {
-  for (const path of sourcePaths) {
-    assert.match(html, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  }
+test('RistoAIRen dependency chain preserves Foundation-first authority', () => {
+  for (const marker of [
+    'AIRenOS FOUNDATION',
+    'GOVERNED EXCHANGE',
+    'RISTOAIREN',
+    'FIRST PORTABLE DOMAIN',
+    'EXPERIENCE LAYER',
+    'Foundation ↔ Vertical',
+    'T20 · PASS BOUNDED',
+    'GOLDEN / PUBLICATION · NOT AUTHORIZED'
+  ]) assert.match(html, new RegExp(marker));
 });
 
-test('Explorer pins every displayed source excerpt to its exact GitHub blob', () => {
+test('RistoAIRen connection pins governed boundary and staging sources', () => {
+  assert.match(html, /8e0c79796e59b970c7e7cb3e8170abcd8de155ad/);
+  assert.match(html, /eb666f018812a684576506ef05f5c02555603d19/);
+  assert.match(html, /468232abf7621039de744fe6822053b1843781f8/);
+});
+
+test('Vertical view keeps core authority in AIRenOS Foundation', () => {
+  for (const label of [
+    'Identity',
+    'Tenant / Location',
+    'Membership / RBAC',
+    'Entitlements',
+    'Trusted DB scope / RLS',
+    'Audit / Outbox'
+  ]) assert.match(html, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.ok((html.match(/AIRenOS Foundation/g) ?? []).length >= 6);
+  assert.match(html, /Restaurant domain logic/);
+  assert.match(html, /RistoAIRen vertical/);
+});
+
+test('Explorer retains six real code drawers and pinned source blobs', () => {
+  assert.equal((html.match(/class="code-drawer"/g) ?? []).length, 6);
+  for (const path of sourcePaths) assert.match(html, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   for (const blob of sourceBlobs) assert.match(html, new RegExp(blob));
 });
 
@@ -58,7 +87,7 @@ test('Displayed excerpts contain verified Foundation and T20 boundary markers', 
   ]) assert.match(html, new RegExp(marker));
 });
 
-test('Code-inside visualization adds no runtime authority path', () => {
+test('Vertical visualization adds no runtime authority path', () => {
   assert.doesNotMatch(html, /fetch\s*\(/);
   assert.doesNotMatch(html, /base44\.entities/i);
   assert.doesNotMatch(html, /<form\b/i);
