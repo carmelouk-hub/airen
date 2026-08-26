@@ -23,12 +23,14 @@ This receipt records design-level acceptance of a provider-neutral typed exchang
 
 ## Exact changed-file set
 
-The implementation branch differs from its base by exactly four design/test files and no UI, Foundation Core, schema, migration or runtime source:
+At the **pre-evidence implementation head** `836092020d28ff69a1668bf437eb4fb9ad32eb43`, the branch differed from its base by exactly four design/test files and no UI, Foundation Core, schema, migration or runtime source:
 
 1. `base44-apps/airenos-control-plane-staging/contracts/foundation-experience-typed-exchange.design.json`
 2. `base44-apps/airenos-control-plane-staging/tests/foundation-experience-typed-exchange-acceptance.test.js`
 3. `base44-apps/ristoairen-staging/contracts/foundation-experience-typed-exchange.design.json`
 4. `base44-apps/ristoairen-staging/tests/foundation-experience-typed-exchange-acceptance.test.js`
+
+The evidence-registration commit adds only this `docs/AIRENOS_RISTOAIREN_TYPED_EXCHANGE_ACCEPTANCE_EVIDENCE_2026-08-26.md` receipt as a fifth docs-only file relative to the branch base. It does not alter application or runtime behavior.
 
 ## Accepted typed boundary
 
