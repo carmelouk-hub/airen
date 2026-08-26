@@ -14,212 +14,47 @@ function assertRoleIdentifier(role: string): string {
   return role;
 }
 function optionalString(value: unknown): string | undefined { return value == null ? undefined : String(value); }
-
 function projection(row: QueryResultRow): BookingPrivateProjectionV1 {
   return Object.freeze({
-    id: String(row.id), status: String(row.status) as BookingStatus, partySize: Number(row.party_size),
-    bookingDate: String(row.booking_date).slice(0, 10), bookingTimeLocal: String(row.booking_time_local),
-    startsAt: new Date(row.starts_at).toISOString(), expectedDurationMinutes: Number(row.expected_duration_minutes),
-    source: String(row.source), customerNameSnapshot: String(row.customer_name_snapshot),
-    phoneSnapshot: optionalString(row.phone_snapshot), emailSnapshot: optionalString(row.email_snapshot),
-    notes: optionalString(row.notes), specialRequests: optionalString(row.special_requests),
-    zoneId: optionalString(row.zone_id), tableId: optionalString(row.table_id), eventId: optionalString(row.event_id),
-    arrivalAt: row.arrival_at == null ? undefined : new Date(row.arrival_at).toISOString(),
-    seatedAt: row.seated_at == null ? undefined : new Date(row.seated_at).toISOString(),
-    completedAt: row.completed_at == null ? undefined : new Date(row.completed_at).toISOString(),
-    cancelledAt: row.cancelled_at == null ? undefined : new Date(row.cancelled_at).toISOString(),
-    cancellationReason: optionalString(row.cancellation_reason),
-    noShowAt: row.no_show_at == null ? undefined : new Date(row.no_show_at).toISOString(),
-    createdAt: new Date(row.created_at).toISOString(), updatedAt: new Date(row.updated_at).toISOString(),
-    rowVersion: Number(row.row_version)
+    id:String(row.id),status:String(row.status) as BookingStatus,partySize:Number(row.party_size),bookingDate:String(row.booking_date).slice(0,10),bookingTimeLocal:String(row.booking_time_local),
+    startsAt:new Date(row.starts_at).toISOString(),expectedDurationMinutes:Number(row.expected_duration_minutes),source:String(row.source),customerNameSnapshot:String(row.customer_name_snapshot),
+    phoneSnapshot:optionalString(row.phone_snapshot),emailSnapshot:optionalString(row.email_snapshot),notes:optionalString(row.notes),specialRequests:optionalString(row.special_requests),
+    zoneId:optionalString(row.zone_id),tableId:optionalString(row.table_id),eventId:optionalString(row.event_id),arrivalAt:row.arrival_at==null?undefined:new Date(row.arrival_at).toISOString(),
+    seatedAt:row.seated_at==null?undefined:new Date(row.seated_at).toISOString(),completedAt:row.completed_at==null?undefined:new Date(row.completed_at).toISOString(),cancelledAt:row.cancelled_at==null?undefined:new Date(row.cancelled_at).toISOString(),
+    cancellationReason:optionalString(row.cancellation_reason),noShowAt:row.no_show_at==null?undefined:new Date(row.no_show_at).toISOString(),createdAt:new Date(row.created_at).toISOString(),updatedAt:new Date(row.updated_at).toISOString(),rowVersion:Number(row.row_version)
   });
 }
-
-const PROJECTION_COLUMNS = `id,status,party_size,booking_date,booking_time_local,starts_at,expected_duration_minutes,source,
- customer_name_snapshot,phone_snapshot,email_snapshot,notes,special_requests,zone_id,table_id,event_id,
- arrival_at,seated_at,completed_at,cancelled_at,cancellation_reason,no_show_at,created_at,updated_at,row_version`;
-
-type CursorPayload = Readonly<{ startsAt: string; id: string; order: "starts_at.asc" | "starts_at.desc" }>;
+const PROJECTION_COLUMNS=`id,status,party_size,booking_date,booking_time_local,starts_at,expected_duration_minutes,source,customer_name_snapshot,phone_snapshot,email_snapshot,notes,special_requests,zone_id,table_id,event_id,arrival_at,seated_at,completed_at,cancelled_at,cancellation_reason,no_show_at,created_at,updated_at,row_version`;
+type CursorPayload=Readonly<{startsAt:string;id:string;order:"starts_at.asc"|"starts_at.desc"}>;
 class BookingCursorCodec {
-  constructor(private readonly key: string) { if (key.length < 32) throw new Error("Booking cursor HMAC key must be at least 32 characters"); }
-  encode(payload: CursorPayload): string {
-    const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-    return `${body}.${createHmac("sha256", this.key).update(body).digest("base64url")}`;
-  }
-  decode(cursor: string): CursorPayload {
-    const [body, signature, extra] = cursor.split(".");
-    if (!body || !signature || extra) throw new AppError("VALIDATION_FAILED", "Invalid Booking cursor");
-    const expected = createHmac("sha256", this.key).update(body).digest();
-    const supplied = Buffer.from(signature, "base64url");
-    if (expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) throw new AppError("VALIDATION_FAILED", "Invalid Booking cursor signature");
-    try {
-      const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as CursorPayload;
-      if (!parsed.startsAt || !parsed.id || !["starts_at.asc", "starts_at.desc"].includes(parsed.order)) throw new Error("bad cursor");
-      return parsed;
-    } catch { throw new AppError("VALIDATION_FAILED", "Invalid Booking cursor payload"); }
-  }
+  private readonly key:string;
+  constructor(key:string){if(key.length<32)throw new Error("Booking cursor HMAC key must be at least 32 characters");this.key=key;}
+  encode(payload:CursorPayload):string{const body=Buffer.from(JSON.stringify(payload),"utf8").toString("base64url");return `${body}.${createHmac("sha256",this.key).update(body).digest("base64url")}`;}
+  decode(cursor:string):CursorPayload{const[body,signature,extra]=cursor.split(".");if(!body||!signature||extra)throw new AppError("VALIDATION_FAILED","Invalid Booking cursor");const expected=createHmac("sha256",this.key).update(body).digest();const supplied=Buffer.from(signature,"base64url");if(expected.length!==supplied.length||!timingSafeEqual(expected,supplied))throw new AppError("VALIDATION_FAILED","Invalid Booking cursor signature");try{const parsed=JSON.parse(Buffer.from(body,"base64url").toString("utf8")) as CursorPayload;if(!parsed.startsAt||!parsed.id||!["starts_at.asc","starts_at.desc"].includes(parsed.order))throw new Error("bad cursor");return parsed;}catch{throw new AppError("VALIDATION_FAILED","Invalid Booking cursor payload");}}
 }
-
-async function applyTrustedScope(client: PoolClient, context: SecurityContext, assumeRole?: string): Promise<void> {
-  if (assumeRole) await client.query(`SET LOCAL ROLE ${assertRoleIdentifier(assumeRole)}`);
-  await client.query(
-    "SELECT set_config('airen.identity_id',$1,true), set_config('airen.tenant_id',$2,true), set_config('airen.location_id',$3,true), set_config('airen.correlation_id',$4,true)",
-    [context.actorIdentityId, context.tenantId, context.locationId, context.correlationId]
-  );
-}
-
-async function withScopedRead<T>(pool: Pool, context: SecurityContext, assumeRole: string | undefined, fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
-  let began = false;
-  try {
-    await client.query("BEGIN"); began = true;
-    await client.query("SET TRANSACTION READ ONLY");
-    await applyTrustedScope(client, context, assumeRole);
-    return await fn(client);
-  } finally {
-    if (began) { try { await client.query("ROLLBACK"); } catch { /* preserve original outcome */ } }
-    client.release();
-  }
-}
+async function applyTrustedScope(client:PoolClient,context:SecurityContext,assumeRole?:string):Promise<void>{if(assumeRole)await client.query(`SET LOCAL ROLE ${assertRoleIdentifier(assumeRole)}`);await client.query("SELECT set_config('airen.identity_id',$1,true), set_config('airen.tenant_id',$2,true), set_config('airen.location_id',$3,true), set_config('airen.correlation_id',$4,true)",[context.actorIdentityId,context.tenantId,context.locationId,context.correlationId]);}
+async function withScopedRead<T>(pool:Pool,context:SecurityContext,assumeRole:string|undefined,fn:(client:PoolClient)=>Promise<T>):Promise<T>{const client=await pool.connect();let began=false;try{await client.query("BEGIN");began=true;await client.query("SET TRANSACTION READ ONLY");await applyTrustedScope(client,context,assumeRole);return await fn(client);}finally{if(began){try{await client.query("ROLLBACK")}catch{}}client.release();}}
 
 export class PostgresRistoBookingReadRepository implements BookingReadRepository {
-  private readonly cursor: BookingCursorCodec;
-  constructor(private readonly pool: Pool, cursorHmacKey: string, private readonly assumeRole = "airen_app") { this.cursor = new BookingCursorCodec(cursorHmacKey); }
-
-  async query(context: SecurityContext, input: BookingQueryInputV1): Promise<BookingPrivateListResultV1> {
-    return withScopedRead(this.pool, context, this.assumeRole, async (client) => {
-      const limit = input.limit ?? 50;
-      const order = input.order ?? "starts_at.asc";
-      const values: unknown[] = [];
-      const where: string[] = [];
-      if (input.statuses?.length) { values.push(input.statuses); where.push(`status = ANY($${values.length}::text[])`); }
-      if (input.fromDate) { values.push(input.fromDate); where.push(`booking_date >= $${values.length}::date`); }
-      if (input.toDate) { values.push(input.toDate); where.push(`booking_date <= $${values.length}::date`); }
-      if (input.cursor) {
-        const decoded = this.cursor.decode(input.cursor);
-        if (decoded.order !== order) throw new AppError("VALIDATION_FAILED", "Booking cursor order mismatch");
-        values.push(decoded.startsAt, decoded.id);
-        const op = order === "starts_at.asc" ? ">" : "<";
-        where.push(`(starts_at,id) ${op} ($${values.length - 1}::timestamptz,$${values.length}::uuid)`);
-      }
-      values.push(limit + 1);
-      const direction = order === "starts_at.asc" ? "ASC" : "DESC";
-      const result = await client.query(
-        `SELECT ${PROJECTION_COLUMNS} FROM risto_bookings ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY starts_at ${direction}, id ${direction} LIMIT $${values.length}`,
-        values
-      );
-      const items = result.rows.slice(0, limit).map(projection);
-      const last = result.rows.length > limit ? items[items.length - 1] : undefined;
-      return Object.freeze({ items, nextCursor: last ? this.cursor.encode({ startsAt: last.startsAt, id: last.id, order }) : undefined });
-    });
-  }
-
-  async findVisibleById(context: SecurityContext, bookingId: UUID): Promise<BookingPrivateProjectionV1 | null> {
-    return withScopedRead(this.pool, context, this.assumeRole, async (client) => {
-      const result = await client.query(`SELECT ${PROJECTION_COLUMNS} FROM risto_bookings WHERE id=$1`, [bookingId]);
-      return result.rows[0] ? projection(result.rows[0]) : null;
-    });
-  }
+  private readonly pool:Pool; private readonly cursor:BookingCursorCodec; private readonly assumeRole:string;
+  constructor(pool:Pool,cursorHmacKey:string,assumeRole="airen_app"){this.pool=pool;this.cursor=new BookingCursorCodec(cursorHmacKey);this.assumeRole=assumeRole;}
+  async query(context:SecurityContext,input:BookingQueryInputV1):Promise<BookingPrivateListResultV1>{return withScopedRead(this.pool,context,this.assumeRole,async(client)=>{const limit=input.limit??50;const order=input.order??"starts_at.asc";const values:unknown[]=[];const where:string[]=[];if(input.statuses?.length){values.push(input.statuses);where.push(`status = ANY($${values.length}::text[])`)}if(input.fromDate){values.push(input.fromDate);where.push(`booking_date >= $${values.length}::date`)}if(input.toDate){values.push(input.toDate);where.push(`booking_date <= $${values.length}::date`)}if(input.cursor){const decoded=this.cursor.decode(input.cursor);if(decoded.order!==order)throw new AppError("VALIDATION_FAILED","Booking cursor order mismatch");values.push(decoded.startsAt,decoded.id);const op=order==="starts_at.asc"?">":"<";where.push(`(starts_at,id) ${op} ($${values.length-1}::timestamptz,$${values.length}::uuid)`)}values.push(limit+1);const direction=order==="starts_at.asc"?"ASC":"DESC";const result=await client.query(`SELECT ${PROJECTION_COLUMNS} FROM risto_bookings ${where.length?`WHERE ${where.join(" AND ")}`:""} ORDER BY starts_at ${direction}, id ${direction} LIMIT $${values.length}`,values);const items=result.rows.slice(0,limit).map(projection);const last=result.rows.length>limit?items[items.length-1]:undefined;return Object.freeze({items,nextCursor:last?this.cursor.encode({startsAt:last.startsAt,id:last.id,order}):undefined});});}
+  async findVisibleById(context:SecurityContext,bookingId:UUID):Promise<BookingPrivateProjectionV1|null>{return withScopedRead(this.pool,context,this.assumeRole,async(client)=>{const result=await client.query(`SELECT ${PROJECTION_COLUMNS} FROM risto_bookings WHERE id=$1`,[bookingId]);return result.rows[0]?projection(result.rows[0]):null;});}
 }
-
 class PostgresRistoBookingMutationTransaction implements BookingMutationTransaction {
-  constructor(private readonly client: PoolClient) {}
-  async findVisibleById(bookingId: UUID): Promise<BookingPrivateProjectionV1 | null> {
-    const result = await this.client.query(`SELECT ${PROJECTION_COLUMNS} FROM risto_bookings WHERE id=$1 FOR UPDATE`, [bookingId]);
-    return result.rows[0] ? projection(result.rows[0]) : null;
-  }
-  claimIdempotency(scope: IdempotencyScope): Promise<IdempotencyClaim> { return claimFoundationIdempotency(this.client, scope); }
-  completeIdempotency(scope: IdempotencyScope, result: BookingMutationResultV1): Promise<void> { return completeFoundationIdempotency(this.client, scope, result); }
-
-  async insertBooking(input: BookingCreateInputV1, context: SecurityContext): Promise<BookingPrivateProjectionV1> {
-    const result = await this.client.query(
-      `INSERT INTO risto_bookings
-       (tenant_id,location_id,customer_profile_id,event_id,zone_id,table_id,source,external_reference,party_size,booking_date,booking_time_local,
-        starts_at,expected_duration_minutes,status,customer_name_snapshot,phone_snapshot,email_snapshot,notes,special_requests,created_by_identity_id,updated_by_identity_id,environment_class)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11::time,($10::date+$11::time) AT TIME ZONE l.timezone,$12,'REQUESTED',$13,$14,$15,$16,$17,$18,$18,'TEST_TEMPORARY'
-       FROM platform.locations l WHERE l.id=$2 AND l.tenant_id=$1 AND l.status='active'
-       RETURNING ${PROJECTION_COLUMNS}`,
-      [context.tenantId,context.locationId,input.customerProfileId??null,input.eventId??null,input.zoneId??null,input.tableId??null,input.source.trim(),input.externalReference??null,
-       input.partySize,input.bookingDate,input.bookingTimeLocal,input.expectedDurationMinutes,input.customerNameSnapshot.trim(),input.phoneSnapshot??null,input.emailSnapshot??null,input.notes??null,input.specialRequests??null,context.actorIdentityId]
-    );
-    if (!result.rows[0]) throw new AppError("LOCATION_SCOPE_VIOLATION", "Trusted active Location was not available for Booking creation");
-    return projection(result.rows[0]);
-  }
-
-  async updateBooking(bookingId: UUID, input: BookingUpdateInputV1, context: SecurityContext): Promise<BookingPrivateProjectionV1> {
-    const result = await this.client.query(
-      `UPDATE risto_bookings b SET
-       customer_profile_id=CASE WHEN $2::boolean THEN $3 ELSE b.customer_profile_id END,
-       event_id=CASE WHEN $4::boolean THEN $5 ELSE b.event_id END,
-       zone_id=CASE WHEN $6::boolean THEN $7 ELSE b.zone_id END,
-       table_id=CASE WHEN $8::boolean THEN $9 ELSE b.table_id END,
-       party_size=COALESCE($10,b.party_size), booking_date=COALESCE($11::date,b.booking_date), booking_time_local=COALESCE($12::time,b.booking_time_local),
-       expected_duration_minutes=COALESCE($13,b.expected_duration_minutes), customer_name_snapshot=COALESCE($14,b.customer_name_snapshot),
-       phone_snapshot=CASE WHEN $15::boolean THEN $16 ELSE b.phone_snapshot END,
-       email_snapshot=CASE WHEN $17::boolean THEN $18 ELSE b.email_snapshot END,
-       notes=CASE WHEN $19::boolean THEN $20 ELSE b.notes END,
-       special_requests=CASE WHEN $21::boolean THEN $22 ELSE b.special_requests END,
-       starts_at=(COALESCE($11::date,b.booking_date)+COALESCE($12::time,b.booking_time_local)) AT TIME ZONE l.timezone,
-       updated_by_identity_id=$23, updated_at=now(), row_version=b.row_version+1
-       FROM platform.locations l
-       WHERE b.id=$1 AND b.location_id=l.id AND b.tenant_id=l.tenant_id AND b.row_version=$24
-       RETURNING ${PROJECTION_COLUMNS}`,
-      [bookingId,
-       Object.hasOwn(input,"customerProfileId"),input.customerProfileId??null,Object.hasOwn(input,"eventId"),input.eventId??null,Object.hasOwn(input,"zoneId"),input.zoneId??null,Object.hasOwn(input,"tableId"),input.tableId??null,
-       input.partySize??null,input.bookingDate??null,input.bookingTimeLocal??null,input.expectedDurationMinutes??null,input.customerNameSnapshot??null,
-       Object.hasOwn(input,"phoneSnapshot"),input.phoneSnapshot??null,Object.hasOwn(input,"emailSnapshot"),input.emailSnapshot??null,Object.hasOwn(input,"notes"),input.notes??null,Object.hasOwn(input,"specialRequests"),input.specialRequests??null,
-       context.actorIdentityId,input.rowVersion]
-    );
-    if (!result.rows[0]) throw new AppError("CONFLICT", "Booking row_version conflict or resource is not visible");
-    return projection(result.rows[0]);
-  }
-
-  async transitionBookingStatus(bookingId: UUID, fromStatus: BookingStatus, input: BookingStatusTransitionInputV1, context: SecurityContext): Promise<BookingPrivateProjectionV1> {
-    const result = await this.client.query(
-      `UPDATE risto_bookings SET status=$2,
-       arrival_at=CASE WHEN $2='ARRIVED' THEN COALESCE(arrival_at,now()) ELSE arrival_at END,
-       seated_at=CASE WHEN $2='SEATED' THEN COALESCE(seated_at,now()) ELSE seated_at END,
-       completed_at=CASE WHEN $2='COMPLETED' THEN COALESCE(completed_at,now()) ELSE completed_at END,
-       cancelled_at=CASE WHEN $2='CANCELLED' THEN COALESCE(cancelled_at,now()) ELSE cancelled_at END,
-       cancellation_reason=CASE WHEN $2='CANCELLED' THEN $3 ELSE cancellation_reason END,
-       no_show_at=CASE WHEN $2='NO_SHOW' THEN COALESCE(no_show_at,now()) ELSE no_show_at END,
-       updated_by_identity_id=$4,updated_at=now(),row_version=row_version+1
-       WHERE id=$1 AND status=$5 AND row_version=$6 RETURNING ${PROJECTION_COLUMNS}`,
-      [bookingId,input.requestedStatus,input.reason??null,context.actorIdentityId,fromStatus,input.rowVersion]
-    );
-    if (!result.rows[0]) throw new AppError("CONFLICT", "Booking status/row_version conflict or resource is not visible");
-    return projection(result.rows[0]);
-  }
-
-  async appendAudit(event: BookingAuditEvent): Promise<void> {
-    await this.client.query(
-      `INSERT INTO audit.audit_events (tenant_id,location_id,actor_identity_id,actor_kind,action_key,resource_type,resource_id,correlation_id,outcome,metadata)
-       VALUES ($1,$2,$3,'user',$4,'Booking',$5,$6,'success',$7::jsonb)`,
-      [event.tenantId,event.locationId,event.actorIdentityId,event.eventType,event.bookingId,event.correlationId,JSON.stringify(event.metadata)]
-    );
-  }
-  async appendOutbox(event: BookingOutboxEvent): Promise<void> {
-    await this.client.query(
-      `INSERT INTO events.outbox_events (tenant_id,location_id,event_type,aggregate_type,aggregate_id,payload_version,payload,correlation_id)
-       VALUES ($1,$2,$3,'Booking',$4,1,$5::jsonb,$6)`,
-      [event.tenantId,event.locationId,event.eventType,event.bookingId,JSON.stringify(event.payload),event.correlationId]
-    );
-  }
+  private readonly client:PoolClient;
+  constructor(client:PoolClient){this.client=client;}
+  async findVisibleById(bookingId:UUID):Promise<BookingPrivateProjectionV1|null>{const result=await this.client.query(`SELECT ${PROJECTION_COLUMNS} FROM risto_bookings WHERE id=$1 FOR UPDATE`,[bookingId]);return result.rows[0]?projection(result.rows[0]):null;}
+  claimIdempotency(scope:IdempotencyScope):Promise<IdempotencyClaim>{return claimFoundationIdempotency(this.client,scope)}
+  completeIdempotency(scope:IdempotencyScope,result:BookingMutationResultV1):Promise<void>{return completeFoundationIdempotency(this.client,scope,result)}
+  async insertBooking(input:BookingCreateInputV1,context:SecurityContext):Promise<BookingPrivateProjectionV1>{const result=await this.client.query(`INSERT INTO risto_bookings (tenant_id,location_id,customer_profile_id,event_id,zone_id,table_id,source,external_reference,party_size,booking_date,booking_time_local,starts_at,expected_duration_minutes,status,customer_name_snapshot,phone_snapshot,email_snapshot,notes,special_requests,created_by_identity_id,updated_by_identity_id,environment_class) SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11::time,($10::date+$11::time) AT TIME ZONE l.timezone,$12,'REQUESTED',$13,$14,$15,$16,$17,$18,$18,'TEST_TEMPORARY' FROM platform.locations l WHERE l.id=$2 AND l.tenant_id=$1 AND l.status='active' RETURNING ${PROJECTION_COLUMNS}`,[context.tenantId,context.locationId,input.customerProfileId??null,input.eventId??null,input.zoneId??null,input.tableId??null,input.source.trim(),input.externalReference??null,input.partySize,input.bookingDate,input.bookingTimeLocal,input.expectedDurationMinutes,input.customerNameSnapshot.trim(),input.phoneSnapshot??null,input.emailSnapshot??null,input.notes??null,input.specialRequests??null,context.actorIdentityId]);if(!result.rows[0])throw new AppError("LOCATION_SCOPE_VIOLATION","Trusted active Location was not available for Booking creation");return projection(result.rows[0]);}
+  async updateBooking(bookingId:UUID,input:BookingUpdateInputV1,context:SecurityContext):Promise<BookingPrivateProjectionV1>{const result=await this.client.query(`UPDATE risto_bookings b SET customer_profile_id=CASE WHEN $2::boolean THEN $3 ELSE b.customer_profile_id END,event_id=CASE WHEN $4::boolean THEN $5 ELSE b.event_id END,zone_id=CASE WHEN $6::boolean THEN $7 ELSE b.zone_id END,table_id=CASE WHEN $8::boolean THEN $9 ELSE b.table_id END,party_size=COALESCE($10,b.party_size),booking_date=COALESCE($11::date,b.booking_date),booking_time_local=COALESCE($12::time,b.booking_time_local),expected_duration_minutes=COALESCE($13,b.expected_duration_minutes),customer_name_snapshot=COALESCE($14,b.customer_name_snapshot),phone_snapshot=CASE WHEN $15::boolean THEN $16 ELSE b.phone_snapshot END,email_snapshot=CASE WHEN $17::boolean THEN $18 ELSE b.email_snapshot END,notes=CASE WHEN $19::boolean THEN $20 ELSE b.notes END,special_requests=CASE WHEN $21::boolean THEN $22 ELSE b.special_requests END,starts_at=(COALESCE($11::date,b.booking_date)+COALESCE($12::time,b.booking_time_local)) AT TIME ZONE l.timezone,updated_by_identity_id=$23,updated_at=now(),row_version=b.row_version+1 FROM platform.locations l WHERE b.id=$1 AND b.location_id=l.id AND b.tenant_id=l.tenant_id AND b.row_version=$24 RETURNING b.id,b.status,b.party_size,b.booking_date,b.booking_time_local,b.starts_at,b.expected_duration_minutes,b.source,b.customer_name_snapshot,b.phone_snapshot,b.email_snapshot,b.notes,b.special_requests,b.zone_id,b.table_id,b.event_id,b.arrival_at,b.seated_at,b.completed_at,b.cancelled_at,b.cancellation_reason,b.no_show_at,b.created_at,b.updated_at,b.row_version`,[bookingId,Object.hasOwn(input,"customerProfileId"),input.customerProfileId??null,Object.hasOwn(input,"eventId"),input.eventId??null,Object.hasOwn(input,"zoneId"),input.zoneId??null,Object.hasOwn(input,"tableId"),input.tableId??null,input.partySize??null,input.bookingDate??null,input.bookingTimeLocal??null,input.expectedDurationMinutes??null,input.customerNameSnapshot??null,Object.hasOwn(input,"phoneSnapshot"),input.phoneSnapshot??null,Object.hasOwn(input,"emailSnapshot"),input.emailSnapshot??null,Object.hasOwn(input,"notes"),input.notes??null,Object.hasOwn(input,"specialRequests"),input.specialRequests??null,context.actorIdentityId,input.rowVersion]);if(!result.rows[0])throw new AppError("CONFLICT","Booking row_version conflict or resource is not visible");return projection(result.rows[0]);}
+  async transitionBookingStatus(bookingId:UUID,fromStatus:BookingStatus,input:BookingStatusTransitionInputV1,context:SecurityContext):Promise<BookingPrivateProjectionV1>{const result=await this.client.query(`UPDATE risto_bookings SET status=$2,arrival_at=CASE WHEN $2='ARRIVED' THEN COALESCE(arrival_at,now()) ELSE arrival_at END,seated_at=CASE WHEN $2='SEATED' THEN COALESCE(seated_at,now()) ELSE seated_at END,completed_at=CASE WHEN $2='COMPLETED' THEN COALESCE(completed_at,now()) ELSE completed_at END,cancelled_at=CASE WHEN $2='CANCELLED' THEN COALESCE(cancelled_at,now()) ELSE cancelled_at END,cancellation_reason=CASE WHEN $2='CANCELLED' THEN $3 ELSE cancellation_reason END,no_show_at=CASE WHEN $2='NO_SHOW' THEN COALESCE(no_show_at,now()) ELSE no_show_at END,updated_by_identity_id=$4,updated_at=now(),row_version=row_version+1 WHERE id=$1 AND status=$5 AND row_version=$6 RETURNING ${PROJECTION_COLUMNS}`,[bookingId,input.requestedStatus,input.reason??null,context.actorIdentityId,fromStatus,input.rowVersion]);if(!result.rows[0])throw new AppError("CONFLICT","Booking status/row_version conflict or resource is not visible");return projection(result.rows[0]);}
+  async appendAudit(event:BookingAuditEvent):Promise<void>{await this.client.query(`INSERT INTO audit.audit_events (tenant_id,location_id,actor_identity_id,actor_kind,action_key,resource_type,resource_id,correlation_id,outcome,metadata) VALUES ($1,$2,$3,'user',$4,'Booking',$5,$6,'success',$7::jsonb)`,[event.tenantId,event.locationId,event.actorIdentityId,event.eventType,event.bookingId,event.correlationId,JSON.stringify(event.metadata)]);}
+  async appendOutbox(event:BookingOutboxEvent):Promise<void>{await this.client.query(`INSERT INTO events.outbox_events (tenant_id,location_id,event_type,aggregate_type,aggregate_id,payload_version,payload,correlation_id) VALUES ($1,$2,$3,'Booking',$4,1,$5::jsonb,$6)`,[event.tenantId,event.locationId,event.eventType,event.bookingId,JSON.stringify(event.payload),event.correlationId]);}
 }
-
 export class PostgresRistoBookingUnitOfWork implements BookingUnitOfWork {
-  constructor(private readonly pool: Pool, private readonly assumeRole = "airen_app") {}
-  async transaction<T>(context: SecurityContext, fn: (tx: BookingMutationTransaction) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("BEGIN");
-      await applyTrustedScope(client, context, this.assumeRole);
-      const result = await fn(new PostgresRistoBookingMutationTransaction(client));
-      await client.query("COMMIT");
-      return result;
-    } catch (error) {
-      try { await client.query("ROLLBACK"); } catch { /* preserve original error */ }
-      throw error;
-    } finally { client.release(); }
-  }
+  private readonly pool:Pool; private readonly assumeRole:string;
+  constructor(pool:Pool,assumeRole="airen_app"){this.pool=pool;this.assumeRole=assumeRole;}
+  async transaction<T>(context:SecurityContext,fn:(tx:BookingMutationTransaction)=>Promise<T>):Promise<T>{const client=await this.pool.connect();try{await client.query("BEGIN");await applyTrustedScope(client,context,this.assumeRole);const result=await fn(new PostgresRistoBookingMutationTransaction(client));await client.query("COMMIT");return result;}catch(error){try{await client.query("ROLLBACK")}catch{}throw error;}finally{client.release();}}
 }
