@@ -41,17 +41,23 @@ test("T20-S01 risto_bookings has RLS enabled and forced",async()=>{
   const r=await pool.query("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='risto_bookings'::regclass"); assert.deepEqual(r.rows[0],{relrowsecurity:true,relforcerowsecurity:true});
 });
 test("T20-S02 airen_app with no trusted settings sees no Booking rows",async()=>{
-  const c=await pool.connect(); try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");const r=await c.query("SELECT count(*)::int c FROM risto_bookings");assert.equal(r.rows[0].c,0);await c.query("ROLLBACK");}finally{c.release();}
+  const c=await pool.connect();
+  try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");const r=await c.query("SELECT count(*)::int c FROM risto_bookings");assert.equal(r.rows[0].c,0);}
+  finally{try{await c.query("ROLLBACK");}catch{}c.release();}
 });
 test("T20-S03 trusted A/A1 scope can read its Booking",async()=>{assert.equal((await domainService.get(managerA(),scopedBookingId)).id,scopedBookingId);});
 test("T20-S04 trusted A/A2 scope cannot read A/A1 Booking",async()=>{await assert.rejects(()=>domainService.get(a2(),scopedBookingId),(e:any)=>e instanceof AppError&&e.code==="NOT_FOUND");});
 test("T20-S05 trusted B/B1 scope cannot read A/A1 Booking",async()=>{await assert.rejects(()=>domainService.get(managerB(),scopedBookingId),(e:any)=>e instanceof AppError&&e.code==="NOT_FOUND");});
 test("T20-S06 direct cross-Tenant insert under A/A1 RLS is rejected",async()=>{
-  const c=await pool.connect();try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");await c.query("SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id','cross-tenant',true)",[T20.managerA,T20.tenantA,T20.locationA1]);
-    await assert.rejects(()=>c.query(`INSERT INTO risto_bookings(tenant_id,location_id,source,party_size,booking_date,booking_time_local,starts_at,expected_duration_minutes,status,customer_name_snapshot,created_by_identity_id,updated_by_identity_id,environment_class) VALUES ($1,$2,'T20',2,'2026-09-03','20:00',now(),90,'REQUESTED','X',$3,$3,'TEST_TEMPORARY')`,[T20.tenantB,T20.locationB1,T20.managerA]),(e:any)=>e.code==="42501"); await c.query("ROLLBACK");}finally{c.release();}
+  const c=await pool.connect();
+  try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");await c.query("SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id','cross-tenant',true)",[T20.managerA,T20.tenantA,T20.locationA1]);
+    await assert.rejects(()=>c.query(`INSERT INTO risto_bookings(tenant_id,location_id,source,party_size,booking_date,booking_time_local,starts_at,expected_duration_minutes,status,customer_name_snapshot,created_by_identity_id,updated_by_identity_id,environment_class) VALUES ($1,$2,'T20',2,'2026-09-03','20:00',now(),90,'REQUESTED','X',$3,$3,'TEST_TEMPORARY')`,[T20.tenantB,T20.locationB1,T20.managerA]),(e:any)=>e.code==="42501");}
+  finally{try{await c.query("ROLLBACK");}catch{}c.release();}
 });
 test("T20-S07 direct cross-Location update under A/A2 cannot modify A/A1 row",async()=>{
-  const c=await pool.connect();try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");await c.query("SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id','cross-location',true)",[T20.managerA,T20.tenantA,T20.locationA2]);const r=await c.query("UPDATE risto_bookings SET party_size=99 WHERE id=$1",[scopedBookingId]);assert.equal(r.rowCount,0);await c.query("ROLLBACK");}finally{c.release();}
+  const c=await pool.connect();
+  try{await c.query("BEGIN");await c.query("SET LOCAL ROLE airen_app");await c.query("SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id','cross-location',true)",[T20.managerA,T20.tenantA,T20.locationA2]);const r=await c.query("UPDATE risto_bookings SET party_size=99 WHERE id=$1",[scopedBookingId]);assert.equal(r.rowCount,0);}
+  finally{try{await c.query("ROLLBACK");}catch{}c.release();}
 });
 test("T20-S08 foundation idempotency table also has forced RLS",async()=>{const r=await pool.query("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='foundation_idempotency_keys'::regclass");assert.deepEqual(r.rows[0],{relrowsecurity:true,relforcerowsecurity:true});});
 test("T20-S09 valid EdDSA service assertion verifies",async()=>{const v=await verifier.verify(jwt(validPayload()));assert.equal(v.subject,"ristoairen-staging");});
