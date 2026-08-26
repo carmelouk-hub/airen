@@ -17,20 +17,20 @@ This receipt records design-level acceptance of a provider-neutral typed exchang
 - Certified R3 head: `3d32b53bde2191c7718606cf9d3fe3497ae3f626`.
 - Working branch: `base44/typed-exchange-acceptance-20260826`.
 - Working branch base: `c8a19bbeca1d972ef592fece427d6967f1c074e7`.
-- Working branch pre-evidence head: `836092020d28ff69a1668bf437eb4fb9ad32eb43`.
+- Working branch pre-evidence head: `8c87d24f366d394a14fbd11bd0994204e0c81628`.
 - Governed design authority: Drive `1s_RNux9Mawk8i0HEam9-iddJ3scvki61`, artifact `GOVERNED_DESIGN_NOT_CANONICAL`, runtime implementation authorized `false`, schema authorized `false`.
 - T20 machine authority: Drive `1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE`, state `CENSUS_COMPLETE_FAIL_CLOSED`, implementation authorized `false`, current T20 verdict `INCOMPLETE`, runtime tests `0/66`.
 
 ## Exact changed-file set
 
-At the **pre-evidence implementation head** `836092020d28ff69a1668bf437eb4fb9ad32eb43`, the branch differed from its base by exactly four design/test files and no UI, Foundation Core, schema, migration or runtime source:
+At the **pre-evidence implementation head** `8c87d24f366d394a14fbd11bd0994204e0c81628`, the branch differed from its base by exactly four design/test files and no UI, Foundation Core, schema, migration or runtime source:
 
 1. `base44-apps/airenos-control-plane-staging/contracts/foundation-experience-typed-exchange.design.json`
 2. `base44-apps/airenos-control-plane-staging/tests/foundation-experience-typed-exchange-acceptance.test.js`
 3. `base44-apps/ristoairen-staging/contracts/foundation-experience-typed-exchange.design.json`
 4. `base44-apps/ristoairen-staging/tests/foundation-experience-typed-exchange-acceptance.test.js`
 
-The evidence-registration commit adds only this `docs/AIRENOS_RISTOAIREN_TYPED_EXCHANGE_ACCEPTANCE_EVIDENCE_2026-08-26.md` receipt as a fifth docs-only file relative to the branch base. It does not alter application or runtime behavior.
+The evidence-registration commits add only this `docs/AIRENOS_RISTOAIREN_TYPED_EXCHANGE_ACCEPTANCE_EVIDENCE_2026-08-26.md` receipt as a fifth docs-only file relative to the branch base. They do not alter application or runtime behavior.
 
 ## Accepted typed boundary
 
