@@ -29,11 +29,13 @@ test('Explorer declares read-only Base44 boundary', () => {
   assert.match(html, /R3 PROTECTED/);
 });
 
-test('Explorer v0.3 exposes RistoAIRen as a connected vertical without JavaScript', () => {
-  assert.match(html, /v0\.3 · RISTOAIREN CONNECTED/);
+test('Explorer v0.4 exposes RistoAIRen connection and domain galaxy without JavaScript', () => {
+  assert.match(html, /v0\.4 · RISTOAIREN DOMAIN GALAXY/);
   assert.match(html, /RistoAIRen Vertical Connection/);
-  assert.match(html, /RISTOAIREN VERTICAL/);
+  assert.match(html, /RistoAIRen Domain Galaxy/);
+  assert.match(html, /DOMAIN GALAXY/);
   assert.equal((html.match(/class="vnode /g) ?? []).length, 5);
+  assert.equal((html.match(/class="planet /g) ?? []).length, 18);
   assert.doesNotMatch(html, /<script\b/i);
 });
 
@@ -68,6 +70,38 @@ test('Vertical view keeps core authority in AIRenOS Foundation', () => {
   assert.ok((html.match(/AIRenOS Foundation/g) ?? []).length >= 6);
   assert.match(html, /Restaurant domain logic/);
   assert.match(html, /RistoAIRen vertical/);
+});
+
+test('Domain galaxy distinguishes live Booking from Golden targets and Reserved Next', () => {
+  assert.match(html, /packages\/ristoairen\/src\/booking/);
+  assert.match(html, /RUNTIME · T20 PASS BOUNDED/);
+  for (const domain of [
+    'Customer &amp; CRM',
+    'Arrival · Check-In · Table',
+    'ServiceSession',
+    'Order',
+    'Production · KDS · Bar',
+    'Bill · Payment · Cash',
+    'Events',
+    'Gift Voucher',
+    'Content · Journal · SEO',
+    'Media &amp; Visual AI',
+    'ATMOS',
+    'STELLA',
+    'Inventory',
+    'Procurement',
+    'Recipes &amp; Cost',
+    'Production Orchestrator',
+    'QSR QuickFlow'
+  ]) assert.match(html, new RegExp(domain.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')));
+  assert.match(html, /RESERVED NEXT/);
+  assert.match(html, /GOLDEN SPEC · target canonico, non runtime certificato/);
+});
+
+test('Galaxy states that non-Booking presence is not runtime certification', () => {
+  assert.match(html, /La presenza in questa mappa non equivale a runtime implementato/);
+  assert.match(html, /salvo Booking/);
+  assert.match(html, /DOC-015 Golden Restaurant E2E Specification/);
 });
 
 test('Explorer retains six real code drawers and pinned source blobs', () => {
