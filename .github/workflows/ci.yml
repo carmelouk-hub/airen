@@ -6,6 +6,7 @@ on:
       - main
       - "foundation/**"
       - "r3/**"
+      - "t20/**"
 
 jobs:
   application-contracts:
@@ -33,6 +34,9 @@ jobs:
       - run: npm run check:r3i-admin-surface-contract
       - run: npm run test:r3i-admin-api-contract
       - run: npm run test:r3i-admin-ui-contract
+      - name: Execute T20 Portable Booking contract tests
+        if: startsWith(github.ref, 'refs/heads/t20/') || github.event_name == 'pull_request'
+        run: npm run test:t20-booking-contract
 
   postgres-rls-runtime:
     runs-on: ubuntu-latest
@@ -84,8 +88,21 @@ jobs:
         run: npm run test:r3g-capability-feature-resolution
       - name: Execute R3-H Platform Audit Query runtime tests
         run: npm run test:r3h-platform-audit-query
+      - name: Apply isolated T20 Portable Booking migration
+        if: startsWith(github.ref, 'refs/heads/t20/') || github.event_name == 'pull_request'
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql
+      - name: Execute T20 Portable Booking PostgreSQL runtime tests
+        if: startsWith(github.ref, 'refs/heads/t20/') || github.event_name == 'pull_request'
+        run: npm run test:t20-booking-runtime
+      - name: Execute T20 Portable Booking security tests
+        if: startsWith(github.ref, 'refs/heads/t20/') || github.event_name == 'pull_request'
+        run: npm run test:t20-booking-security
+      - name: Execute T20 Portable Booking cleanup tests
+        if: startsWith(github.ref, 'refs/heads/t20/') || github.event_name == 'pull_request'
+        run: npm run test:t20-booking-cleanup
 
   deployment-path-runtime:
+    if: ${{ !startsWith(github.ref, 'refs/heads/t20/') }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -123,7 +140,7 @@ jobs:
       - application-contracts
       - postgres-rls-runtime
       - deployment-path-runtime
-    if: ${{ needs['application-contracts'].result == 'success' && needs['postgres-rls-runtime'].result == 'success' && needs['deployment-path-runtime'].result == 'success' }}
+    if: ${{ !startsWith(github.ref, 'refs/heads/t20/') && needs['application-contracts'].result == 'success' && needs['postgres-rls-runtime'].result == 'success' && needs['deployment-path-runtime'].result == 'success' }}
     runs-on: ubuntu-latest
     services:
       postgres:
