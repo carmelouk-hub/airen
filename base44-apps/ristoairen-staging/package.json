@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:design-boundary": "node --test tests/ristoairen-design-boundary.test.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.40",
