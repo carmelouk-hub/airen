@@ -38,6 +38,7 @@ import {
 
 const navigation = [
   { id: "overview", label: "Overview", icon: Gauge },
+  { id: "architecture", label: "Architecture", icon: Network },
   { id: "customers", label: "Customer Twin", icon: UserRound },
   { id: "suppliers", label: "Supplier Twin", icon: Building2 },
   { id: "authorization", label: "Purpose & Authority", icon: Fingerprint },
@@ -258,6 +259,36 @@ function GovernanceReview() {
   );
 }
 
+function ArchitectureReview() {
+  return (
+    <section className="view-stack">
+      <header className="view-header">
+        <div>
+          <span className="kicker">Foundation map · governed read only</span>
+          <h1>AIRenOS Architecture Explorer</h1>
+          <p>The repository-derived architecture map is rendered inside the Control Plane experience without gaining persistence, runtime authority or operational actions.</p>
+        </div>
+        <span className="read-only"><LockKeyhole size={13} />READ ONLY</span>
+      </header>
+
+      <article className="boundary-card safe">
+        <ShieldCheck size={21} />
+        <div><span>Authority boundary</span><strong>BASE44 = EXPERIENCE ONLY · FOUNDATION REMAINS AUTHORITATIVE</strong></div>
+      </article>
+
+      <div style={{ border: "1px solid rgba(79, 216, 255, .18)", borderRadius: 16, overflow: "hidden", minHeight: "72vh", background: "#050914" }}>
+        <iframe
+          title="AIRenOS Architecture Explorer"
+          src="/architecture-explorer.html"
+          sandbox=""
+          referrerPolicy="no-referrer"
+          style={{ width: "100%", height: "72vh", border: 0, display: "block", background: "#050914" }}
+        />
+      </div>
+    </section>
+  );
+}
+
 function Overview({ onNavigate }) {
   return (
     <section className="view-stack">
@@ -305,6 +336,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("overview");
 
   const renderView = () => {
+    if (activeView === "architecture") return <ArchitectureReview />;
     if (activeView === "customers") return <TwinReview kind="customer" />;
     if (activeView === "suppliers") return <TwinReview kind="supplier" />;
     if (activeView === "authorization") return <AuthorizationReview />;
