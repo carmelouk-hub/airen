@@ -1,1 +1,119 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIRenOS Architecture Explorer</title><style>:root{--bg:#050914;--panel:#0c1624;--line:#1f3449;--text:#e8f6ff;--muted:#7693a8;--accent:#4fd8ff;--ok:#65deb5}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#102940 0,#050914 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}header{padding:32px 38px;border-bottom:1px solid var(--line)}.k{color:var(--accent);font-size:11px;letter-spacing:.16em;font-weight:700}h1{margin:8px 0 6px;font-size:36px}.sub{color:var(--muted);max-width:900px;line-height:1.55}.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.badge{padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:#a9bfd0;font-size:10px}main{padding:30px 38px 70px;max-width:1450px;margin:auto}.label{margin:24px 0 12px;color:#6f8ba1;font-size:11px;letter-spacing:.12em;text-transform:uppercase}.flow{display:flex;gap:7px;overflow:auto;padding-bottom:10px}.flow span{white-space:nowrap;padding:9px 11px;border:1px solid var(--line);background:#091321;border-radius:9px;font-size:11px}.arrow{color:#426077!important;border:0!important;background:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#0d1a29,#08111d);padding:16px}.card .top{display:flex;justify-content:space-between;gap:10px}.layer{color:var(--accent);font-size:10px;font-weight:700}.status{color:var(--ok);font-size:9px}.card h2{font-size:16px;margin:12px 0 7px}.card code{font-size:10px;color:#8da8ba;word-break:break-all}.card p{font-size:12px;color:var(--muted);line-height:1.5}.tree{display:grid;grid-template-columns:1fr 1fr;gap:12px}.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px}.folder{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#b9cedc;padding:5px 0}.note{margin-top:18px;padding:14px;border-left:3px solid var(--accent);background:#091421;color:#91a8b8;font-size:12px;line-height:1.5}@media(max-width:700px){header,main{padding-left:20px;padding-right:20px}.tree{grid-template-columns:1fr}h1{font-size:29px}}</style></head><body><header><div class="k">AIRenOS · SYSTEM FOR THE FUTURE · READ ONLY</div><h1>Architecture Explorer <span style="color:#4fd8ff">v0.1</span></h1><div class="sub">Vista navigabile della struttura AIRenOS derivata dal repository governato. Questa superficie non possiede authority, non scrive dati e non sostituisce Foundation.</div><div class="badges"><span class="badge">SOURCE · carmelouk-hub/airen</span><span class="badge">R3 PROTECTED</span><span class="badge">T20 BOOKING PASS</span><span class="badge">NO PRODUCTION WRITE</span><span class="badge">BASE44 = EXPERIENCE ONLY</span></div></header><main><div class="label">Foundation request path</div><div class="flow"><span>Request / Experience</span><span class="arrow">→</span><span>Authentication</span><span class="arrow">→</span><span>Tenant / Location</span><span class="arrow">→</span><span>Membership</span><span class="arrow">→</span><span>Permissions</span><span class="arrow">→</span><span>Entitlements</span><span class="arrow">→</span><span>Application Service</span><span class="arrow">→</span><span>PostgreSQL + RLS</span><span class="arrow">→</span><span>Idempotency</span><span class="arrow">→</span><span>Audit</span><span class="arrow">→</span><span>Outbox</span><span class="arrow">→</span><span>Typed Result</span></div><div class="label">Moduli reali principali</div><div class="grid"><article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Identity</h2><code>packages/identity/src/index.ts</code><p>Autenticazione provider-neutral e risoluzione del principal. L'assenza di identità verificata fallisce chiusa.</p></article><article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Authorization & SecurityContext</h2><code>packages/authorization/src/index.ts</code><p>SecurityContext server-derived da identità, route trusted, membership, ruoli, permessi ed entitlement.</p></article><article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Tenant / Location / Domain</h2><code>packages/tenant/src/index.ts</code><p>Risoluzione hostname → Tenant → Location con subdomain trusted e TenantDomain. Unknown host = fail closed.</p></article><article class="card"><div class="top"><span class="layer">PERSISTENCE</span><span class="status">RUNTIME / RLS</span></div><h2>PostgreSQL Trusted Scope</h2><code>packages/persistence-postgres/src/index.ts</code><p>Trusted request scope con namespace airen.identity_id / tenant_id / location_id / correlation_id.</p></article><article class="card"><div class="top"><span class="layer">RISTOAIREN</span><span class="status">T20 PASS / BOUNDED</span></div><h2>Booking</h2><code>packages/persistence-postgres/src/risto-booking-repository.ts</code><p>Primo dominio portable operativo: create/query/update/status, RLS, idempotency, audit, outbox e isolamento Tenant/Location.</p></article><article class="card"><div class="top"><span class="layer">API</span><span class="status">T20 PASS / NOT PUBLISHED</span></div><h2>Private Booking Boundary</h2><code>apps/api/src/ristoairen-booking-api.ts</code><p>Bearer auth, EdDSA service assertion, SecurityContext, rate limiting e kill-switch. Non pubblicato da server.ts.</p></article></div><div class="label">Repository map</div><div class="tree"><section class="panel"><h2>packages/</h2><div class="folder">▸ atmos</div><div class="folder">▸ audit-events</div><div class="folder">▸ authorization</div><div class="folder">▸ billing</div><div class="folder">▸ capabilities</div><div class="folder">▸ entitlements</div><div class="folder">▸ identity</div><div class="folder">▸ integrations</div><div class="folder">▸ observability</div><div class="folder">▸ persistence-postgres</div><div class="folder">▸ platform-core</div><div class="folder">▸ ristoairen</div><div class="folder">▸ shared-contracts</div><div class="folder">▸ tenant</div></section><section class="panel"><h2>apps/</h2><div class="folder">▸ admin</div><div class="folder">▸ api</div><div class="folder">▸ web</div><div class="note">Prima versione intenzionalmente selettiva. Mostra soltanto componenti già verificati e non crea alcuna authority Base44. Foundation rimane l'unica fonte operativa autorevole.</div></section></div></main></body></html>
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIRenOS Architecture Explorer</title>
+<style>
+:root{--bg:#050914;--panel:#0c1624;--line:#1f3449;--text:#e8f6ff;--muted:#7693a8;--accent:#4fd8ff;--ok:#65deb5;--code:#08101b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#102940 0,#050914 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif}header{padding:32px 38px;border-bottom:1px solid var(--line)}.k{color:var(--accent);font-size:11px;letter-spacing:.16em;font-weight:700}h1{margin:8px 0 6px;font-size:36px}.sub{color:var(--muted);max-width:980px;line-height:1.55}.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.badge{padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:#a9bfd0;font-size:10px}main{padding:30px 38px 70px;max-width:1450px;margin:auto}.label{margin:24px 0 12px;color:#6f8ba1;font-size:11px;letter-spacing:.12em;text-transform:uppercase}.flow{display:flex;gap:7px;overflow:auto;padding-bottom:10px}.flow span{white-space:nowrap;padding:9px 11px;border:1px solid var(--line);background:#091321;border-radius:9px;font-size:11px}.arrow{color:#426077!important;border:0!important;background:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}.card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#0d1a29,#08111d);padding:16px;min-width:0}.card .top{display:flex;justify-content:space-between;gap:10px}.layer{color:var(--accent);font-size:10px;font-weight:700}.status{color:var(--ok);font-size:9px}.card h2{font-size:16px;margin:12px 0 7px}.path{display:block;font:10px ui-monospace,SFMono-Regular,Menlo,monospace;color:#8da8ba;word-break:break-all}.card p{font-size:12px;color:var(--muted);line-height:1.5}.code-drawer{margin-top:14px;border-top:1px solid rgba(79,216,255,.12);padding-top:11px}.code-drawer summary{cursor:pointer;color:#bfefff;font-size:11px;font-weight:700;list-style-position:inside}.code-drawer summary span{display:block;margin-top:5px;color:#57768d;font:9px ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:400;word-break:break-all}.code-drawer pre{margin:11px 0 0;background:var(--code);border:1px solid #17283a;border-radius:10px;padding:12px;overflow:auto;white-space:pre;color:#b9d9e7;font:10px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}.tree{display:grid;grid-template-columns:1fr 1fr;gap:12px}.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px}.folder{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#b9cedc;padding:5px 0}.note{margin-top:18px;padding:14px;border-left:3px solid var(--accent);background:#091421;color:#91a8b8;font-size:12px;line-height:1.5}@media(max-width:700px){header,main{padding-left:20px;padding-right:20px}.tree{grid-template-columns:1fr}.grid{grid-template-columns:1fr}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<header>
+<div class="k">AIRenOS · SYSTEM FOR THE FUTURE · READ ONLY</div>
+<h1>Architecture Explorer <span style="color:#4fd8ff">v0.2 · CODE INSIDE</span></h1>
+<div class="sub">Vista navigabile della struttura AIRenOS derivata dal repository governato. Ogni modulo mostra un estratto statico del sorgente reale e il blob GitHub da cui proviene. Gli estratti non vengono eseguiti, non scrivono dati e non sostituiscono Foundation.</div>
+<div class="badges"><span class="badge">SOURCE · carmelouk-hub/airen</span><span class="badge">SOURCE BLOBS PINNED</span><span class="badge">R3 PROTECTED</span><span class="badge">T20 BOOKING PASS</span><span class="badge">NO PRODUCTION WRITE</span><span class="badge">BASE44 = EXPERIENCE ONLY</span></div>
+</header>
+<main>
+<div class="label">Foundation request path</div>
+<div class="flow"><span>Request / Experience</span><span class="arrow">→</span><span>Authentication</span><span class="arrow">→</span><span>Tenant / Location</span><span class="arrow">→</span><span>Membership</span><span class="arrow">→</span><span>Permissions</span><span class="arrow">→</span><span>Entitlements</span><span class="arrow">→</span><span>Application Service</span><span class="arrow">→</span><span>PostgreSQL + RLS</span><span class="arrow">→</span><span>Idempotency</span><span class="arrow">→</span><span>Audit</span><span class="arrow">→</span><span>Outbox</span><span class="arrow">→</span><span>Typed Result</span></div>
+<div class="label">Moduli reali principali · apri il codice</div>
+<div class="grid">
+<article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Identity</h2><code class="path">packages/identity/src/index.ts</code><p>Autenticazione provider-neutral e risoluzione del principal. L'assenza di identità verificata fallisce chiusa.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · b0ee6060c5a28f7d1aa216f223054bea4d06d9d9</span></summary><pre><code>export interface AuthenticationAdapter {
+  authenticate(request: unknown): Promise&lt;AuthenticatedPrincipal | null&gt;;
+}
+
+export function requirePrincipal(
+  principal: AuthenticatedPrincipal | null
+): AuthenticatedPrincipal {
+  if (!principal) throw new AppError(
+    "AUTHENTICATION_REQUIRED",
+    "Authenticated principal is required"
+  );
+  return principal;
+}</code></pre></details></article>
+
+<article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Authorization &amp; SecurityContext</h2><code class="path">packages/authorization/src/index.ts</code><p>SecurityContext server-derived da identità, route trusted, membership, ruoli, permessi ed entitlement.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · ea4e48220eb040b5e555593715a0b50df0181d80</span></summary><pre><code>const tenantMembership = await input.memberships
+  .findTenantMembership(
+    input.route.tenant.id,
+    input.principal.identityId
+  );
+
+if (!tenantMembership || tenantMembership.status !== "active") {
+  if (!platformPermissions.includes("platform.override_tenant_scope"))
+    throw new AppError(
+      "MEMBERSHIP_REQUIRED",
+      "Active tenant membership is required"
+    );
+}</code></pre></details></article>
+
+<article class="card"><div class="top"><span class="layer">FOUNDATION</span><span class="status">RUNTIME / GOVERNED</span></div><h2>Tenant / Location / Domain</h2><code class="path">packages/tenant/src/index.ts</code><p>Risoluzione hostname → Tenant → Location con subdomain trusted e TenantDomain. Unknown host = fail closed.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · fa2f500f8a1a7e725067de40711d20f81f41a922</span></summary><pre><code>if (hostname.endsWith(suffix)) {
+  const prefix = hostname.slice(0, -suffix.length);
+  if (!prefix || prefix.includes("."))
+    throw new AppError(
+      "TENANT_RESOLUTION_FAILED",
+      "Platform hostname must contain exactly one tenant slug label"
+    );
+}
+
+throw new AppError(
+  "TENANT_RESOLUTION_FAILED",
+  "Hostname is not registered for any tenant"
+);</code></pre></details></article>
+
+<article class="card"><div class="top"><span class="layer">PERSISTENCE</span><span class="status">RUNTIME / RLS</span></div><h2>PostgreSQL Trusted Scope</h2><code class="path">packages/persistence-postgres/src/index.ts</code><p>Trusted request scope con namespace airen.identity_id / tenant_id / location_id / correlation_id.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · 6d040134f58072b67c5c3f67a640b578136380b4</span></summary><pre><code>await client.query("BEGIN");
+await client.query("SET TRANSACTION READ ONLY");
+await client.query(`SET LOCAL ROLE ${assertRoleIdentifier("airen_app")}`);
+await client.query(
+  "SELECT set_config('airen.identity_id',$1,true), " +
+  "set_config('airen.tenant_id',$2,true), " +
+  "set_config('airen.location_id',$3,true), " +
+  "set_config('airen.correlation_id',$4,true)",
+  [input.actorIdentityId,input.tenantId,input.locationId,input.correlationId]
+);</code></pre></details></article>
+
+<article class="card"><div class="top"><span class="layer">RISTOAIREN</span><span class="status">T20 PASS / BOUNDED</span></div><h2>Booking</h2><code class="path">packages/persistence-postgres/src/risto-booking-repository.ts</code><p>Primo dominio portable operativo: create/query/update/status, RLS, idempotency, audit, outbox e isolamento Tenant/Location.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · 468232abf7621039de744fe6822053b1843781f8</span></summary><pre><code>async transaction&lt;T&gt;(
+  context: SecurityContext,
+  fn: (tx: BookingMutationTransaction) =&gt; Promise&lt;T&gt;
+): Promise&lt;T&gt; {
+  const client = await this.pool.connect();
+  try {
+    await client.query("BEGIN");
+    await applyTrustedScope(client, context, this.assumeRole);
+    const result = await fn(
+      new PostgresRistoBookingMutationTransaction(client)
+    );
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    try { await client.query("ROLLBACK"); } catch {}
+    throw error;
+  } finally { client.release(); }
+}</code></pre></details></article>
+
+<article class="card"><div class="top"><span class="layer">API</span><span class="status">T20 PASS / NOT PUBLISHED</span></div><h2>Private Booking Boundary</h2><code class="path">apps/api/src/ristoairen-booking-api.ts</code><p>Bearer auth, EdDSA service assertion, SecurityContext, rate limiting e kill-switch. Non pubblicato da server.ts.</p><details class="code-drawer"><summary>Apri codice reale<span>blob · 6661d5528da34814f7d443751447aee253432820</span></summary><pre><code>const rate = await deps.rateLimiter.consume({
+  serviceId,
+  actorIdentityId: context.actorIdentityId,
+  tenantId: context.tenantId,
+  locationId: context.locationId,
+  kind: isQuery ? "query" : "mutation"
+});
+
+if (!rate.allowed) return Object.freeze({
+  status: 429,
+  body: Object.freeze({
+    error: "RETRYABLE_FAILURE",
+    retry_after_ms: rate.retryAfterMs ?? 1000,
+    correlation_id: context.correlationId
+  })
+});</code></pre></details></article>
+</div>
+
+<div class="note">Gli estratti sopra sono copie statiche read-only dei blob GitHub dichiarati. Base44 non recupera, esegue o modifica questi sorgenti. Per il codice autorevole resta valido esclusivamente il repository governato.</div>
+
+<div class="label">Repository map</div>
+<div class="tree"><section class="panel"><h2>packages/</h2><div class="folder">▸ atmos</div><div class="folder">▸ audit-events</div><div class="folder">▸ authorization</div><div class="folder">▸ billing</div><div class="folder">▸ capabilities</div><div class="folder">▸ entitlements</div><div class="folder">▸ identity</div><div class="folder">▸ integrations</div><div class="folder">▸ observability</div><div class="folder">▸ persistence-postgres</div><div class="folder">▸ platform-core</div><div class="folder">▸ ristoairen</div><div class="folder">▸ shared-contracts</div><div class="folder">▸ tenant</div></section><section class="panel"><h2>apps/</h2><div class="folder">▸ admin</div><div class="folder">▸ api</div><div class="folder">▸ web</div><div class="note">Vista intenzionalmente selettiva. Mostra soltanto componenti verificati e non crea alcuna authority Base44. Foundation rimane l'unica fonte operativa autorevole.</div></section></div>
+</main>
+</body>
+</html>
