@@ -69,8 +69,20 @@ test("T20-S14 forged service assertion signature is denied",async()=>{const othe
 test("T20-S15 adapter kill switch fails closed before authentication",async()=>{
   const r=await dispatchRistoBookingApiRequest({method:"GET",url:"/v1/ristoairen/bookings",hostname:"t20-a.example.test",headers:{}},{switches:{adapterEnabled:false,projectionEnabled:false,mutationEnabled:false}} as any);assert.equal(r.status,403);
 });
-test("T20-S16 query rate limiter allows first 120 calls and denies 121st",async()=>{const l=new InMemoryBookingRateLimiter();const x={serviceId:"s",actorIdentityId:"a",tenantId:"t",locationId:"l",kind:"query" as const};for(let i=0;i<120;i++)assert.equal((await l.consume(x)).allowed,true);assert.equal((await l.consume(x)).allowed,false);});
-test("T20-S17 mutation rate limiter allows first 60 calls and denies 61st",async()=>{const l=new InMemoryBookingRateLimiter();const x={serviceId:"s2",actorIdentityId:"a",tenantId:"t",locationId:"l",kind:"mutation" as const};for(let i=0;i<60;i++)assert.equal((await l.consume(x)).allowed,true);assert.equal((await l.consume(x)).allowed,false);});
+test("T20-S16 query rate limiter enforces burst 20 and 120/min deterministically",async()=>{
+  let clock=0;const l=new InMemoryBookingRateLimiter(()=>clock);const x={serviceId:"s",actorIdentityId:"a",tenantId:"t",locationId:"l",kind:"query" as const};
+  for(let i=0;i<20;i++)assert.equal((await l.consume(x)).allowed,true);
+  assert.equal((await l.consume(x)).allowed,false);
+  for(let second=1;second<=5;second++){clock=second*1000;for(let i=0;i<20;i++)assert.equal((await l.consume(x)).allowed,true);}
+  clock=6000;assert.equal((await l.consume(x)).allowed,false);
+});
+test("T20-S17 mutation rate limiter enforces burst 20 and 60/min deterministically",async()=>{
+  let clock=0;const l=new InMemoryBookingRateLimiter(()=>clock);const x={serviceId:"s2",actorIdentityId:"a",tenantId:"t",locationId:"l",kind:"mutation" as const};
+  for(let i=0;i<20;i++)assert.equal((await l.consume(x)).allowed,true);
+  assert.equal((await l.consume(x)).allowed,false);
+  for(let second=1;second<=2;second++){clock=second*1000;for(let i=0;i<20;i++)assert.equal((await l.consume(x)).allowed,true);}
+  clock=3000;assert.equal((await l.consume(x)).allowed,false);
+});
 test("T20-S18 responsabile permission set excludes create and generic update",async()=>{const r=securityContext({actorIdentityId:T20.responsabileA,tenantId:T20.tenantA,locationId:T20.locationA1,role:"responsabile",permissions:["booking.read","booking.status.update"]});await assert.rejects(()=>domainService.create(r,{source:"T20",partySize:2,bookingDate:"2026-09-03",bookingTimeLocal:"20:00",expectedDurationMinutes:90,customerNameSnapshot:"X"},"denied"),(e:any)=>e.code==="PERMISSION_DENIED");await assert.rejects(()=>domainService.update(r,scopedBookingId,{partySize:3,rowVersion:1},"denied2"),(e:any)=>e.code==="PERMISSION_DENIED");});
 test("T20-S19 generic update path cannot mutate status because status is not part of input contract/runtime SQL",async()=>{const source=await import("node:fs/promises").then(fs=>fs.readFile(new URL("../../packages/persistence-postgres/src/risto-booking-repository.ts",import.meta.url),"utf8"));const updateBlock=source.slice(source.indexOf("async updateBooking"),source.indexOf("async transitionBookingStatus"));assert.doesNotMatch(updateBlock,/SET\s+status\s*=/i);});
 test("T20-S20 private projection has no tenant_id/location_id fields",async()=>{const b=await domainService.get(managerA(),scopedBookingId);assert.equal(Object.hasOwn(b,"tenantId"),false);assert.equal(Object.hasOwn(b,"locationId"),false);assert.equal(Object.hasOwn(b,"tenant_id"),false);assert.equal(Object.hasOwn(b,"location_id"),false);});
