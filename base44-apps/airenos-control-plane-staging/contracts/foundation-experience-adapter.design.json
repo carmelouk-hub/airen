@@ -1,0 +1,72 @@
+{
+  "contract_id": "AIRENOS-FOUNDATION-EXPERIENCE-ADAPTER-DESIGN-v0.1",
+  "artifact_class": "DESIGN_ONLY_NOT_RUNTIME",
+  "provider_neutral": true,
+  "runtime_implementation_authorized": false,
+  "schema_authorized": false,
+  "production_publication_authorized": false,
+  "authority": {
+    "foundation_remains_authoritative": true,
+    "base44_is_foundation_authority": false,
+    "client_supplied_tenant_authority": false,
+    "client_supplied_location_authority": false,
+    "default_tenant_allowed": false,
+    "default_location_allowed": false,
+    "unknown_host_fallback_allowed": false
+  },
+  "foundation_pipeline": [
+    "validate input",
+    "resolve actor",
+    "resolve trusted Tenant/Location",
+    "permission",
+    "entitlement",
+    "purpose authorization",
+    "transaction",
+    "domain validation",
+    "idempotency",
+    "audit",
+    "outbox",
+    "typed result"
+  ],
+  "foundation_to_experience": {
+    "mode": "READ_ONLY_GOVERNED_PROJECTION",
+    "allowed_inputs": [
+      "certified typed domain events",
+      "governed projections",
+      "authorization decision results"
+    ],
+    "direct_source_table_reads_allowed": false,
+    "direct_domain_writes_allowed": false
+  },
+  "experience_to_foundation": {
+    "mode": "ACTION_PROPOSAL_ONLY",
+    "direct_execution_authority": false,
+    "must_reenter_foundation_pipeline": true,
+    "provider_identity_is_authority": false
+  },
+  "base44_boundary": {
+    "role": "REVIEW_OR_REPLACEABLE_EXPERIENCE_ADAPTER",
+    "provider_sdk_allowed_in_foundation_core": false,
+    "custom_domain_entities_authorized": false,
+    "backend_functions_authorized": false,
+    "connectors_authorized": false,
+    "secrets_authorized": false
+  },
+  "ristoairen_boundary": {
+    "booking_contract_expansion_authorized": false,
+    "t20_state": "INCOMPLETE",
+    "t20_implementation_authorized": false,
+    "golden_restaurant_e2e_promotion_authorized": false,
+    "stella_direct_operational_writes_allowed": false
+  },
+  "forbidden_direct_domains": [
+    "Booking",
+    "Order",
+    "Feedback",
+    "PurchaseOrder",
+    "GoodsReceipt",
+    "customer",
+    "supplier",
+    "STELLA"
+  ]
+}
