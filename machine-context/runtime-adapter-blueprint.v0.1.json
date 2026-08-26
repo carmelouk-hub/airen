@@ -1,0 +1,205 @@
+{
+  "artifact_class": "GOVERNED_DESIGN_NOT_CANONICAL",
+  "milestone": "AIRENOS-RUNTIME-ADAPTER-BLUEPRINT-001",
+  "version": "0.1",
+  "date": "2026-08-26",
+  "authorizations": {
+    "runtime_implementation": false,
+    "schema": false,
+    "production_publication": false
+  },
+  "authority": {
+    "foundation_is_authoritative_for": [
+      "identity",
+      "tenant",
+      "location",
+      "membership",
+      "roles",
+      "permissions",
+      "entitlements",
+      "purpose_authorization",
+      "domain_state",
+      "idempotency",
+      "audit",
+      "outbox"
+    ],
+    "experience_provider_is_authoritative_for": []
+  },
+  "exchange_modes": {
+    "foundation_to_experience": "READ_ONLY_GOVERNED_PROJECTION",
+    "experience_to_foundation": "ACTION_PROPOSAL_ONLY"
+  },
+  "candidate_transport": {
+    "mode": "HTTPS_REQUEST_RESPONSE",
+    "encoding": "JSON_TYPED_ENVELOPES",
+    "protocol_version": "airen.exchange.v1",
+    "direct_database_connectivity": false,
+    "provider_webhook_direct_domain_mutation": false,
+    "replaceable": true
+  },
+  "mutation_pipeline": [
+    "validate_input",
+    "resolve_actor",
+    "resolve_trusted_tenant_location",
+    "permission",
+    "entitlement",
+    "purpose_authorization",
+    "transaction",
+    "domain_validation",
+    "idempotency",
+    "audit",
+    "outbox",
+    "typed_result"
+  ],
+  "projection_required_fields": [
+    "protocol_version",
+    "projection_id",
+    "projection_type",
+    "issued_at",
+    "expires_at",
+    "tenant_ref",
+    "purpose_ref",
+    "authorization_ref",
+    "policy_version",
+    "correlation_id",
+    "data_classification",
+    "payload",
+    "provenance_ref"
+  ],
+  "proposal_required_fields": [
+    "protocol_version",
+    "proposal_id",
+    "proposal_type",
+    "created_at",
+    "actor_session_ref",
+    "correlation_id",
+    "idempotency_key",
+    "purpose_ref",
+    "payload"
+  ],
+  "proposal_forbidden_authority_claims": [
+    "trusted_tenant_id",
+    "trusted_location_id",
+    "permission_decision",
+    "entitlement_decision",
+    "lawful_basis_decision",
+    "authorization_decision",
+    "audit_identity",
+    "outbox_event_authority",
+    "service_role_credentials",
+    "provider_secret_material"
+  ],
+  "typed_result_states": [
+    "SUCCESS",
+    "DENIED",
+    "INVALID",
+    "CONFLICT",
+    "UNAVAILABLE",
+    "RETRYABLE_FAILURE"
+  ],
+  "default_authorization_result": "DENY",
+  "idempotency": {
+    "required_for_mutations": true,
+    "foundation_owned_decision": true,
+    "same_key_different_semantic_payload": "IDEMPOTENCY_CONFLICT",
+    "timestamp_alone_is_replay_protection": false
+  },
+  "retry_rules": {
+    "timeout_implies_success": false,
+    "retry_only_retry_safe_requests": true,
+    "same_mutation_retry_reuses_idempotency_key": true,
+    "authorization_denial_implicitly_retryable": false,
+    "offline_mutation_queue_authorized": false
+  },
+  "observability": {
+    "structured": true,
+    "privacy_minimized": true,
+    "raw_personal_payloads_allowed": false,
+    "secrets_allowed": false,
+    "authorization_tokens_allowed": false,
+    "raw_prompts_allowed": false
+  },
+  "data_boundary": {
+    "candidate_allowed_classes_when_separately_authorized": [
+      "PUBLIC_METADATA",
+      "TENANT_CONFIDENTIAL",
+      "PERSONAL",
+      "SECURITY_METADATA",
+      "DERIVED_CLAIM"
+    ],
+    "sensitive_compartment_authorized": false,
+    "always_forbidden": [
+      "raw_database_rows",
+      "unrestricted_notes",
+      "raw_prompts",
+      "raw_conversation_history",
+      "credentials",
+      "secrets",
+      "tokens",
+      "cross_tenant_enrichment_payloads",
+      "universal_customer_supplier_profiles",
+      "protected_sensitive_inferred_traits",
+      "unrestricted_event_payloads",
+      "provider_service_role_authority"
+    ]
+  },
+  "rollback": {
+    "foundation_owned_disable_path_required": true,
+    "default_before_promotion": "OFF",
+    "disable_without_domain_data_change": true,
+    "projection_issuance_independently_disableable": true,
+    "mutation_ingress_independently_disableable": true,
+    "provider_fallback_when_disabled": "FAIL_CLOSED_READ_ONLY"
+  },
+  "provider_replacement": {
+    "base44_replaceable_without_foundation_domain_contract_change": true,
+    "provider_sdk_in_foundation_core": false
+  },
+  "minimum_threat_cases": [
+    "forged_tenant_hint",
+    "forged_location_hint",
+    "unknown_host_scope",
+    "expired_projection",
+    "revoked_authorization",
+    "missing_permission",
+    "missing_entitlement",
+    "disabled_unapproved_purpose",
+    "replayed_proposal",
+    "idempotency_key_payload_conflict",
+    "unsupported_protocol_major",
+    "malformed_typed_envelope",
+    "invalid_service_credential",
+    "provider_retry_storm",
+    "foundation_timeout_unavailability",
+    "cross_tenant_reference_injection",
+    "stella_direct_write_attempt",
+    "provider_source_table_read_attempt",
+    "secret_personal_logging_attempt",
+    "kill_switch_activation_recovery"
+  ],
+  "unresolved": [
+    "exact_api_paths_http_methods",
+    "exact_framework_library",
+    "credential_mechanism_rotation",
+    "service_identity_model",
+    "timeout_retry_numeric_values",
+    "idempotency_persistence_schema_retention",
+    "event_outbox_payload_versions",
+    "private_booking_read_list_contract",
+    "booking_permission_grant_matrix",
+    "booking_entitlement_applicability_key",
+    "tenant_context_canonical_contract",
+    "production_endpoint_domain",
+    "deployment_topology",
+    "rate_limits",
+    "observability_backend",
+    "disaster_recovery_rto_rpo",
+    "sensitive_compartment_contract"
+  ],
+  "gate": {
+    "runtime_adapter_implementation": "BLOCKED",
+    "schema_change": "BLOCKED",
+    "production_publication": "BLOCKED",
+    "next_action": "GOVERNANCE_ACCEPTANCE_AND_EXPLICIT_RUNTIME_IMPLEMENTATION_AUTHORIZATION"
+  }
+}
