@@ -7,203 +7,30 @@ import type { LocationRepository, TenantDomainRepository, TenantRepository } fro
 import { BookingApplicationService, BOOKING_STATUSES, type BookingCreateInputV1, type BookingQueryInputV1, type BookingStatusTransitionInputV1, type BookingUpdateInputV1 } from "../../../packages/ristoairen/src/booking/index.ts";
 import { authenticateAndResolveRequestSecurityContext } from "./security-context.ts";
 
-export type BookingApiRequest = Readonly<{
-  method: string;
-  url: string;
-  hostname: string;
-  headers: Readonly<Record<string, string | undefined>>;
-  body?: unknown;
-}>;
-export type BookingApiResult = Readonly<{ status: number; body: Readonly<Record<string, unknown>>; headers?: Readonly<Record<string, string>> }>;
-
-export interface ServicePublicKeyRegistry {
-  resolve(kid: string): Promise<Readonly<{ key: string | JsonWebKey | KeyObject; enabled: boolean }> | null>;
-}
-
-export type VerifiedServiceIdentity = Readonly<{ issuer: string; subject: string; keyId: string; jti: string }>;
-
-function decodeJsonSegment(segment: string): Record<string, unknown> {
-  try { return JSON.parse(Buffer.from(segment, "base64url").toString("utf8")) as Record<string, unknown>; }
-  catch { throw new AppError("AUTHENTICATION_REQUIRED", "Invalid service assertion encoding"); }
-}
+export type BookingApiRequest=Readonly<{method:string;url:string;hostname:string;headers:Readonly<Record<string,string|undefined>>;body?:unknown}>;
+export type BookingApiResult=Readonly<{status:number;body:Readonly<Record<string,unknown>>;headers?:Readonly<Record<string,string>>}>;
+export interface ServicePublicKeyRegistry{resolve(kid:string):Promise<Readonly<{key:string|JsonWebKey|KeyObject;enabled:boolean}>|null>}
+export type VerifiedServiceIdentity=Readonly<{issuer:string;subject:string;keyId:string;jti:string}>;
+function decodeJsonSegment(segment:string):Record<string,unknown>{try{return JSON.parse(Buffer.from(segment,"base64url").toString("utf8")) as Record<string,unknown>}catch{throw new AppError("AUTHENTICATION_REQUIRED","Invalid service assertion encoding")}}
 
 export class EdDsaServiceAssertionVerifier {
-  constructor(private readonly registry: ServicePublicKeyRegistry, private readonly audience = "airenos-foundation", private readonly clockSkewSeconds = 30) {}
-
-  async verify(assertion: string, now = Math.floor(Date.now() / 1000)): Promise<VerifiedServiceIdentity> {
-    const [headerPart, payloadPart, signaturePart, extra] = assertion.split(".");
-    if (!headerPart || !payloadPart || !signaturePart || extra) throw new AppError("AUTHENTICATION_REQUIRED", "Invalid service assertion");
-    const header = decodeJsonSegment(headerPart);
-    const payload = decodeJsonSegment(payloadPart);
-    if (header.alg !== "EdDSA" || typeof header.kid !== "string" || !header.kid) throw new AppError("AUTHENTICATION_REQUIRED", "Unsupported service assertion algorithm/key");
-    const keyRecord = await this.registry.resolve(header.kid);
-    if (!keyRecord?.enabled) throw new AppError("AUTHENTICATION_REQUIRED", "Service assertion key is revoked or unknown");
-    const key = keyRecord.key instanceof KeyObject ? keyRecord.key : createPublicKey(keyRecord.key);
-    const signature = Buffer.from(signaturePart, "base64url");
-    if (!verifySignature(null, Buffer.from(`${headerPart}.${payloadPart}`), key, signature)) throw new AppError("AUTHENTICATION_REQUIRED", "Invalid service assertion signature");
-
-    const iss = typeof payload.iss === "string" ? payload.iss : "";
-    const sub = typeof payload.sub === "string" ? payload.sub : "";
-    const aud = payload.aud;
-    const iat = Number(payload.iat);
-    const exp = Number(payload.exp);
-    const jti = typeof payload.jti === "string" ? payload.jti : "";
-    if (!iss || !sub || !jti || !Number.isInteger(iat) || !Number.isInteger(exp)) throw new AppError("AUTHENTICATION_REQUIRED", "Incomplete service assertion claims");
-    const audienceMatches = aud === this.audience || (Array.isArray(aud) && aud.includes(this.audience));
-    if (!audienceMatches) throw new AppError("AUTHENTICATION_REQUIRED", "Service assertion audience mismatch");
-    if (exp - iat > 300 || exp <= iat) throw new AppError("AUTHENTICATION_REQUIRED", "Service assertion TTL is invalid");
-    if (iat > now + this.clockSkewSeconds || exp < now - this.clockSkewSeconds) throw new AppError("AUTHENTICATION_REQUIRED", "Service assertion is expired or not yet valid");
-    return Object.freeze({ issuer: iss, subject: sub, keyId: header.kid, jti });
-  }
+  private readonly registry:ServicePublicKeyRegistry; private readonly audience:string; private readonly clockSkewSeconds:number;
+  constructor(registry:ServicePublicKeyRegistry,audience="airenos-foundation",clockSkewSeconds=30){this.registry=registry;this.audience=audience;this.clockSkewSeconds=clockSkewSeconds;}
+  async verify(assertion:string,now=Math.floor(Date.now()/1000)):Promise<VerifiedServiceIdentity>{const[headerPart,payloadPart,signaturePart,extra]=assertion.split(".");if(!headerPart||!payloadPart||!signaturePart||extra)throw new AppError("AUTHENTICATION_REQUIRED","Invalid service assertion");const header=decodeJsonSegment(headerPart);const payload=decodeJsonSegment(payloadPart);if(header.alg!=="EdDSA"||typeof header.kid!=="string"||!header.kid)throw new AppError("AUTHENTICATION_REQUIRED","Unsupported service assertion algorithm/key");const keyRecord=await this.registry.resolve(header.kid);if(!keyRecord?.enabled)throw new AppError("AUTHENTICATION_REQUIRED","Service assertion key is revoked or unknown");const key=keyRecord.key instanceof KeyObject?keyRecord.key:createPublicKey(keyRecord.key as string);const signature=Buffer.from(signaturePart,"base64url");if(!verifySignature(null,Buffer.from(`${headerPart}.${payloadPart}`),key,signature))throw new AppError("AUTHENTICATION_REQUIRED","Invalid service assertion signature");const iss=typeof payload.iss==="string"?payload.iss:"";const sub=typeof payload.sub==="string"?payload.sub:"";const aud=payload.aud;const iat=Number(payload.iat);const exp=Number(payload.exp);const jti=typeof payload.jti==="string"?payload.jti:"";if(!iss||!sub||!jti||!Number.isInteger(iat)||!Number.isInteger(exp))throw new AppError("AUTHENTICATION_REQUIRED","Incomplete service assertion claims");const audienceMatches=aud===this.audience||(Array.isArray(aud)&&aud.includes(this.audience));if(!audienceMatches)throw new AppError("AUTHENTICATION_REQUIRED","Service assertion audience mismatch");if(exp-iat>300||exp<=iat)throw new AppError("AUTHENTICATION_REQUIRED","Service assertion TTL is invalid");if(iat>now+this.clockSkewSeconds||exp<now-this.clockSkewSeconds)throw new AppError("AUTHENTICATION_REQUIRED","Service assertion is expired or not yet valid");return Object.freeze({issuer:iss,subject:sub,keyId:header.kid,jti});}
 }
-
-export interface BookingRateLimiter {
-  consume(input: Readonly<{ serviceId: string; actorIdentityId: string; tenantId: string; locationId: string; kind: "query" | "mutation" }>): Promise<Readonly<{ allowed: boolean; retryAfterMs?: number }>>;
-}
-
+export interface BookingRateLimiter{consume(input:Readonly<{serviceId:string;actorIdentityId:string;tenantId:string;locationId:string;kind:"query"|"mutation"}>):Promise<Readonly<{allowed:boolean;retryAfterMs?:number}>>}
 export class InMemoryBookingRateLimiter implements BookingRateLimiter {
-  private readonly buckets = new Map<string, { minute: number; count: number }>();
-  async consume(input: Readonly<{ serviceId: string; actorIdentityId: string; tenantId: string; locationId: string; kind: "query" | "mutation" }>) {
-    const minute = Math.floor(Date.now() / 60000);
-    const key = [input.serviceId,input.actorIdentityId,input.tenantId,input.locationId,input.kind].join(":");
-    const current = this.buckets.get(key);
-    const limit = input.kind === "query" ? 120 : 60;
-    const bucket = !current || current.minute !== minute ? { minute, count: 0 } : current;
-    bucket.count += 1;
-    this.buckets.set(key, bucket);
-    return bucket.count <= limit ? Object.freeze({ allowed: true }) : Object.freeze({ allowed: false, retryAfterMs: (minute + 1) * 60000 - Date.now() });
-  }
+  private readonly buckets=new Map<string,{minute:number;count:number}>();
+  async consume(input:Readonly<{serviceId:string;actorIdentityId:string;tenantId:string;locationId:string;kind:"query"|"mutation"}>){const minute=Math.floor(Date.now()/60000);const key=[input.serviceId,input.actorIdentityId,input.tenantId,input.locationId,input.kind].join(":");const current=this.buckets.get(key);const limit=input.kind==="query"?120:60;const bucket=!current||current.minute!==minute?{minute,count:0}:current;bucket.count++;this.buckets.set(key,bucket);return bucket.count<=limit?Object.freeze({allowed:true}):Object.freeze({allowed:false,retryAfterMs:(minute+1)*60000-Date.now()});}
 }
-
-export type BookingApiDependencies = Readonly<{
-  authentication: AuthenticationAdapter;
-  serviceAssertions: EdDsaServiceAssertionVerifier;
-  rateLimiter: BookingRateLimiter;
-  roles: RolePermissionResolver;
-  trustedBaseDomain: string;
-  tenants: TenantRepository;
-  locations: LocationRepository;
-  domains: TenantDomainRepository;
-  memberships: MembershipRepository;
-  entitlements: EntitlementRepository;
-  service: BookingApplicationService;
-  switches: Readonly<{ adapterEnabled: boolean; projectionEnabled: boolean; mutationEnabled: boolean }>;
-}>;
-
-function bearer(headers: Readonly<Record<string, string | undefined>>): string {
-  const value = headers.authorization?.trim();
-  if (!value?.toLowerCase().startsWith("bearer ")) throw new AppError("AUTHENTICATION_REQUIRED", "End-user bearer authentication is required");
-  return value;
-}
-
-function serviceAssertion(headers: Readonly<Record<string, string | undefined>>): string {
-  const value = headers["x-airen-service-assertion"]?.trim();
-  if (!value) throw new AppError("AUTHENTICATION_REQUIRED", "Service assertion is required");
-  return value;
-}
-
-function idempotencyKey(headers: Readonly<Record<string, string | undefined>>): string {
-  const value = headers["idempotency-key"]?.trim();
-  if (!value) throw new AppError("VALIDATION_FAILED", "idempotency-key is required");
-  return value;
-}
-
-function correlationId(headers: Readonly<Record<string, string | undefined>>): string | undefined {
-  return headers["x-airen-correlation-id"]?.trim() || undefined;
-}
-
-function parseBody<T>(body: unknown): T {
-  if (!body || typeof body !== "object" || Array.isArray(body)) throw new AppError("VALIDATION_FAILED", "JSON object body is required");
-  const raw = JSON.stringify(body);
-  if (Buffer.byteLength(raw, "utf8") > 65536) throw new AppError("VALIDATION_FAILED", "Booking request body exceeds 64 KiB");
-  return body as T;
-}
-
-function statusFor(error: unknown): number {
-  if (!(error instanceof AppError)) return 500;
-  if (error.code === "AUTHENTICATION_REQUIRED") return 401;
-  if (["PERMISSION_DENIED","MEMBERSHIP_REQUIRED","LOCATION_MEMBERSHIP_REQUIRED","ENTITLEMENT_REQUIRED","TENANT_SCOPE_VIOLATION","LOCATION_SCOPE_VIOLATION"].includes(error.code)) return 403;
-  if (error.code === "NOT_FOUND") return 404;
-  if (["CONFLICT","IDEMPOTENCY_CONFLICT"].includes(error.code)) return 409;
-  if (error.code === "VALIDATION_FAILED") return 422;
-  return 500;
-}
-
-async function resolvedContext(request: BookingApiRequest, deps: BookingApiDependencies): Promise<{ context: SecurityContext; serviceId: string }> {
-  bearer(request.headers);
-  const serviceIdentity = await deps.serviceAssertions.verify(serviceAssertion(request.headers));
-  const resolved = await authenticateAndResolveRequestSecurityContext({
-    request: { headers: { authorization: request.headers.authorization } },
-    authentication: deps.authentication,
-    hostname: request.hostname,
-    trustedBaseDomain: deps.trustedBaseDomain,
-    correlationId: correlationId(request.headers),
-    tenants: deps.tenants, locations: deps.locations, domains: deps.domains,
-    memberships: deps.memberships, roles: deps.roles, entitlements: deps.entitlements
-  });
-  return { context: resolved.context, serviceId: `${serviceIdentity.issuer}:${serviceIdentity.subject}` };
-}
-
-function listInput(url: URL): BookingQueryInputV1 {
-  const statuses = url.searchParams.getAll("status").filter(Boolean);
-  for (const status of statuses) if (!BOOKING_STATUSES.includes(status as (typeof BOOKING_STATUSES)[number])) throw new AppError("VALIDATION_FAILED", "Unknown Booking status");
-  const limitRaw = url.searchParams.get("limit");
-  return Object.freeze({
-    statuses: statuses.length ? statuses as BookingQueryInputV1["statuses"] : undefined,
-    fromDate: url.searchParams.get("from_date") ?? undefined,
-    toDate: url.searchParams.get("to_date") ?? undefined,
-    cursor: url.searchParams.get("cursor") ?? undefined,
-    limit: limitRaw == null ? undefined : Number(limitRaw),
-    order: (url.searchParams.get("order") ?? undefined) as BookingQueryInputV1["order"]
-  });
-}
-
-export function isRistoBookingApiRequest(url: string | undefined): boolean {
-  if (!url) return false;
-  try { return new URL(url, "https://airenos.invalid").pathname.startsWith("/v1/ristoairen/bookings"); } catch { return false; }
-}
-
-export async function dispatchRistoBookingApiRequest(request: BookingApiRequest, deps: BookingApiDependencies): Promise<BookingApiResult> {
-  try {
-    if (!deps.switches.adapterEnabled) throw new AppError("PERMISSION_DENIED", "Booking adapter is disabled");
-    const url = new URL(request.url, "https://airenos.invalid");
-    const { context, serviceId } = await resolvedContext(request, deps);
-    const isQuery = request.method === "GET";
-    if (isQuery && !deps.switches.projectionEnabled) throw new AppError("PERMISSION_DENIED", "Booking projection is disabled");
-    if (!isQuery && !deps.switches.mutationEnabled) throw new AppError("PERMISSION_DENIED", "Booking mutation is disabled");
-    const rate = await deps.rateLimiter.consume({ serviceId, actorIdentityId: context.actorIdentityId, tenantId: context.tenantId, locationId: context.locationId, kind: isQuery ? "query" : "mutation" });
-    if (!rate.allowed) return Object.freeze({ status: 429, body: Object.freeze({ error: "RETRYABLE_FAILURE", retry_after_ms: rate.retryAfterMs ?? 1000, correlation_id: context.correlationId }) });
-
-    const base = "/v1/ristoairen/bookings";
-    const escaped = url.pathname.slice(base.length);
-    if (request.method === "GET" && escaped === "") {
-      const result = await deps.service.query(context, listInput(url));
-      return Object.freeze({ status: 200, body: Object.freeze({ data: result, correlation_id: context.correlationId }) });
-    }
-    if (request.method === "POST" && escaped === "") {
-      const result = await deps.service.create(context, parseBody<BookingCreateInputV1>(request.body), idempotencyKey(request.headers));
-      return Object.freeze({ status: result.replayed ? 200 : 201, body: Object.freeze({ data: result, correlation_id: context.correlationId }) });
-    }
-    const match = escaped.match(/^\/([^/]+)(\/status-transitions)?$/);
-    if (!match) return Object.freeze({ status: 404, body: Object.freeze({ error: "not_found", correlation_id: context.correlationId }) });
-    const bookingId = decodeURIComponent(match[1]);
-    if (request.method === "GET" && !match[2]) {
-      const result = await deps.service.get(context, bookingId);
-      return Object.freeze({ status: 200, body: Object.freeze({ data: result, correlation_id: context.correlationId }) });
-    }
-    if (request.method === "PATCH" && !match[2]) {
-      const result = await deps.service.update(context, bookingId, parseBody<BookingUpdateInputV1>(request.body), idempotencyKey(request.headers));
-      return Object.freeze({ status: 200, body: Object.freeze({ data: result, correlation_id: context.correlationId }) });
-    }
-    if (request.method === "POST" && match[2]) {
-      const result = await deps.service.transitionStatus(context, bookingId, parseBody<BookingStatusTransitionInputV1>(request.body), idempotencyKey(request.headers));
-      return Object.freeze({ status: 200, body: Object.freeze({ data: result, correlation_id: context.correlationId }) });
-    }
-    return Object.freeze({ status: 405, body: Object.freeze({ error: "method_not_allowed", correlation_id: context.correlationId }) });
-  } catch (error) {
-    const status = statusFor(error);
-    const code = error instanceof AppError ? error.code : "INTERNAL_ERROR";
-    const bodyError = error instanceof AppError && error.code === "NOT_FOUND" ? "RESOURCE_NOT_FOUND_OR_NOT_VISIBLE" : code;
-    return Object.freeze({ status, body: Object.freeze({ error: bodyError }) });
-  }
-}
+export type BookingApiDependencies=Readonly<{authentication:AuthenticationAdapter;serviceAssertions:EdDsaServiceAssertionVerifier;rateLimiter:BookingRateLimiter;roles:RolePermissionResolver;trustedBaseDomain:string;tenants:TenantRepository;locations:LocationRepository;domains:TenantDomainRepository;memberships:MembershipRepository;entitlements:EntitlementRepository;service:BookingApplicationService;switches:Readonly<{adapterEnabled:boolean;projectionEnabled:boolean;mutationEnabled:boolean}>}>;
+function bearer(h:Readonly<Record<string,string|undefined>>):string{const v=h.authorization?.trim();if(!v?.toLowerCase().startsWith("bearer "))throw new AppError("AUTHENTICATION_REQUIRED","End-user bearer authentication is required");return v;}
+function serviceAssertion(h:Readonly<Record<string,string|undefined>>):string{const v=h["x-airen-service-assertion"]?.trim();if(!v)throw new AppError("AUTHENTICATION_REQUIRED","Service assertion is required");return v;}
+function idempotencyKey(h:Readonly<Record<string,string|undefined>>):string{const v=h["idempotency-key"]?.trim();if(!v)throw new AppError("VALIDATION_FAILED","idempotency-key is required");return v;}
+function correlationId(h:Readonly<Record<string,string|undefined>>):string|undefined{return h["x-airen-correlation-id"]?.trim()||undefined;}
+function parseBody<T>(body:unknown):T{if(!body||typeof body!=="object"||Array.isArray(body))throw new AppError("VALIDATION_FAILED","JSON object body is required");if(Buffer.byteLength(JSON.stringify(body),"utf8")>65536)throw new AppError("VALIDATION_FAILED","Booking request body exceeds 64 KiB");return body as T;}
+function statusFor(error:unknown):number{if(!(error instanceof AppError))return 500;if(error.code==="AUTHENTICATION_REQUIRED")return 401;if(["PERMISSION_DENIED","MEMBERSHIP_REQUIRED","LOCATION_MEMBERSHIP_REQUIRED","ENTITLEMENT_REQUIRED","TENANT_SCOPE_VIOLATION","LOCATION_SCOPE_VIOLATION"].includes(error.code))return 403;if(error.code==="NOT_FOUND")return 404;if(["CONFLICT","IDEMPOTENCY_CONFLICT"].includes(error.code))return 409;if(error.code==="VALIDATION_FAILED")return 422;return 500;}
+async function resolvedContext(request:BookingApiRequest,deps:BookingApiDependencies):Promise<{context:SecurityContext;serviceId:string}>{bearer(request.headers);const serviceIdentity=await deps.serviceAssertions.verify(serviceAssertion(request.headers));const resolved=await authenticateAndResolveRequestSecurityContext({request:{headers:{authorization:request.headers.authorization}},authentication:deps.authentication,hostname:request.hostname,trustedBaseDomain:deps.trustedBaseDomain,correlationId:correlationId(request.headers),tenants:deps.tenants,locations:deps.locations,domains:deps.domains,memberships:deps.memberships,roles:deps.roles,entitlements:deps.entitlements});return{context:resolved.context,serviceId:`${serviceIdentity.issuer}:${serviceIdentity.subject}`};}
+function listInput(url:URL):BookingQueryInputV1{const statuses=url.searchParams.getAll("status").filter(Boolean);for(const status of statuses)if(!BOOKING_STATUSES.includes(status as (typeof BOOKING_STATUSES)[number]))throw new AppError("VALIDATION_FAILED","Unknown Booking status");const limitRaw=url.searchParams.get("limit");return Object.freeze({statuses:statuses.length?statuses as BookingQueryInputV1["statuses"]:undefined,fromDate:url.searchParams.get("from_date")??undefined,toDate:url.searchParams.get("to_date")??undefined,cursor:url.searchParams.get("cursor")??undefined,limit:limitRaw==null?undefined:Number(limitRaw),order:(url.searchParams.get("order")??undefined) as BookingQueryInputV1["order"]});}
+export function isRistoBookingApiRequest(url:string|undefined):boolean{if(!url)return false;try{return new URL(url,"https://airenos.invalid").pathname.startsWith("/v1/ristoairen/bookings")}catch{return false}}
+export async function dispatchRistoBookingApiRequest(request:BookingApiRequest,deps:BookingApiDependencies):Promise<BookingApiResult>{try{if(!deps.switches.adapterEnabled)throw new AppError("PERMISSION_DENIED","Booking adapter is disabled");const url=new URL(request.url,"https://airenos.invalid");const{context,serviceId}=await resolvedContext(request,deps);const isQuery=request.method==="GET";if(isQuery&&!deps.switches.projectionEnabled)throw new AppError("PERMISSION_DENIED","Booking projection is disabled");if(!isQuery&&!deps.switches.mutationEnabled)throw new AppError("PERMISSION_DENIED","Booking mutation is disabled");const rate=await deps.rateLimiter.consume({serviceId,actorIdentityId:context.actorIdentityId,tenantId:context.tenantId,locationId:context.locationId,kind:isQuery?"query":"mutation"});if(!rate.allowed)return Object.freeze({status:429,body:Object.freeze({error:"RETRYABLE_FAILURE",retry_after_ms:rate.retryAfterMs??1000,correlation_id:context.correlationId})});const base="/v1/ristoairen/bookings";const escaped=url.pathname.slice(base.length);if(request.method==="GET"&&escaped==="")return Object.freeze({status:200,body:Object.freeze({data:await deps.service.query(context,listInput(url)),correlation_id:context.correlationId})});if(request.method==="POST"&&escaped===""){const result=await deps.service.create(context,parseBody<BookingCreateInputV1>(request.body),idempotencyKey(request.headers));return Object.freeze({status:result.replayed?200:201,body:Object.freeze({data:result,correlation_id:context.correlationId})});}const match=escaped.match(/^\/([^/]+)(\/status-transitions)?$/);if(!match)return Object.freeze({status:404,body:Object.freeze({error:"not_found",correlation_id:context.correlationId})});const bookingId=decodeURIComponent(match[1]);if(request.method==="GET"&&!match[2])return Object.freeze({status:200,body:Object.freeze({data:await deps.service.get(context,bookingId),correlation_id:context.correlationId})});if(request.method==="PATCH"&&!match[2])return Object.freeze({status:200,body:Object.freeze({data:await deps.service.update(context,bookingId,parseBody<BookingUpdateInputV1>(request.body),idempotencyKey(request.headers)),correlation_id:context.correlationId})});if(request.method==="POST"&&match[2])return Object.freeze({status:200,body:Object.freeze({data:await deps.service.transitionStatus(context,bookingId,parseBody<BookingStatusTransitionInputV1>(request.body),idempotencyKey(request.headers)),correlation_id:context.correlationId})});return Object.freeze({status:405,body:Object.freeze({error:"method_not_allowed",correlation_id:context.correlationId})});}catch(error){const status=statusFor(error);const code=error instanceof AppError?error.code:"INTERNAL_ERROR";return Object.freeze({status,body:Object.freeze({error:error instanceof AppError&&error.code==="NOT_FOUND"?"RESOURCE_NOT_FOUND_OR_NOT_VISIBLE":code})});}}
