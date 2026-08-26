@@ -46,12 +46,12 @@ ALTER TABLE risto_bookings FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS risto_bookings_scope_policy ON risto_bookings;
 CREATE POLICY risto_bookings_scope_policy ON risto_bookings
   USING (
-    tenant_id = current_setting('airen.tenant_id', true)::uuid
-    AND location_id = current_setting('airen.location_id', true)::uuid
+    tenant_id = NULLIF(current_setting('airen.tenant_id', true), '')::uuid
+    AND location_id = NULLIF(current_setting('airen.location_id', true), '')::uuid
   )
   WITH CHECK (
-    tenant_id = current_setting('airen.tenant_id', true)::uuid
-    AND location_id = current_setting('airen.location_id', true)::uuid
+    tenant_id = NULLIF(current_setting('airen.tenant_id', true), '')::uuid
+    AND location_id = NULLIF(current_setting('airen.location_id', true), '')::uuid
   );
 
 CREATE TABLE IF NOT EXISTS foundation_idempotency_keys (
@@ -77,14 +77,14 @@ ALTER TABLE foundation_idempotency_keys FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS foundation_idempotency_scope_policy ON foundation_idempotency_keys;
 CREATE POLICY foundation_idempotency_scope_policy ON foundation_idempotency_keys
   USING (
-    actor_identity_id = current_setting('airen.identity_id', true)::uuid
-    AND tenant_id = current_setting('airen.tenant_id', true)::uuid
-    AND location_id = current_setting('airen.location_id', true)::uuid
+    actor_identity_id = NULLIF(current_setting('airen.identity_id', true), '')::uuid
+    AND tenant_id = NULLIF(current_setting('airen.tenant_id', true), '')::uuid
+    AND location_id = NULLIF(current_setting('airen.location_id', true), '')::uuid
   )
   WITH CHECK (
-    actor_identity_id = current_setting('airen.identity_id', true)::uuid
-    AND tenant_id = current_setting('airen.tenant_id', true)::uuid
-    AND location_id = current_setting('airen.location_id', true)::uuid
+    actor_identity_id = NULLIF(current_setting('airen.identity_id', true), '')::uuid
+    AND tenant_id = NULLIF(current_setting('airen.tenant_id', true), '')::uuid
+    AND location_id = NULLIF(current_setting('airen.location_id', true), '')::uuid
   );
 
 GRANT SELECT, INSERT, UPDATE ON risto_bookings TO airen_app;
