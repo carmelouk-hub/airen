@@ -25,22 +25,25 @@ export function requireBookingCreate(context: SecurityContext): void { requirePe
 export function requireBookingUpdate(context: SecurityContext): void { requirePermission(context, BOOKING_PERMISSIONS.update); }
 export function requireBookingStatusUpdate(context: SecurityContext): void { requirePermission(context, BOOKING_PERMISSIONS.statusUpdate); }
 
+const CLIENT_SCOPE_KEYS = new Set(["tenantId", "tenant_id", "locationId", "location_id"]);
+function rejectClientScopeSpoof(input: object): void {
+  for (const key of Object.keys(input)) {
+    if (CLIENT_SCOPE_KEYS.has(key)) throw new AppError("TENANT_SCOPE_VIOLATION", "Client Tenant/Location scope is not authoritative");
+  }
+}
 function nonEmpty(value: string, field: string): string {
   const normalized = value.trim();
   if (!normalized) throw new AppError("VALIDATION_FAILED", `${field} is required`);
   return normalized;
 }
-
 function validDate(value: string, field: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new AppError("VALIDATION_FAILED", `${field} must be YYYY-MM-DD`);
   return value;
 }
-
 function validTime(value: string, field: string): string {
   if (!/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) throw new AppError("VALIDATION_FAILED", `${field} must be local HH:MM[:SS]`);
   return value;
 }
-
 function boundedInteger(value: number, min: number, max: number, field: string): number {
   if (!Number.isInteger(value) || value < min || value > max) throw new AppError("VALIDATION_FAILED", `${field} must be an integer between ${min} and ${max}`);
   return value;
@@ -58,6 +61,7 @@ export function validateBookingQuery(input: BookingQueryInputV1): BookingQueryIn
 }
 
 export function validateBookingCreate(input: BookingCreateInputV1): BookingCreateInputV1 {
+  rejectClientScopeSpoof(input);
   boundedInteger(input.partySize, 1, 1000, "party_size");
   boundedInteger(input.expectedDurationMinutes, 15, 1440, "expected_duration_minutes");
   validDate(input.bookingDate, "booking_date");
@@ -68,6 +72,7 @@ export function validateBookingCreate(input: BookingCreateInputV1): BookingCreat
 }
 
 export function validateBookingUpdate(input: BookingUpdateInputV1): BookingUpdateInputV1 {
+  rejectClientScopeSpoof(input);
   boundedInteger(input.rowVersion, 1, Number.MAX_SAFE_INTEGER, "row_version");
   if (input.partySize !== undefined) boundedInteger(input.partySize, 1, 1000, "party_size");
   if (input.expectedDurationMinutes !== undefined) boundedInteger(input.expectedDurationMinutes, 15, 1440, "expected_duration_minutes");
@@ -78,6 +83,7 @@ export function validateBookingUpdate(input: BookingUpdateInputV1): BookingUpdat
 }
 
 export function validateStatusTransition(fromStatus: BookingStatus, input: BookingStatusTransitionInputV1): void {
+  rejectClientScopeSpoof(input);
   boundedInteger(input.rowVersion, 1, Number.MAX_SAFE_INTEGER, "row_version");
   if (!BOOKING_STATUSES.includes(input.requestedStatus)) throw new AppError("VALIDATION_FAILED", "Unknown Booking status");
   if (!BOOKING_ALLOWED_TRANSITIONS[fromStatus].includes(input.requestedStatus)) {
