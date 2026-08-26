@@ -1,0 +1,110 @@
+{
+  "milestone": "GOLDEN-G0-BOOTSTRAP-EXACT-IMPLEMENTATION-SPEC",
+  "artifact_class": "GOVERNED_EXACT_SPEC_NOT_RUNTIME",
+  "authorizations": {
+    "runtime": false,
+    "production": false,
+    "base44_runtime": false,
+    "corte_fixture_use": false,
+    "r3_merge": false
+  },
+  "environment": {
+    "governance_class": "DEMO_CERTIFICATION",
+    "booking_persistence_class": "DEMO",
+    "trusted_base_domain": "golden.ristoairen.test",
+    "primary_hostname": "golden-g0.golden.ristoairen.test",
+    "secondary_hostname": "golden-g0-l2.example.test",
+    "purchased_domains_used": false
+  },
+  "tenant": {
+    "slug": "golden-g0",
+    "name": "Golden Restaurant G0",
+    "locale": "it-IT",
+    "timezone": "Europe/Rome",
+    "currency": "EUR",
+    "physical_uuid": "FOUNDATION_GENERATED_AND_FROZEN_AT_BOOTSTRAP"
+  },
+  "locations": [
+    {"logical_id":"G01","slug":"main","name":"Golden Main","primary":true,"physical_uuid":"FOUNDATION_GENERATED_AND_FROZEN_AT_BOOTSTRAP"},
+    {"logical_id":"G02","slug":"annex","name":"Golden Annex","primary":false,"physical_uuid":"FOUNDATION_GENERATED_AND_FROZEN_AT_BOOTSTRAP"}
+  ],
+  "provisioning": {
+    "tenant_primary_location": "provisionTenant",
+    "second_location": "createLocation",
+    "second_location_domain_lifecycle": ["register","start_verification","verify","activate"],
+    "direct_sql_platform_topology_insert": false
+  },
+  "actors": {
+    "golden_manager": {"role":"manager","locations":["G01","G02"],"permissions":["booking.read","booking.create","booking.update","booking.status.update"]},
+    "golden_responsabile": {"role":"responsabile","locations":["G01"],"permissions":["booking.read","booking.status.update"],"forbidden_permissions":["booking.create","booking.update"]},
+    "golden_bootstrap_platform_actor": {"kind":"platform_bootstrap_only","operational_restaurant_actor":false},
+    "golden-g0-experience": {"kind":"service","assertion":"EdDSA","audience":"airenos-foundation","tenant_location_authority":false}
+  },
+  "booking_environment_correction": {
+    "current_hardcoded_value": "TEST_TEMPORARY",
+    "future_server_owned_values": ["TEST_TEMPORARY","DEMO","SANDBOX","PRODUCTION"],
+    "g0_value": "DEMO",
+    "client_selectable": false,
+    "schema_expansion_required": false,
+    "t20_semantics_preserved": true
+  },
+  "ingress": {
+    "reuse_existing_private_booking_dispatcher": true,
+    "publish_server_ts": false,
+    "public_guest_booking_claimed": false,
+    "trusted_scope_source": "route_plus_membership",
+    "client_scope_authority": false
+  },
+  "reset": {
+    "foundation_owned": true,
+    "fail_closed": true,
+    "guard_tenant_slug": "golden-g0",
+    "guard_physical_uuid_from_manifest": true,
+    "wildcard_tenant_delete": false,
+    "delete_order": ["booking_outbox","booking_audit","booking_idempotency","risto_bookings_demo"],
+    "preserve": ["tenant","locations","identities","memberships","tenant_domain","canonical_role_grants","t20","production","corte"],
+    "terminal_residue": {"bookings":0,"idempotency":0,"booking_outbox":0,"booking_audit":0}
+  },
+  "acceptance_ids": [
+    "G0-T01","G0-T02","G0-T03","G0-T04","G0-T05","G0-T06","G0-T07","G0-T08","G0-T09","G0-T10",
+    "G0-T11","G0-T12","G0-T13","G0-T14","G0-T15","G0-T16","G0-T17","G0-T18","G0-T19","G0-T20",
+    "G0-T21","G0-T22","G0-T23","G0-T24","G0-T25"
+  ],
+  "acceptance_count": 25,
+  "bounded_write_manifest": {
+    "new": [
+      "tests/helpers/golden-g0-fixtures.ts",
+      "tests/integration/golden-g0-contract.test.ts",
+      "tests/postgres/golden-g0-runtime.test.ts",
+      "tests/postgres/golden-g0-security.test.ts",
+      "tests/postgres/golden-g0-cleanup.test.ts",
+      "machine-context/golden-g0-fixture-manifest.json",
+      "machine-context/golden-g0-evidence-schema.json"
+    ],
+    "modify": [
+      "packages/persistence-postgres/src/risto-booking-repository.ts",
+      "tests/helpers/t20-booking-fixtures.ts",
+      "tests/postgres/t20-booking-runtime.test.ts",
+      "tests/postgres/t20-booking-security.test.ts",
+      "package.json",
+      ".github/workflows/ci.yml"
+    ],
+    "protected": [
+      "apps/api/src/server.ts","base44-apps/**","apps/admin/**","packages/platform-core/**","r3/control-plane-20260822","main","corte-production"
+    ]
+  },
+  "rollback": {
+    "run_golden_reset": true,
+    "disable_golden_test_path": true,
+    "t20_migration_rollback_with_demo_rows": "FORBIDDEN",
+    "production_side_effects": false
+  },
+  "terminal": {
+    "golden_g0_exact_spec": "FROZEN",
+    "golden_g0_runtime": "NOT_AUTHORIZED",
+    "full_golden": "NOT_READY",
+    "production": "BLOCKED",
+    "base44_authority_delta": "ZERO",
+    "corte_fixture_use": "FORBIDDEN"
+  }
+}
