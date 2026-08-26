@@ -26,7 +26,10 @@ test("T20-C04 terminal Booking states have no outgoing transitions",()=>{assert.
 test("T20-C05 query defaults limit/order deterministically",()=>assert.deepEqual(validateBookingQuery({}),{limit:50,order:"starts_at.asc"}));
 test("T20-C06 query limit above 100 is rejected",()=>assert.throws(()=>validateBookingQuery({limit:101}),(e:any)=>e instanceof AppError&&e.code==="VALIDATION_FAILED"));
 test("T20-C07 inverted date range is rejected",()=>assert.throws(()=>validateBookingQuery({fromDate:"2026-09-02",toDate:"2026-09-01"}),AppError));
-test("T20-C08 create validates positive party size",()=>assert.throws(()=>validateBookingCreate({source:"T20",partySize:0,bookingDate:"2026-09-01",bookingTimeLocal:"20:00",expectedDurationMinutes:120,customerNameSnapshot:"X"}),AppError));
+test("T20-C08 create validates positive party size and rejects client scope spoof",()=>{
+  assert.throws(()=>validateBookingCreate({source:"T20",partySize:0,bookingDate:"2026-09-01",bookingTimeLocal:"20:00",expectedDurationMinutes:120,customerNameSnapshot:"X"}),AppError);
+  assert.throws(()=>validateBookingCreate({source:"T20",partySize:2,bookingDate:"2026-09-01",bookingTimeLocal:"20:00",expectedDurationMinutes:120,customerNameSnapshot:"X",tenant_id:"spoof",locationId:"spoof"} as any),(e:any)=>e instanceof AppError&&e.code==="TENANT_SCOPE_VIOLATION");
+});
 test("T20-C09 create validates bounded duration",()=>assert.throws(()=>validateBookingCreate({source:"T20",partySize:2,bookingDate:"2026-09-01",bookingTimeLocal:"20:00",expectedDurationMinutes:14,customerNameSnapshot:"X"}),AppError));
 test("T20-C10 update requires positive row version",()=>assert.throws(()=>validateBookingUpdate({rowVersion:0}),AppError));
 test("T20-C11 invalid status transition is denied",()=>assert.throws(()=>validateStatusTransition("REQUESTED",{requestedStatus:"SEATED",rowVersion:1}),(e:any)=>e instanceof AppError&&e.code==="CONFLICT"));
