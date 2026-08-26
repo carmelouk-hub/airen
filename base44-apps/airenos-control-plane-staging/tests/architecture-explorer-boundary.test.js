@@ -29,13 +29,13 @@ test('Explorer declares read-only Base44 boundary', () => {
   assert.match(html, /R3 PROTECTED/);
 });
 
-test('Explorer v0.4 exposes RistoAIRen connection and domain galaxy without JavaScript', () => {
-  assert.match(html, /v0\.4 · RISTOAIREN DOMAIN GALAXY/);
+test('Explorer v0.5 exposes RistoAIRen domain galaxy and restaurant journey without JavaScript', () => {
+  assert.match(html, /v0\.5 · RESTAURANT JOURNEY FLOW/);
   assert.match(html, /RistoAIRen Vertical Connection/);
   assert.match(html, /RistoAIRen Domain Galaxy/);
   assert.match(html, /DOMAIN GALAXY/);
   assert.equal((html.match(/class="vnode /g) ?? []).length, 5);
-  assert.equal((html.match(/class="planet /g) ?? []).length, 18);
+  assert.equal((html.match(/class="planet /g) ?? []).length, 38);
   assert.doesNotMatch(html, /<script\b/i);
 });
 
@@ -102,6 +102,17 @@ test('Galaxy states that non-Booking presence is not runtime certification', () 
   assert.match(html, /La presenza in questa mappa non equivale a runtime implementato/);
   assert.match(html, /salvo Booking/);
   assert.match(html, /DOC-015 Golden Restaurant E2E Specification/);
+});
+
+test('Restaurant journey follows DOC-015 canonical sequence and preserves Foundation controls', () => {
+  for (const step of [
+    'Discovery','Booking','Customer','Arrival','Check-In','Table','ServiceSession','Order',
+    'Production Routing','Kitchen / Bar','Ready','Serve','Bill','Payment','Close','CRM Update',
+    'Analytics / Event','Audit','STELLA Observation','Insight → Governed Proposal'
+  ]) assert.match(html, new RegExp(step.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')));
+  for (const control of ['Tenant/Location','SecurityContext','RLS','idempotency','permissions','audit','outbox'])
+    assert.match(html, new RegExp(control, 'i'));
+  assert.match(html, /Non dichiara implementati i passaggi Golden non ancora runtime-certified/);
 });
 
 test('Explorer retains six real code drawers and pinned source blobs', () => {
