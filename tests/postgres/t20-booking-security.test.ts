@@ -66,8 +66,10 @@ test("T20-S11 assertion TTL over 300 seconds is denied",async()=>{await assert.r
 test("T20-S12 revoked service key fails closed",async()=>{await assert.rejects(()=>verifier.verify(jwt(validPayload(),"revoked")),(e:any)=>e.code==="AUTHENTICATION_REQUIRED");});
 test("T20-S13 wrong service audience is denied",async()=>{await assert.rejects(()=>verifier.verify(jwt({...validPayload(),aud:"other"})),(e:any)=>e.code==="AUTHENTICATION_REQUIRED");});
 test("T20-S14 forged service assertion signature is denied",async()=>{const other=generateKeyPairSync("ed25519");await assert.rejects(()=>verifier.verify(jwt(validPayload(),"t20-kid",other.privateKey)),(e:any)=>e.code==="AUTHENTICATION_REQUIRED");});
-test("T20-S15 adapter kill switch fails closed before authentication",async()=>{
-  const r=await dispatchRistoBookingApiRequest({method:"GET",url:"/v1/ristoairen/bookings",hostname:"t20-a.example.test",headers:{}},{switches:{adapterEnabled:false,projectionEnabled:false,mutationEnabled:false}} as any);assert.equal(r.status,403);
+test("T20-S15 kill switch fails closed and enabled adapter denies unauthenticated request",async()=>{
+  const request={method:"GET",url:"/v1/ristoairen/bookings",hostname:"t20-a.example.test",headers:{}};
+  const disabled=await dispatchRistoBookingApiRequest(request,{switches:{adapterEnabled:false,projectionEnabled:false,mutationEnabled:false}} as any);assert.equal(disabled.status,403);
+  const unauthenticated=await dispatchRistoBookingApiRequest(request,{switches:{adapterEnabled:true,projectionEnabled:true,mutationEnabled:false}} as any);assert.equal(unauthenticated.status,401);assert.deepEqual(unauthenticated.body,{error:"AUTHENTICATION_REQUIRED"});
 });
 test("T20-S16 query rate limiter enforces burst 20 and 120/min deterministically",async()=>{
   let clock=0;const l=new InMemoryBookingRateLimiter(()=>clock);const x={serviceId:"s",actorIdentityId:"a",tenantId:"t",locationId:"l",kind:"query" as const};
