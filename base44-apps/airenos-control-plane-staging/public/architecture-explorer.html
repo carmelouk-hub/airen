@@ -11,7 +11,7 @@
 <body>
 <header>
 <div class="k">AIRenOS · SYSTEM FOR THE FUTURE · READ ONLY</div>
-<h1>Architecture Explorer <span style="color:#4fd8ff">v0.4 · RISTOAIREN DOMAIN GALAXY</span></h1>
+<h1>Architecture Explorer <span style="color:#4fd8ff">v0.5 · RESTAURANT JOURNEY FLOW</span></h1>
 <div class="sub">Vista navigabile della struttura AIRenOS derivata dal repository governato. Mostra il Core autorevole, la connessione della verticale Hospitality e la galassia dei domini RistoAIRen distinguendo runtime reale, target Golden, capability condizionali e Reserved Next.</div>
 <div class="badges"><span class="badge">SOURCE · carmelouk-hub/airen</span><span class="badge">SOURCE BLOBS PINNED</span><span class="badge">R3 PROTECTED</span><span class="badge">T20 BOOKING PASS</span><span class="badge">RISTOAIREN VERTICAL</span><span class="badge">DOMAIN GALAXY</span><span class="badge">NO PRODUCTION WRITE</span><span class="badge">BASE44 = EXPERIENCE ONLY</span></div>
 </header>
@@ -55,6 +55,32 @@
 <article class="planet reserved"><span class="orbit">RESERVED NEXT</span><h3>QSR QuickFlow</h3><p>Capability futura esplicitamente RESERVED_NEXT, non requisito Golden corrente.</p></article>
 </section>
 <div class="galaxy-note">Fonte della classificazione: censimento live GitHub del package RistoAIRen + DOC-015 Golden Restaurant E2E Specification. La presenza in questa mappa non equivale a runtime implementato: salvo Booking, i domini sono mostrati come target canonico o capability condizionale secondo la specifica.</div>
+
+<div class="label">Restaurant Journey Flow</div>
+<div class="galaxy-legend"><span>RISTOAIREN · dominio operativo</span><span>FOUNDATION · controllo trasversale</span><span>BOOKING · runtime bounded</span><span>GOLDEN TARGET · non runtime certificato</span></div>
+<section class="domain-galaxy" aria-label="Golden restaurant journey flow">
+<article class="planet spec"><span class="orbit">01 · PUBLIC</span><h3>Discovery</h3><p>RistoAIRen: public experience. Foundation: hostname → Tenant/Location + public projection policy.</p></article>
+<article class="planet runtime"><span class="orbit">02 · RUNTIME T20</span><h3>Booking</h3><p>RistoAIRen Booking. Foundation: SecurityContext, RLS, idempotency, audit e outbox.</p></article>
+<article class="planet spec"><span class="orbit">03 · GOLDEN TARGET</span><h3>Customer</h3><p>RistoAIRen CRM. Foundation: Tenant/Location scope, permissions e data policy.</p></article>
+<article class="planet spec"><span class="orbit">04 · GOLDEN TARGET</span><h3>Arrival</h3><p>RistoAIRen front-of-house. Foundation: actor identity, membership e authorization.</p></article>
+<article class="planet spec"><span class="orbit">05 · GOLDEN TARGET</span><h3>Check-In</h3><p>RistoAIRen booking/table transition. Foundation: valid state transition + audit.</p></article>
+<article class="planet spec"><span class="orbit">06 · GOLDEN TARGET</span><h3>Table</h3><p>RistoAIRen floor/table. Foundation: Location scope e cross-location isolation.</p></article>
+<article class="planet spec"><span class="orbit">07 · GOLDEN TARGET</span><h3>ServiceSession</h3><p>RistoAIRen service lifecycle. Foundation: authoritative context e transaction policy.</p></article>
+<article class="planet spec"><span class="orbit">08 · GOLDEN TARGET</span><h3>Order</h3><p>RistoAIRen order composer. Foundation: authoritative price, permissions e idempotency.</p></article>
+<article class="planet spec"><span class="orbit">09 · GOLDEN TARGET</span><h3>Production Routing</h3><p>RistoAIRen production tickets. Foundation: trusted station/location scope + audit.</p></article>
+<article class="planet spec"><span class="orbit">10 · GOLDEN TARGET</span><h3>Kitchen / Bar</h3><p>RistoAIRen KDS/Bar Board. Foundation: scoped visibility e valid lifecycle transitions.</p></article>
+<article class="planet spec"><span class="orbit">11 · GOLDEN TARGET</span><h3>Ready</h3><p>RistoAIRen production status. Foundation: state integrity, correlation e audit.</p></article>
+<article class="planet spec"><span class="orbit">12 · GOLDEN TARGET</span><h3>Serve</h3><p>RistoAIRen service update. Foundation: same-service ownership e consistent state.</p></article>
+<article class="planet spec"><span class="orbit">13 · GOLDEN TARGET</span><h3>Bill</h3><p>RistoAIRen merchant bill. Foundation: server-derived totals e permission gates.</p></article>
+<article class="planet spec"><span class="orbit">14 · GOLDEN TARGET</span><h3>Payment</h3><p>RistoAIRen merchant payment. Foundation: idempotency, audit e provider failure containment.</p></article>
+<article class="planet spec"><span class="orbit">15 · GOLDEN TARGET</span><h3>Close</h3><p>RistoAIRen service closure. Foundation: transaction consistency e final audit chain.</p></article>
+<article class="planet spec"><span class="orbit">16 · GOLDEN TARGET</span><h3>CRM Update</h3><p>RistoAIRen customer relationship update. Foundation: purpose, consent e scoped write policy.</p></article>
+<article class="planet spec"><span class="orbit">17 · GOLDEN TARGET</span><h3>Analytics / Event</h3><p>RistoAIRen derived insight/event surfaces. Foundation: typed events, projections e entitlements.</p></article>
+<article class="planet spec"><span class="orbit">18 · FOUNDATION</span><h3>Audit</h3><p>AIRenOS cross-cutting evidence: actor, action, Tenant, Location, result e correlation_id.</p></article>
+<article class="planet spec"><span class="orbit">19 · GOLDEN EXTENDED</span><h3>STELLA Observation</h3><p>RistoAIRen governed AI observation. Foundation: capability gate, named tool e no self-authority.</p></article>
+<article class="planet spec"><span class="orbit">20 · CLOSED LOOP</span><h3>Insight → Governed Proposal</h3><p>STELLA può proporre; ogni azione rientra nella Foundation prima di qualsiasi execution.</p></article>
+</section>
+<div class="galaxy-note">Il journey è una rappresentazione read-only del DOC-015: descrive la catena canonica del ristorante e i controlli trasversali AIRenOS. Non dichiara implementati i passaggi Golden non ancora runtime-certified.</div>
 
 <div class="label">Moduli reali principali · apri il codice</div>
 <div class="grid">
