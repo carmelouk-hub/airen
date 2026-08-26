@@ -1,0 +1,473 @@
+{
+  "artifact_class": "EXACT_IMPLEMENTATION_SPEC_NOT_RUNTIME_AUTHORIZATION",
+  "milestone": "T20-PORTABLE-BOOKING-EXACT-IMPLEMENTATION-SPEC-001",
+  "date": "2026-08-26",
+  "state": "SPECIFICATION_FROZEN_PENDING_ACCEPTANCE",
+  "source_gate": {
+    "gate": "T20-BOOKING-GOVERNANCE-DECISION-001",
+    "evidence_commit": "46992cb59019a7bd85c2d1250b9823ae8547fd8f"
+  },
+  "authorizations": {
+    "implementation_spec": true,
+    "runtime_implementation": false,
+    "schema_migration_execution": false,
+    "base44_runtime_change": false,
+    "production_publication": false
+  },
+  "technology_baseline": {
+    "language": "TypeScript",
+    "runtime": "Node.js",
+    "database": "PostgreSQL",
+    "database_driver": "pg",
+    "foundation_security_context": "apps/api/src/security-context.ts",
+    "vertical_package": "packages/ristoairen",
+    "persistence_package": "packages/persistence-postgres"
+  },
+  "authority": {
+    "foundation_authoritative": true,
+    "security_context": "SERVER_DERIVED",
+    "client_tenant_location_authoritative": false,
+    "base44_authoritative": false,
+    "stella_direct_booking_write": false,
+    "default_authorization": "DENY"
+  },
+  "protocol": {
+    "version": "airen.exchange.v1",
+    "content_type": "application/json",
+    "transport": "HTTPS",
+    "correlation_header": "x-airen-correlation-id",
+    "idempotency_header": "idempotency-key",
+    "request_deadline_header": "x-airen-deadline-ms",
+    "max_request_body_bytes": 65536
+  },
+  "private_api": {
+    "base_path": "/v1/ristoairen/bookings",
+    "routes": [
+      {
+        "function_id": "RST-F-BKG-007",
+        "canonical_name": "booking.private.query",
+        "method": "GET",
+        "path": "/v1/ristoairen/bookings",
+        "permission": "booking.read",
+        "location_scope_required": true,
+        "query": {
+          "status": "optional repeatable enum",
+          "from_date": "optional ISO local date inclusive",
+          "to_date": "optional ISO local date inclusive",
+          "cursor": "optional opaque base64url cursor",
+          "limit": "optional integer 1..100 default 50",
+          "order": "starts_at.asc|starts_at.desc default starts_at.asc"
+        },
+        "output": "BookingPrivateListResultV1"
+      },
+      {
+        "function_id": "RST-F-BKG-007",
+        "canonical_name": "booking.private.query",
+        "method": "GET",
+        "path": "/v1/ristoairen/bookings/{booking_id}",
+        "permission": "booking.read",
+        "location_scope_required": true,
+        "output": "BookingPrivateResourceResultV1"
+      },
+      {
+        "function_id": "RST-F-BKG-001",
+        "canonical_name": "booking.create",
+        "method": "POST",
+        "path": "/v1/ristoairen/bookings",
+        "permission": "booking.create",
+        "idempotency_required": true,
+        "output": "BookingMutationResultV1"
+      },
+      {
+        "function_id": "RST-F-BKG-002",
+        "canonical_name": "booking.update",
+        "method": "PATCH",
+        "path": "/v1/ristoairen/bookings/{booking_id}",
+        "permission": "booking.update",
+        "idempotency_required": true,
+        "status_mutation_allowed": false,
+        "output": "BookingMutationResultV1"
+      },
+      {
+        "function_id": "RST-F-BKG-003",
+        "canonical_name": "booking.status.transition",
+        "method": "POST",
+        "path": "/v1/ristoairen/bookings/{booking_id}/status-transitions",
+        "permission": "booking.status.update",
+        "idempotency_required": true,
+        "output": "BookingMutationResultV1"
+      }
+    ]
+  },
+  "dto": {
+    "BookingPrivateProjectionV1": [
+      "id",
+      "status",
+      "party_size",
+      "booking_date",
+      "booking_time_local",
+      "starts_at",
+      "expected_duration_minutes",
+      "source",
+      "customer_name_snapshot",
+      "phone_snapshot",
+      "email_snapshot",
+      "notes",
+      "special_requests",
+      "zone_id",
+      "table_id",
+      "event_id",
+      "arrival_at",
+      "seated_at",
+      "completed_at",
+      "cancelled_at",
+      "cancellation_reason",
+      "no_show_at",
+      "created_at",
+      "updated_at",
+      "row_version"
+    ],
+    "BookingPrivateProjectionV1_forbidden": [
+      "tenant_id",
+      "location_id",
+      "raw_internal_metadata",
+      "service_credentials",
+      "authorization_tokens"
+    ],
+    "BookingCreateInputV1": {
+      "allowed": [
+        "customer_profile_id",
+        "event_id",
+        "zone_id",
+        "table_id",
+        "source",
+        "external_reference",
+        "party_size",
+        "booking_date",
+        "booking_time_local",
+        "expected_duration_minutes",
+        "customer_name_snapshot",
+        "phone_snapshot",
+        "email_snapshot",
+        "notes",
+        "special_requests"
+      ],
+      "server_derived": ["tenant_id", "location_id", "starts_at", "created_by_identity_id", "status"],
+      "initial_status": "REQUESTED"
+    },
+    "BookingUpdateInputV1": {
+      "allowed": [
+        "customer_profile_id",
+        "event_id",
+        "zone_id",
+        "table_id",
+        "party_size",
+        "booking_date",
+        "booking_time_local",
+        "expected_duration_minutes",
+        "customer_name_snapshot",
+        "phone_snapshot",
+        "email_snapshot",
+        "notes",
+        "special_requests",
+        "row_version"
+      ],
+      "forbidden": ["status", "tenant_id", "location_id", "created_at", "created_by_identity_id"]
+    },
+    "BookingStatusTransitionInputV1": {
+      "required": ["requested_status", "row_version"],
+      "optional": ["reason"],
+      "forbidden": ["tenant_id", "location_id", "actor_identity_id"]
+    }
+  },
+  "booking_lifecycle": {
+    "states": ["REQUESTED", "PENDING", "CONFIRMED", "ARRIVED", "SEATED", "COMPLETED", "CANCELLED", "NO_SHOW"],
+    "allowed_transitions": {
+      "REQUESTED": ["PENDING", "CONFIRMED", "CANCELLED"],
+      "PENDING": ["CONFIRMED", "CANCELLED"],
+      "CONFIRMED": ["ARRIVED", "CANCELLED", "NO_SHOW"],
+      "ARRIVED": ["SEATED", "CANCELLED"],
+      "SEATED": ["COMPLETED"],
+      "COMPLETED": [],
+      "CANCELLED": [],
+      "NO_SHOW": []
+    }
+  },
+  "schema_design": {
+    "table": "risto_bookings",
+    "primary_key": "uuid",
+    "columns": {
+      "id": "uuid primary key",
+      "tenant_id": "uuid not null",
+      "location_id": "uuid not null",
+      "customer_profile_id": "uuid null",
+      "event_id": "uuid null",
+      "zone_id": "uuid null",
+      "table_id": "uuid null",
+      "source": "text not null",
+      "external_reference": "text null",
+      "party_size": "integer not null check party_size > 0 and party_size <= 1000",
+      "booking_date": "date not null",
+      "booking_time_local": "time not null",
+      "starts_at": "timestamptz not null",
+      "expected_duration_minutes": "integer not null check 15..1440",
+      "status": "text not null check in canonical lifecycle states",
+      "customer_name_snapshot": "text not null",
+      "phone_snapshot": "text null",
+      "email_snapshot": "text null",
+      "notes": "text null",
+      "special_requests": "text null",
+      "arrival_at": "timestamptz null",
+      "seated_at": "timestamptz null",
+      "completed_at": "timestamptz null",
+      "cancelled_at": "timestamptz null",
+      "cancellation_reason": "text null",
+      "no_show_at": "timestamptz null",
+      "promoter_attribution_id": "uuid null",
+      "created_by_identity_id": "uuid not null",
+      "updated_by_identity_id": "uuid not null",
+      "created_at": "timestamptz not null default now()",
+      "updated_at": "timestamptz not null default now()",
+      "row_version": "bigint not null default 1",
+      "environment_class": "text not null default 'PRODUCTION' check in PRODUCTION|DEMO|SANDBOX|TEST_TEMPORARY"
+    },
+    "indexes": [
+      "(tenant_id, location_id, status)",
+      "(tenant_id, location_id, starts_at, id)",
+      "(tenant_id, location_id, booking_date, booking_time_local, id)",
+      "partial (tenant_id, location_id, external_reference) where external_reference is not null"
+    ],
+    "foreign_key_rule": "All operational parent references must be validated same-Tenant; Location-aware parents must also be validated same-Location before mutation. Database constraints may reinforce but never replace application validation.",
+    "hard_delete": false
+  },
+  "migration_design": {
+    "migration_file": "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql",
+    "rollback_file": "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.rollback.sql",
+    "execution_authorized": false,
+    "forward_rules": [
+      "create table and indexes only on isolated T20 database first",
+      "enable and force row level security before inserting T20 fixtures",
+      "no Base44 or Corte production data migration in Slice-01",
+      "unknown legacy enum/value mapping fails closed"
+    ],
+    "rollback_rules": [
+      "allowed only before any production cutover",
+      "must refuse destructive rollback when non-test rows exist",
+      "T20 fixtures are removed deterministically before drop"
+    ]
+  },
+  "rls_design": {
+    "enabled": true,
+    "forced": true,
+    "session_settings": {
+      "tenant": "app.tenant_id",
+      "location": "app.location_id",
+      "identity": "app.identity_id",
+      "correlation": "app.correlation_id"
+    },
+    "policy": "USING tenant_id = current_setting('app.tenant_id')::uuid AND location_id = current_setting('app.location_id')::uuid; WITH CHECK identical",
+    "admin_bypass_via_client": false,
+    "service_role_unscoped_access": false
+  },
+  "authentication": {
+    "end_user": {
+      "mechanism": "existing Foundation AuthenticationAdapter + requirePrincipal",
+      "context_resolution": "authenticateAndResolveRequestSecurityContext",
+      "client_tenant_location_ignored_as_authority": true
+    },
+    "experience_service": {
+      "mechanism": "short-lived asymmetric JWT service assertion",
+      "algorithm": "EdDSA",
+      "required_claims": ["iss", "sub", "aud", "iat", "exp", "jti", "kid"],
+      "audience": "airenos-foundation",
+      "max_ttl_seconds": 300,
+      "clock_skew_seconds": 30,
+      "public_key_registry_owner": "AIRenOS Foundation",
+      "private_key_storage": "provider secret manager only",
+      "rotation": "overlap old/new kid for max 15 minutes then revoke old",
+      "revocation": "Foundation key registry disable is immediately fail-closed",
+      "service_assertion_is_user_authority": false
+    }
+  },
+  "idempotency": {
+    "table": "foundation_idempotency_keys",
+    "implementation_path": "packages/persistence-postgres/src/idempotency-control-plane.ts",
+    "scope": ["actor_identity_id", "tenant_id", "location_id", "canonical_function_id", "idempotency_key"],
+    "semantic_hash": "sha256 canonical-json normalized request payload",
+    "retention_hours": 72,
+    "in_progress_lease_seconds": 30,
+    "duplicate_same_payload": "return stored typed result",
+    "duplicate_different_payload": "IDEMPOTENCY_CONFLICT",
+    "concurrency": "single winner enforced by unique scope index; concurrent loser reads IN_PROGRESS or stored result",
+    "timestamp_only_replay_protection": false
+  },
+  "timeouts_and_retries": {
+    "foundation_server_deadline_ms": {
+      "query": 5000,
+      "mutation": 8000
+    },
+    "experience_client_timeout_ms": {
+      "query": 6000,
+      "mutation": 9000
+    },
+    "retry": {
+      "queries": "max 2 retries on network error/502/503/504 with exponential backoff 150ms then 450ms plus jitter",
+      "mutations": "max 2 retries only on network error/502/503/504 using identical idempotency key and semantic payload",
+      "never_retry": ["400", "401", "403", "404", "409", "422"]
+    },
+    "timeout_implies_success": false
+  },
+  "rate_limits": {
+    "scope": "resolved service identity + resolved user identity + trusted tenant + trusted location",
+    "query_per_minute": 120,
+    "mutation_per_minute": 60,
+    "burst": 20,
+    "limit_response": "429 typed RETRYABLE_FAILURE with retry_after_ms",
+    "rate_limit_is_authorization": false
+  },
+  "audit_outbox": {
+    "audit_events": {
+      "BOOKING_CREATED": ["booking_id", "actor_identity_id", "tenant_id", "location_id", "correlation_id", "source", "result"],
+      "BOOKING_UPDATED": ["booking_id", "actor_identity_id", "tenant_id", "location_id", "correlation_id", "changed_field_names", "result"],
+      "BOOKING_STATUS_CHANGED": ["booking_id", "actor_identity_id", "tenant_id", "location_id", "correlation_id", "from_status", "to_status", "reason_code", "result"]
+    },
+    "outbox_events": {
+      "booking.created.v1": ["event_id", "occurred_at", "tenant_id", "location_id", "booking_id", "status", "starts_at", "party_size", "correlation_id"],
+      "booking.updated.v1": ["event_id", "occurred_at", "tenant_id", "location_id", "booking_id", "changed_field_names", "correlation_id"],
+      "booking.status_changed.v1": ["event_id", "occurred_at", "tenant_id", "location_id", "booking_id", "from_status", "to_status", "correlation_id"]
+    },
+    "forbidden_payload": ["phone_snapshot", "email_snapshot", "notes", "special_requests", "tokens", "secrets", "raw_request_headers"]
+  },
+  "observability": {
+    "backend": "existing packages/observability abstraction; no provider-specific SDK in domain code",
+    "required_fields": [
+      "timestamp",
+      "service",
+      "operation",
+      "result_type",
+      "reason_code",
+      "duration_ms",
+      "correlation_id",
+      "protocol_version",
+      "tenant_ref_hash",
+      "location_ref_hash"
+    ],
+    "forbidden_fields": ["customer_name_snapshot", "phone_snapshot", "email_snapshot", "notes", "special_requests", "authorization_header", "service_assertion", "raw_body"]
+  },
+  "kill_switch": {
+    "owner": "AIRenOS Foundation",
+    "config_key": "RISTOAIREN_BOOKING_ADAPTER_ENABLED",
+    "default": false,
+    "projection_read_switch": "RISTOAIREN_BOOKING_PROJECTION_ENABLED",
+    "mutation_switch": "RISTOAIREN_BOOKING_MUTATION_ENABLED",
+    "all_default": false,
+    "disabled_behavior": "FAIL_CLOSED_READ_ONLY or typed UNAVAILABLE; never local-success fallback"
+  },
+  "environment_separation": {
+    "environments": ["test", "staging", "production"],
+    "credentials_not_shared": true,
+    "database_not_shared": true,
+    "service_key_registry_not_shared": true,
+    "test_fixture_environment_class": "TEST_TEMPORARY",
+    "corte_delle_stelle_as_test_fixture": false
+  },
+  "disaster_recovery": {
+    "staging_rpo_minutes": 60,
+    "staging_rto_minutes": 120,
+    "production_target_rpo_minutes": 15,
+    "production_target_rto_minutes": 60,
+    "production_targets_require_separate_operational_validation": true,
+    "backup_restore_test_required_before_production_gate": true
+  },
+  "implementation_paths": {
+    "domain_contract": "packages/ristoairen/src/booking/contracts.ts",
+    "domain_service": "packages/ristoairen/src/booking/application-service.ts",
+    "domain_policy": "packages/ristoairen/src/booking/policy.ts",
+    "domain_index": "packages/ristoairen/src/booking/index.ts",
+    "vertical_index_update": "packages/ristoairen/src/index.ts",
+    "postgres_repository": "packages/persistence-postgres/src/risto-booking-repository.ts",
+    "idempotency_repository": "packages/persistence-postgres/src/idempotency-control-plane.ts",
+    "postgres_index_update": "packages/persistence-postgres/src/index.ts",
+    "migration_forward": "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql",
+    "migration_rollback": "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.rollback.sql",
+    "api_route": "apps/api/src/ristoairen-booking-api.ts",
+    "api_server_update": "apps/api/src/server.ts",
+    "integration_tests": "tests/integration/t20-booking-contract.test.ts",
+    "postgres_tests": "tests/postgres/t20-booking-runtime.test.ts",
+    "security_tests": "tests/postgres/t20-booking-security.test.ts",
+    "fixture_helper": "tests/helpers/t20-booking-fixtures.ts",
+    "cleanup_test": "tests/postgres/t20-booking-cleanup.test.ts",
+    "workflow_update": ".github/workflows/ci.yml",
+    "package_script_update": "package.json"
+  },
+  "bounded_write_manifest": {
+    "new_files": [
+      "packages/ristoairen/src/booking/contracts.ts",
+      "packages/ristoairen/src/booking/application-service.ts",
+      "packages/ristoairen/src/booking/policy.ts",
+      "packages/ristoairen/src/booking/index.ts",
+      "packages/persistence-postgres/src/risto-booking-repository.ts",
+      "packages/persistence-postgres/src/idempotency-control-plane.ts",
+      "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql",
+      "packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.rollback.sql",
+      "apps/api/src/ristoairen-booking-api.ts",
+      "tests/integration/t20-booking-contract.test.ts",
+      "tests/postgres/t20-booking-runtime.test.ts",
+      "tests/postgres/t20-booking-security.test.ts",
+      "tests/helpers/t20-booking-fixtures.ts",
+      "tests/postgres/t20-booking-cleanup.test.ts"
+    ],
+    "existing_files_allowed_to_modify": [
+      "packages/ristoairen/src/index.ts",
+      "packages/persistence-postgres/src/index.ts",
+      "apps/api/src/server.ts",
+      ".github/workflows/ci.yml",
+      "package.json"
+    ],
+    "forbidden_paths": [
+      "base44-apps/**",
+      "apps/admin/**",
+      "packages/platform-core/**",
+      "packages/identity/** except import/use of existing public contracts",
+      "packages/authorization/** except import/use of existing public contracts",
+      "packages/tenant/** except import/use of existing public contracts",
+      "Corte delle Stelle production resources",
+      "r3/control-plane-20260822",
+      "main"
+    ]
+  },
+  "t20_required_evidence": {
+    "runtime_test_count_contract": 66,
+    "must_include": [
+      "positive authorized booking reads and mutations",
+      "unauthenticated denial",
+      "permission denial",
+      "cross-tenant denial",
+      "cross-location denial",
+      "client tenant/location spoof ignored",
+      "status bypass denial",
+      "invalid transition denial",
+      "idempotent duplicate success",
+      "idempotency conflict denial",
+      "RLS direct-query defense",
+      "service assertion expiry/revocation denial",
+      "rate-limit behavior",
+      "kill-switch behavior",
+      "audit/outbox evidence",
+      "deterministic fixture cleanup and residue/orphan zero"
+    ],
+    "fixture_topology": {
+      "tenant_A": ["location_A1", "location_A2"],
+      "tenant_B": ["location_B1"]
+    },
+    "canonical_role": "responsabile"
+  },
+  "promotion_gate": {
+    "spec_acceptance_required": true,
+    "runtime_implementation_authorized": false,
+    "schema_execution_authorized": false,
+    "base44_sync_required_for_foundation_runtime": false,
+    "production_publication_authorized": false,
+    "next_action_after_spec_pass": "EXPLICIT_BOUNDED_T20_RUNTIME_IMPLEMENTATION_AUTHORIZATION"
+  }
+}
