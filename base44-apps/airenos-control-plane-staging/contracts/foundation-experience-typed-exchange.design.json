@@ -1,0 +1,107 @@
+{
+  "contract_id": "AIRENOS-FOUNDATION-EXPERIENCE-TYPED-EXCHANGE-DESIGN-v0.1",
+  "artifact_class": "DESIGN_ONLY_NOT_RUNTIME",
+  "provider_neutral": true,
+  "runtime_implementation_authorized": false,
+  "schema_authorized": false,
+  "production_publication_authorized": false,
+  "authority": {
+    "foundation_remains_authoritative": true,
+    "experience_layer_is_authority": false,
+    "provider_identity_is_authority": false,
+    "client_supplied_tenant_authority": false,
+    "client_supplied_location_authority": false,
+    "default_tenant_allowed": false,
+    "default_location_allowed": false,
+    "unknown_host_fallback_allowed": false
+  },
+  "projection_envelope": {
+    "direction": "FOUNDATION_TO_EXPERIENCE",
+    "mode": "READ_ONLY_GOVERNED_PROJECTION",
+    "required_fields": [
+      "projection_id",
+      "projection_type",
+      "contract_version",
+      "tenant_ref",
+      "purpose_ref",
+      "authorization_ref",
+      "source_event_refs",
+      "generated_at",
+      "expires_at",
+      "allowed_fields",
+      "payload_classification",
+      "payload",
+      "correlation_id",
+      "integrity_ref"
+    ],
+    "optional_fields": ["location_ref", "subject_ref"],
+    "direct_source_table_reads_allowed": false,
+    "direct_domain_writes_allowed": false,
+    "unbounded_payload_allowed": false,
+    "expired_projection_usable": false
+  },
+  "action_proposal_envelope": {
+    "direction": "EXPERIENCE_TO_FOUNDATION",
+    "mode": "ACTION_PROPOSAL_ONLY",
+    "required_fields": [
+      "proposal_id",
+      "proposal_type",
+      "contract_version",
+      "actor_intent_ref",
+      "purpose_ref",
+      "requested_operation",
+      "requested_payload",
+      "correlation_id",
+      "created_at"
+    ],
+    "direct_execution_authority": false,
+    "trusted_tenant_or_location_may_be_asserted_by_client": false,
+    "must_reenter_foundation_pipeline": true,
+    "proposal_is_authorization_decision": false,
+    "proposal_is_domain_fact": false
+  },
+  "typed_denial_result": {
+    "default_decision": "DENY",
+    "required_fields": [
+      "decision",
+      "reason_code",
+      "correlation_id",
+      "policy_version",
+      "audit_ref"
+    ],
+    "secret_details_allowed": false
+  },
+  "foundation_pipeline": [
+    "validate input",
+    "resolve actor",
+    "resolve trusted Tenant/Location",
+    "permission",
+    "entitlement",
+    "purpose authorization",
+    "transaction",
+    "domain validation",
+    "idempotency",
+    "audit",
+    "outbox",
+    "typed result"
+  ],
+  "forbidden_shortcuts": [
+    "direct source-domain table read",
+    "direct domain write",
+    "provider SDK in Foundation core",
+    "client-supplied Tenant authority",
+    "client-supplied Location authority",
+    "default Tenant fallback",
+    "default Location fallback",
+    "unknown-host fallback",
+    "proposal self-authorization",
+    "STELLA direct operational write"
+  ],
+  "ristoairen_gate": {
+    "booking_contract_expansion_authorized": false,
+    "t20_state": "INCOMPLETE",
+    "t20_implementation_authorized": false,
+    "golden_restaurant_e2e_promotion_authorized": false,
+    "stella_direct_operational_writes_allowed": false
+  }
+}
