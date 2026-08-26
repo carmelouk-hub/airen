@@ -20,8 +20,18 @@ export class EdDsaServiceAssertionVerifier {
 }
 export interface BookingRateLimiter{consume(input:Readonly<{serviceId:string;actorIdentityId:string;tenantId:string;locationId:string;kind:"query"|"mutation"}>):Promise<Readonly<{allowed:boolean;retryAfterMs?:number}>>}
 export class InMemoryBookingRateLimiter implements BookingRateLimiter {
-  private readonly buckets=new Map<string,{minute:number;count:number}>();
-  async consume(input:Readonly<{serviceId:string;actorIdentityId:string;tenantId:string;locationId:string;kind:"query"|"mutation"}>){const minute=Math.floor(Date.now()/60000);const key=[input.serviceId,input.actorIdentityId,input.tenantId,input.locationId,input.kind].join(":");const current=this.buckets.get(key);const limit=input.kind==="query"?120:60;const bucket=!current||current.minute!==minute?{minute,count:0}:current;bucket.count++;this.buckets.set(key,bucket);return bucket.count<=limit?Object.freeze({allowed:true}):Object.freeze({allowed:false,retryAfterMs:(minute+1)*60000-Date.now()});}
+  private readonly buckets=new Map<string,{minute:number;minuteCount:number;second:number;secondCount:number}>();
+  private readonly clock:()=>number;
+  constructor(clock:()=>number=()=>Date.now()){this.clock=clock;}
+  async consume(input:Readonly<{serviceId:string;actorIdentityId:string;tenantId:string;locationId:string;kind:"query"|"mutation"}>){
+    const currentTime=this.clock();const minute=Math.floor(currentTime/60000);const second=Math.floor(currentTime/1000);
+    const key=[input.serviceId,input.actorIdentityId,input.tenantId,input.locationId,input.kind].join(":");
+    const existing=this.buckets.get(key);const minuteLimit=input.kind==="query"?120:60;const burstLimit=20;
+    const bucket=!existing||existing.minute!==minute?{minute,minuteCount:0,second,secondCount:0}:{...existing,second:existing.second===second?existing.second:second,secondCount:existing.second===second?existing.secondCount:0};
+    if(bucket.secondCount>=burstLimit)return Object.freeze({allowed:false,retryAfterMs:(second+1)*1000-currentTime});
+    if(bucket.minuteCount>=minuteLimit)return Object.freeze({allowed:false,retryAfterMs:(minute+1)*60000-currentTime});
+    bucket.secondCount+=1;bucket.minuteCount+=1;this.buckets.set(key,bucket);return Object.freeze({allowed:true});
+  }
 }
 export type BookingApiDependencies=Readonly<{authentication:AuthenticationAdapter;serviceAssertions:EdDsaServiceAssertionVerifier;rateLimiter:BookingRateLimiter;roles:RolePermissionResolver;trustedBaseDomain:string;tenants:TenantRepository;locations:LocationRepository;domains:TenantDomainRepository;memberships:MembershipRepository;entitlements:EntitlementRepository;service:BookingApplicationService;switches:Readonly<{adapterEnabled:boolean;projectionEnabled:boolean;mutationEnabled:boolean}>}>;
 function bearer(h:Readonly<Record<string,string|undefined>>):string{const v=h.authorization?.trim();if(!v?.toLowerCase().startsWith("bearer "))throw new AppError("AUTHENTICATION_REQUIRED","End-user bearer authentication is required");return v;}
