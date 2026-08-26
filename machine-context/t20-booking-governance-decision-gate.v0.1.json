@@ -1,0 +1,146 @@
+{
+  "gate": "T20-BOOKING-GOVERNANCE-DECISION-001",
+  "date": "2026-08-26",
+  "artifact_class": "GOVERNANCE_DECISION_FOR_IMPLEMENTATION_SPEC",
+  "state": "ACCEPTED_FOR_IMPLEMENTATION_SPEC_ONLY",
+  "authorizations": {
+    "implementation_spec": true,
+    "runtime_implementation": false,
+    "schema_migration_execution": false,
+    "production_publication": false
+  },
+  "authority": {
+    "foundation_authoritative": true,
+    "client_tenant_location_authoritative": false,
+    "base44_authoritative": false,
+    "stella_direct_booking_write": false,
+    "security_context": "SERVER_DERIVED"
+  },
+  "decisions": {
+    "GAP-001": {
+      "status": "ACCEPTED",
+      "function_id": "RST-F-BKG-007",
+      "canonical_name": "booking.private.query",
+      "class": "BF-C1_QUERY",
+      "permission": "booking.read",
+      "active_tenant_required": true,
+      "active_location_required_for_slice_01": true,
+      "raw_persistence_output": false,
+      "pagination": "CURSOR_BASED_SERVER_BOUNDED",
+      "empty_list": "SUCCESS_EMPTY_COLLECTION",
+      "invisible_exact_resource": "RESOURCE_NOT_FOUND_OR_NOT_VISIBLE"
+    },
+    "GAP-002": {
+      "status": "ACCEPTED",
+      "function_id": "RST-F-BKG-003",
+      "permission": "booking.status.update",
+      "generic_update_permission_implies_status": false
+    },
+    "GAP-003": {
+      "status": "ACCEPTED",
+      "canonical_role_key": "responsabile",
+      "implicit_alias_responsabile_cucina": false,
+      "grants": {
+        "tenant_admin": ["booking.read", "booking.create", "booking.update", "booking.status.update"],
+        "manager": ["booking.read", "booking.create", "booking.update", "booking.status.update"],
+        "responsabile": ["booking.read", "booking.status.update"]
+      }
+    },
+    "GAP-004": {
+      "status": "ACCEPTED",
+      "booking_feature_entitlement": "NOT_APPLICABLE_FOR_SLICE_01",
+      "ristoairen_product_access_required": true,
+      "risto_booking_example_is_authority": false
+    },
+    "GAP-005": {
+      "status": "ACCEPTED",
+      "application_context": "SecurityContext",
+      "separate_tenant_context_required": false
+    },
+    "GAP-006": {
+      "status": "ACCEPTED_WITH_IMPLEMENTATION_DETAIL_PENDING",
+      "implementation_spec_may_design_schema": true,
+      "schema_execution_authorized": false
+    },
+    "GAP-007": {
+      "status": "ACCEPTED",
+      "foundation_owned_durable_idempotency_functions": ["RST-F-BKG-001", "RST-F-BKG-002", "RST-F-BKG-003"],
+      "scope_components": ["resolved_actor", "trusted_tenant", "trusted_location", "canonical_function", "idempotency_key"],
+      "same_key_different_semantic_payload": "IDEMPOTENCY_CONFLICT",
+      "timestamp_alone_replay_protection": false
+    },
+    "GAP-008": {
+      "status": "ACCEPTED",
+      "audit_events": ["BOOKING_CREATED", "BOOKING_UPDATED", "BOOKING_STATUS_CHANGED"],
+      "outbox_events": ["booking.created.v1", "booking.updated.v1", "booking.status_changed.v1"],
+      "secret_material_allowed": false,
+      "cross_tenant_payload_allowed": false
+    },
+    "GAP-009": {
+      "status": "ACCEPTED_WITH_IMPLEMENTATION_DETAIL_PENDING",
+      "server_authorization_required": true,
+      "rls_defense_in_depth_required": true,
+      "rls_replaces_application_authorization": false,
+      "application_authorization_replaces_rls": false
+    },
+    "GAP-010": {
+      "status": "ACCEPTED_WITH_IMPLEMENTATION_DETAIL_PENDING",
+      "derives_from": "RST-F-BKG-007",
+      "raw_domain_or_persistence_rows": false,
+      "tenant_location_client_authority": false
+    },
+    "GAP-011": {
+      "status": "ACCEPTED",
+      "fixture_topology": {
+        "tenant_A": ["location_A1", "location_A2"],
+        "tenant_B": ["location_B1"]
+      },
+      "role_key": "responsabile",
+      "production_fixture_data_allowed": false,
+      "deterministic_cleanup_required": true,
+      "residue_orphan_checks_required": true
+    },
+    "GAP-012": {
+      "status": "ACCEPTED",
+      "base44_artifacts": "REFERENCE_TRANSFORMATION_EVIDENCE_ONLY",
+      "implementation_prerequisite": false,
+      "materialization_requires_hash_provenance": true
+    },
+    "GAP-013": {
+      "status": "ACCEPTED_WITH_IMPLEMENTATION_DETAIL_PENDING",
+      "path_authority": "POST_GATE_IMPLEMENTATION_SPEC",
+      "bounded_write_manifest_required": true,
+      "base44_forensic_paths_authoritative": false
+    }
+  },
+  "implementation_spec_must_freeze": [
+    "exact_api_paths_methods",
+    "exact_booking_query_dto",
+    "cursor_encoding_page_bounds_ordering",
+    "schema_constraints_indexes_foreign_keys",
+    "migration_and_rollback_plan",
+    "authentication_and_service_identity",
+    "credential_rotation_revocation_behavior",
+    "airen_exchange_v1_mapping",
+    "timeout_retry_numeric_policy",
+    "idempotency_storage_retention_and_concurrency",
+    "audit_outbox_payload_schemas_redaction",
+    "rls_policies",
+    "rate_limits_abuse_controls",
+    "observability_backend_and_fields",
+    "foundation_owned_kill_switch_default_off",
+    "environment_separation",
+    "rollback_and_disaster_recovery",
+    "bounded_write_manifest"
+  ],
+  "post_gate": {
+    "governance_decisions_for_implementation_spec": "ACCEPTED",
+    "implementation_spec_authorized": true,
+    "runtime_implementation_authorized": false,
+    "schema_execution_authorized": false,
+    "t20_runtime_tests_executed": 0,
+    "t20_certification": "INCOMPLETE",
+    "production_publication": "BLOCKED",
+    "next_action": "T20_PORTABLE_BOOKING_EXACT_IMPLEMENTATION_SPECIFICATION"
+  }
+}
