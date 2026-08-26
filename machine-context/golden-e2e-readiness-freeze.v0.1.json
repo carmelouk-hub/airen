@@ -1,0 +1,64 @@
+{
+  "milestone": "GOLDEN-E2E-READINESS-FREEZE-001",
+  "artifact_class": "GOVERNED_DESIGN_NOT_CERTIFICATION",
+  "source_authority": "DOC-015 — Golden Restaurant E2E Specification — v0.1",
+  "upstream_t20": "PASS_BOUNDED_T20_SLICE_01",
+  "authorizations": {
+    "golden_g0_bootstrap_spec": true,
+    "golden_g0_runtime_implementation": false,
+    "full_golden_certification": false,
+    "production": false,
+    "base44_runtime_promotion": false,
+    "corte_migration_cutover": false,
+    "r3_merge": false
+  },
+  "environment": {
+    "class": "DEMO_CERTIFICATION",
+    "tenant_kind": "SYNTHETIC_PERMANENT_GOLDEN",
+    "minimum_locations": 2,
+    "corte_fixture_use": "FORBIDDEN",
+    "t20_fixture_reuse": "FORBIDDEN"
+  },
+  "current_readiness": {
+    "booking_slice_01": "CERTIFIED_BOUNDED_RUNTIME",
+    "gr_t02": "NOT_READY_PUBLIC_INGRESS_MISSING",
+    "gr_t03": "PARTIAL_PRIVATE_QUERY_ONLY_NO_GOLDEN_UI_JOURNEY",
+    "gr_t01_and_gr_t04_to_gr_t45": "NOT_EXECUTABLE_FOR_FULL_GOLDEN_CERTIFICATION"
+  },
+  "g0_bootstrap_mandatory": [
+    "synthetic_permanent_golden_tenant",
+    "minimum_two_locations",
+    "canonical_test_identities_memberships",
+    "foundation_owned_reset_contract",
+    "bounded_booking_test_ingress",
+    "trusted_context_resolution",
+    "booking_create_query_visibility",
+    "audit_correlation",
+    "machine_fixture_manifest",
+    "actor_matrix",
+    "scenario_catalog_subset",
+    "evidence_schema",
+    "reset_to_known_baseline",
+    "no_unintended_residue_outside_golden_scope"
+  ],
+  "open_decision_freeze": {
+    "mandatory_optional": "G0_SUBSET_MANDATORY_FULL_45_TERMINAL_TARGET_PRESERVED",
+    "multi_location": "MANDATORY_MINIMUM_TWO_FROM_G0",
+    "payment_provider_sandbox": "DEFER_UNTIL_BILL_PAYMENT_SCOPE",
+    "dataset_volume": "MINIMAL_DETERMINISTIC_G0_LOAD_PERFORMANCE_SEPARATE_GATE",
+    "browser_device_framework": "DEFER_UNTIL_BROWSER_ACCESSIBLE_GOLDEN_SURFACE",
+    "reset": "MANDATORY_FOUNDATION_OWNED_FAIL_CLOSED_BEFORE_G0_PASS",
+    "performance_sla": "SEPARATE_GATE_BEFORE_PERFORMANCE_CLAIMS",
+    "supply_chain": "NOT_G0_MANDATORY_LATER_FEATURE_PACK"
+  },
+  "progression": ["G0", "G1", "G2", "G3", "G4", "G5"],
+  "next_authorized_specification": "GOLDEN-G0-BOOTSTRAP-EXACT-IMPLEMENTATION-SPEC",
+  "terminal_state": {
+    "golden_full_certification": "NOT_READY",
+    "golden_g0_bootstrap_spec": "AUTHORIZED",
+    "golden_g0_runtime_implementation": "NOT_AUTHORIZED",
+    "production": "BLOCKED",
+    "corte_fixture_use": "FORBIDDEN",
+    "base44_authority_delta": "ZERO"
+  }
+}
