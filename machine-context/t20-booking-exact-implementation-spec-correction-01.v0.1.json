@@ -1,0 +1,36 @@
+{
+  "artifact_class": "GOVERNANCE_CORRECTION_NOT_RUNTIME_EVIDENCE",
+  "milestone": "T20-PORTABLE-BOOKING-EXACT-IMPLEMENTATION-SPEC-CORRECTION-01",
+  "date": "2026-08-26",
+  "state": "CORRECTION_ACCEPTED_FOR_RUNTIME_PRECONDITION",
+  "base_spec_commit": "660fa600a32f5ea0a1206016f6ac4bdef7ad8738",
+  "mismatch": {
+    "incorrect_namespace": "app.*",
+    "canonical_foundation_namespace": "airen.*",
+    "reason": "existing Foundation trusted request scopes and mutation transactions already set airen.identity_id, airen.tenant_id, airen.location_id and airen.correlation_id"
+  },
+  "corrected_rls_design": {
+    "enabled": true,
+    "forced": true,
+    "session_settings": {
+      "tenant": "airen.tenant_id",
+      "location": "airen.location_id",
+      "identity": "airen.identity_id",
+      "correlation": "airen.correlation_id"
+    },
+    "policy": "USING tenant_id = current_setting('airen.tenant_id')::uuid AND location_id = current_setting('airen.location_id')::uuid; WITH CHECK identical",
+    "forbidden_namespace": "app.*",
+    "service_role_unscoped_access": false,
+    "admin_bypass_via_client": false
+  },
+  "preservation": {
+    "all_other_exact_spec_decisions_unchanged": true,
+    "foundation_authority_unchanged": true,
+    "security_context_server_derived": true,
+    "base44_authoritative": false,
+    "stella_direct_booking_write": false,
+    "production_publication_authorized": false,
+    "schema_execution_authorized": false
+  },
+  "next_gate": "BOUNDED_T20_RUNTIME_IMPLEMENTATION_SLICE_01"
+}
