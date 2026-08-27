@@ -30,10 +30,7 @@ services:
         value: airenos-foundation
       - key: SECRET_MANAGER_ADAPTER
         value: env
-      - key: RBL01C2_DATABASE_URL
-        fromDatabase:
-          name: ristoairen-rbl01c2-db
-          property: connectionString
+      - fromGroup: rbl01c2-postgres-private
       - key: DATABASE_URL_SECRET_REF
         value: secret://env/RBL01C2_DATABASE_URL
       - key: RBL01C2_AUTH_SESSION_KEY
