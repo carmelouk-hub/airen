@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install locked Node PostgreSQL adapter dependency for RBL composition imports
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
       - run: npm run check:boundaries
       - run: npm run check:machine-context
       - run: npm run check:foundation-contracts
