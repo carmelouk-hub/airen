@@ -1,0 +1,60 @@
+databases:
+  - name: ristoairen-rbl01c2-db
+    plan: free
+    region: frankfurt
+    databaseName: airen_rbl01c2
+    user: airen_rbl01c2
+
+services:
+  - type: web
+    name: ristoairen-booking-rbl01c2-20260827
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: rbl/ristoairen-real-baseline-01-20260827
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    preDeployCommand: node --experimental-strip-types deploy/migrate-ristoairen-booking.ts
+    envVars:
+      - key: NODE_ENV
+        value: test
+      - key: APP_BASE_DOMAIN
+        value: ristoairen.test
+      - key: AUTH_ADAPTER
+        value: signed-session
+      - key: AUTH_PROVIDER_KEY
+        value: rbl01c2
+      - key: AUTH_AUDIENCE
+        value: airenos-foundation
+      - key: SECRET_MANAGER_ADAPTER
+        value: env
+      - key: RBL01C2_DATABASE_URL
+        fromDatabase:
+          name: ristoairen-rbl01c2-db
+          property: connectionString
+      - key: DATABASE_URL_SECRET_REF
+        value: secret://env/RBL01C2_DATABASE_URL
+      - key: RBL01C2_AUTH_SESSION_KEY
+        generateValue: true
+      - key: AUTH_SESSION_KEY_SECRET_REF
+        value: secret://env/RBL01C2_AUTH_SESSION_KEY
+      - key: MIGRATION_SECRET_MANAGER_ADAPTER
+        value: env
+      - key: MIGRATION_DATABASE_URL_SECRET_REF
+        value: secret://env/RBL01C2_DATABASE_URL
+      - key: RBL01C2_BOOKING_CURSOR_KEY
+        generateValue: true
+      - key: RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF
+        value: secret://env/RBL01C2_BOOKING_CURSOR_KEY
+      - key: RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT
+        value: rbl01c2.booking.external
+      - key: RISTOAIREN_BOOKING_ADAPTER_ENABLED
+        value: "false"
+      - key: RISTOAIREN_BOOKING_PROJECTION_ENABLED
+        value: "false"
+      - key: RISTOAIREN_BOOKING_MUTATION_ENABLED
+        value: "false"
+      - key: HOST
+        value: 0.0.0.0
