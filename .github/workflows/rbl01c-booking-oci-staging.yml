@@ -1,0 +1,44 @@
+name: rbl01c-booking-oci-staging
+
+on:
+  push:
+    branches:
+      - "rbl/**"
+  workflow_dispatch:
+
+jobs:
+  booking-oci-staging-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+      RBL01C_IMAGE_TAG: airenos-foundation-rbl01c:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply canonical Foundation runtime schema
+        run: bash scripts/run-postgres-runtime-tests.sh
+      - name: Apply isolated T20 Booking migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql
+      - name: Build exact RBL portable OCI image
+        run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t "$RBL01C_IMAGE_TAG" -f deploy/Dockerfile .
+      - name: Prove Booking through staging OCI artifact
+        run: npm run test:rbl01c-booking-oci-staging
