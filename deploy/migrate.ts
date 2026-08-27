@@ -1,12 +1,30 @@
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { AppError } from "../packages/shared-contracts/src/index.ts";
 import { parseSecretRef } from "../packages/platform-core/src/index.ts";
 import { EnvironmentSecretProvider, type SecretProvider } from "../packages/integrations/src/index.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
+type RuntimeRoleProvisioningMode = "bootstrap" | "external";
+
+type RuntimeRoleExpectation = Readonly<{
+  rolname: string;
+  rolcanlogin: boolean;
+  rolsuper: boolean;
+  rolcreatedb: boolean;
+  rolcreaterole: boolean;
+  rolinherit: boolean;
+  rolbypassrls: boolean;
+}>;
+
+const RUNTIME_ROLE_EXPECTATIONS: readonly RuntimeRoleExpectation[] = [
+  { rolname: "airen_app", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
+  { rolname: "airen_auth", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
+  { rolname: "airen_control_plane", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
+  { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: true },
+] as const;
 
 function required(input: EnvironmentInput, key: string): string {
   const value = input[key]?.trim();
@@ -17,6 +35,15 @@ function required(input: EnvironmentInput, key: string): string {
 function secretProvider(input: EnvironmentInput, providerKey: string, allowedKey: string): SecretProvider {
   if (providerKey === "env") return new EnvironmentSecretProvider(input, [allowedKey]);
   throw new AppError("RUNTIME_CONFIGURATION_INVALID", "No migration SecretProvider adapter is registered for the configured provider", { provider: providerKey });
+}
+
+function runtimeRoleProvisioningMode(input: EnvironmentInput): RuntimeRoleProvisioningMode {
+  const value = input.AIREN_RUNTIME_ROLE_PROVISIONING_MODE?.trim() || "bootstrap";
+  if (value === "bootstrap" || value === "external") return value;
+  throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Unsupported runtime role provisioning mode", {
+    field: "AIREN_RUNTIME_ROLE_PROVISIONING_MODE",
+    value,
+  });
 }
 
 function checksum(text: string): string {
@@ -36,13 +63,53 @@ function transactionBody(sql: string, migrationId: string): string {
   return trimmed.slice(bodyStart, commit.index).trim();
 }
 
-async function runMigrations(connectionString: string): Promise<void> {
+async function assertExternallyProvisionedRuntimeRoles(client: PoolClient): Promise<void> {
+  const expectedNames = RUNTIME_ROLE_EXPECTATIONS.map((role) => role.rolname);
+  const result = await client.query<RuntimeRoleExpectation>(`
+    SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolinherit, rolbypassrls
+    FROM pg_catalog.pg_roles
+    WHERE rolname = ANY($1::text[])
+  `, [expectedNames]);
+  const actualByName = new Map(result.rows.map((row) => [row.rolname, row]));
+  const missing = expectedNames.filter((name) => !actualByName.has(name));
+  const mismatched: string[] = [];
+
+  for (const expected of RUNTIME_ROLE_EXPECTATIONS) {
+    const actual = actualByName.get(expected.rolname);
+    if (!actual) continue;
+    for (const attribute of ["rolcanlogin", "rolsuper", "rolcreatedb", "rolcreaterole", "rolinherit", "rolbypassrls"] as const) {
+      if (actual[attribute] !== expected[attribute]) mismatched.push(`${expected.rolname}.${attribute}`);
+    }
+  }
+
+  if (missing.length || mismatched.length) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Canonical PostgreSQL runtime roles must be provisioned by the database provider/operator before schema migration", {
+      field: "AIREN_RUNTIME_ROLE_PROVISIONING_MODE",
+      provisioningMode: "external",
+      missingRoles: missing,
+      mismatchedAttributes: mismatched,
+    });
+  }
+
+  process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.verified", provisioningMode: "external", roles: expectedNames })}\n`);
+}
+
+async function provisionOrVerifyRuntimeRoles(client: PoolClient, mode: RuntimeRoleProvisioningMode): Promise<void> {
+  if (mode === "bootstrap") {
+    const bootstrapSql = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
+    await client.query(bootstrapSql);
+    process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.provisioned", provisioningMode: "bootstrap" })}\n`);
+    return;
+  }
+  await assertExternallyProvisionedRuntimeRoles(client);
+}
+
+async function runMigrations(connectionString: string, roleProvisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const pool = new Pool({ connectionString, max: 1, application_name: "airenos-migration" });
   const client = await pool.connect();
   try {
     await client.query("SELECT pg_advisory_lock(hashtext('airenos-foundation-migrations'))");
-    const bootstrapSql = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
-    await client.query(bootstrapSql);
+    await provisionOrVerifyRuntimeRoles(client, roleProvisioningMode);
     await client.query(`
       CREATE TABLE IF NOT EXISTS public.airen_schema_migrations (
         migration_id text PRIMARY KEY,
@@ -91,7 +158,8 @@ export async function migrateFoundationDatabase(environment: EnvironmentInput = 
   if (ref.provider !== providerKey) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration database SecretRef provider must match MIGRATION_SECRET_MANAGER_ADAPTER", { field: "MIGRATION_DATABASE_URL_SECRET_REF" });
   const provider = secretProvider(environment, providerKey, ref.key);
   const material = await provider.resolve(ref);
-  await material.use((connectionString) => runMigrations(connectionString));
+  const roleMode = runtimeRoleProvisioningMode(environment);
+  await material.use((connectionString) => runMigrations(connectionString, roleMode));
 }
 
 if (process.argv[1]?.endsWith("deploy/migrate.ts")) {
