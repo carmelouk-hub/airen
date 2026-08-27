@@ -9,7 +9,7 @@ services:
   - type: web
     name: ristoairen-booking-rbl01c2-20260827
     runtime: docker
-    plan: free
+    plan: starter
     region: frankfurt
     branch: rbl/ristoairen-real-baseline-01-20260827
     dockerfilePath: ./deploy/Dockerfile
