@@ -46,7 +46,8 @@
     "test:t20-booking-cleanup": "node --experimental-strip-types --test tests/postgres/t20-booking-cleanup.test.ts",
     "test:t20-booking": "npm run test:t20-booking-contract && npm run test:t20-booking-runtime && npm run test:t20-booking-security && npm run test:t20-booking-cleanup",
     "test:rbl01-booking-http-wiring": "node --experimental-strip-types --test tests/integration/rbl01-booking-http-wiring.test.ts",
-    "test:rbl01b-booking-live-http": "node --experimental-strip-types --test tests/postgres/rbl01b-booking-live-http.test.ts"
+    "test:rbl01b-booking-live-http": "node --experimental-strip-types --test tests/postgres/rbl01b-booking-live-http.test.ts",
+    "test:rbl01c-booking-oci-staging": "node --experimental-strip-types --test tests/deployment/rbl01c-booking-oci-staging.test.ts"
   },
   "dependencies": {
     "pg": "8.23.0"
