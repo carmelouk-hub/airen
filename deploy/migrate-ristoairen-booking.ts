@@ -94,16 +94,32 @@ async function migrateBookingDatabase(connectionString: string): Promise<void> {
 }
 
 export async function migrateRistoairenBookingDatabase(environment: EnvironmentInput = process.env): Promise<void> {
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "foundation", state: "start" })}\n`);
   await migrateFoundationDatabase(environment);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "foundation", state: "complete" })}\n`);
   const connectionString = await resolveMigrationConnectionString(environment);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "start" })}\n`);
   await migrateBookingDatabase(connectionString);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "complete" })}\n`);
 }
 
 if (process.argv[1]?.endsWith("deploy/migrate-ristoairen-booking.ts")) {
   migrateRistoairenBookingDatabase().catch((error: unknown) => {
     const code = error instanceof AppError ? error.code : "INTERNAL_ERROR";
     const migrationId = error instanceof AppError && typeof error.details?.migrationId === "string" ? error.details.migrationId : undefined;
-    process.stderr.write(`${JSON.stringify({ event: "ristoairen.booking.migration.failed", errorCode: code, ...(migrationId ? { migrationId } : {}) })}\n`);
+    const providerErrorCode = typeof error === "object" && error !== null && "code" in error && typeof (error as { code?: unknown }).code === "string"
+      ? (error as { code: string }).code
+      : undefined;
+    const providerRoutine = typeof error === "object" && error !== null && "routine" in error && typeof (error as { routine?: unknown }).routine === "string"
+      ? (error as { routine: string }).routine
+      : undefined;
+    process.stderr.write(`${JSON.stringify({
+      event: "ristoairen.booking.migration.failed",
+      errorCode: code,
+      ...(migrationId ? { migrationId } : {}),
+      ...(providerErrorCode ? { providerErrorCode } : {}),
+      ...(providerRoutine ? { providerRoutine } : {}),
+    })}\n`);
     process.exitCode = 1;
   });
 }
