@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHmac, generateKeyPairSync, randomBytes, randomUUID, sign as signData } from "node:crypto";
 import { request as httpRequest } from "node:http";
 import { createServer as createNetServer } from "node:net";
+import { spawnSync } from "node:child_process";
 import { Pool } from "pg";
 import { startFoundationHttpServer } from "../../apps/api/src/server.ts";
 import { T20, cleanupT20BookingData, seedT20BookingTopology } from "../helpers/t20-booking-fixtures.ts";
@@ -10,7 +11,7 @@ import { T20, cleanupT20BookingData, seedT20BookingTopology } from "../helpers/t
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) throw new Error("DATABASE_URL required");
 
-const RUNTIME_ROLE = "rbl01b_runtime_user";
+const RUNTIME_ROLE = "airen_runtime_ci";
 const ENTITLEMENT = "rbl01b.booking.runtime";
 const PROVIDER = "rbl01b-auth";
 const AUDIENCE = "airenos-foundation";
@@ -33,11 +34,22 @@ async function freePort(): Promise<number> {
   });
 }
 
+function provisionRuntimeLogin(): void {
+  const result = spawnSync("psql", [DATABASE_URL!, "-v", "ON_ERROR_STOP=1", "-v", `runtime_password=${RUNTIME_PASSWORD}`, "-f", "tests/deployment/provision_runtime_login.sql"], { encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`Runtime login provisioning failed: ${result.stderr || result.stdout}`);
+}
+
 function runtimeDatabaseUrl(url: string): string {
   const parsed = new URL(url);
   parsed.username = RUNTIME_ROLE;
   parsed.password = RUNTIME_PASSWORD;
   return parsed.toString();
+}
+
+function responseCorrelation(headers: Record<string, string | string[] | undefined>): string {
+  const value = headers["x-correlation-id"];
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
 }
 
 function userToken(): string {
@@ -101,7 +113,6 @@ async function requestJson(port: number, method: string, path: string, headers: 
 test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RLS/audit/outbox", async () => {
   const root = new Pool({ connectionString: DATABASE_URL });
   let service: Awaited<ReturnType<typeof startFoundationHttpServer>> | undefined;
-  const correlationId = randomUUID();
   let bookingId: string | undefined;
 
   try {
@@ -118,9 +129,7 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
       VALUES($1,$2,'rbl01b_test','synthetic_live_http',true,now(),'{}'::jsonb)
       ON CONFLICT(tenant_id,entitlement_key) DO UPDATE SET enabled=true,source_kind=EXCLUDED.source_kind,source_ref=EXCLUDED.source_ref,valid_from=EXCLUDED.valid_from,valid_until=NULL,revoked_at=NULL,expired_at=NULL,updated_at=now()`, [T20.tenantA, ENTITLEMENT]);
 
-    await root.query(`DROP ROLE IF EXISTS ${RUNTIME_ROLE}`);
-    await root.query(`CREATE ROLE ${RUNTIME_ROLE} LOGIN PASSWORD '${RUNTIME_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS`);
-    await root.query(`GRANT airen_app,airen_auth,airen_control_plane TO ${RUNTIME_ROLE}`);
+    provisionRuntimeLogin();
 
     const port = await freePort();
     const runtimeUrl = runtimeDatabaseUrl(DATABASE_URL);
@@ -154,16 +163,18 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
     const contextPreflight = await requestJson(port, "GET", "/v1/ristoairen/bookings?limit=1", {
       authorization: auth,
       "x-airen-service-assertion": serviceAssertion(),
-      "x-airen-correlation-id": correlationId
+      "x-airen-correlation-id": `untrusted-client-${randomUUID()}`
     });
     assert.equal(contextPreflight.status, 200, `context preflight failed: ${JSON.stringify(contextPreflight.body)}`);
     assert.ok(Array.isArray(contextPreflight.body.data?.items));
-    assert.equal(contextPreflight.body.correlation_id, correlationId);
+    const preflightCorrelation = responseCorrelation(contextPreflight.headers);
+    assert.ok(preflightCorrelation);
+    assert.equal(contextPreflight.body.correlation_id, preflightCorrelation);
 
     const create = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
       authorization: auth,
       "x-airen-service-assertion": serviceAssertion(),
-      "x-airen-correlation-id": correlationId,
+      "x-airen-correlation-id": `untrusted-client-${randomUUID()}`,
       "idempotency-key": "rbl01b-booking-create-0001"
     }, {
       source: "RBL01B_SYNTHETIC",
@@ -178,22 +189,23 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
     bookingId = create.body.data?.booking?.id;
     assert.ok(bookingId);
     assert.equal(create.body.data?.replayed, false);
-    assert.equal(create.body.correlation_id, correlationId);
-    assert.equal(create.headers["x-correlation-id"], correlationId);
+    const createCorrelation = responseCorrelation(create.headers);
+    assert.ok(createCorrelation);
+    assert.equal(create.body.correlation_id, createCorrelation);
 
     const read = await requestJson(port, "GET", `/v1/ristoairen/bookings/${bookingId}`, {
       authorization: auth,
       "x-airen-service-assertion": serviceAssertion(),
-      "x-airen-correlation-id": correlationId
+      "x-airen-correlation-id": `untrusted-client-${randomUUID()}`
     });
     assert.equal(read.status, 200);
     assert.equal(read.body.data?.id, bookingId);
     assert.equal(read.body.data?.customerNameSnapshot, "Synthetic Live HTTP Proof");
+    assert.equal(read.body.correlation_id, responseCorrelation(read.headers));
 
-    const deniedCorrelation = randomUUID();
     const noServiceAssertion = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
       authorization: auth,
-      "x-airen-correlation-id": deniedCorrelation,
+      "x-airen-correlation-id": `untrusted-client-${randomUUID()}`,
       "idempotency-key": "rbl01b-booking-denied-0001"
     }, {
       source: "RBL01B_SYNTHETIC",
@@ -213,12 +225,12 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
 
     const audit = (await root.query(`SELECT action_key,correlation_id,outcome FROM audit.audit_events WHERE tenant_id=$1 AND resource_id=$2 ORDER BY created_at DESC LIMIT 1`, [T20.tenantA, bookingId])).rows[0];
     assert.equal(audit.action_key, "BOOKING_CREATED");
-    assert.equal(audit.correlation_id, correlationId);
+    assert.equal(audit.correlation_id, createCorrelation);
     assert.equal(audit.outcome, "success");
 
     const outbox = (await root.query(`SELECT event_type,correlation_id,payload FROM events.outbox_events WHERE tenant_id=$1 AND aggregate_id=$2 ORDER BY created_at DESC LIMIT 1`, [T20.tenantA, bookingId])).rows[0];
     assert.equal(outbox.event_type, "booking.created.v1");
-    assert.equal(outbox.correlation_id, correlationId);
+    assert.equal(outbox.correlation_id, createCorrelation);
     assert.equal(outbox.payload.booking_id, bookingId);
     assert.equal(outbox.payload.party_size, 2);
   } finally {
