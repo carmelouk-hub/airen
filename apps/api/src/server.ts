@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 import { AppError } from "../../../packages/shared-contracts/src/index.ts";
-import { loadFoundationRuntimeEnvironment } from "../../../packages/platform-core/src/index.ts";
+import { loadFoundationRuntimeEnvironment, parseSecretRef } from "../../../packages/platform-core/src/index.ts";
 import { EnvironmentSecretProvider, type SecretProvider } from "../../../packages/integrations/src/index.ts";
 import { ProviderNeutralAuthenticationAdapter } from "../../../packages/identity/src/index.ts";
 import { classifyError, formatTraceparent, type LogSink, type MetricPoint, type MetricSink, type StructuredLogRecord } from "../../../packages/observability/src/index.ts";
@@ -24,6 +24,8 @@ import { PostgresPlatformAuditQueryStore } from "../../../packages/persistence-p
 import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import { dispatchAdminApiRequest, isAdminApiRequest, type AdminApiDependencies } from "./admin-api.ts";
+import { isRistoBookingApiRequest } from "./ristoairen-booking-api.ts";
+import { createRistoBookingRuntime } from "./ristoairen-booking-runtime.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 
@@ -38,7 +40,16 @@ class StdoutJsonMetricSink implements MetricSink {
 function referenceSecretProvider(environment: EnvironmentInput): SecretProvider {
   const config = loadFoundationRuntimeEnvironment(environment);
   if (config.secretManagerAdapter === "env") {
-    return new EnvironmentSecretProvider(environment, [config.databaseUrlRef.key, config.authSessionKeyRef.key]);
+    const allowedKeys = [config.databaseUrlRef.key, config.authSessionKeyRef.key];
+    const bookingCursorRefRaw = environment.RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF?.trim();
+    if (bookingCursorRefRaw) {
+      const bookingCursorRef = parseSecretRef(bookingCursorRefRaw, "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF");
+      if (bookingCursorRef.provider !== config.secretManagerAdapter) {
+        throw new AppError("RUNTIME_CONFIGURATION_INVALID", "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF provider must match SECRET_MANAGER_ADAPTER", { field: "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF" });
+      }
+      allowedKeys.push(bookingCursorRef.key);
+    }
+    return new EnvironmentSecretProvider(environment, allowedKeys);
   }
   throw new AppError("RUNTIME_CONFIGURATION_INVALID", "No runtime SecretProvider adapter is registered for the configured provider", { provider: config.secretManagerAdapter });
 }
@@ -79,6 +90,28 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
+async function readBookingJsonBody(request: IncomingMessage): Promise<unknown> {
+  if (request.method === "GET" || request.method === "HEAD") return undefined;
+  const contentType = header(request, "content-type");
+  if (contentType && !contentType.toLowerCase().startsWith("application/json")) {
+    throw new AppError("VALIDATION_FAILED", "Booking mutation content-type must be application/json");
+  }
+  const chunks: Buffer[] = [];
+  let bytes = 0;
+  for await (const chunk of request) {
+    const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    bytes += data.length;
+    if (bytes > 64 * 1024) throw new AppError("VALIDATION_FAILED", "Booking request body exceeds 64 KiB");
+    chunks.push(data);
+  }
+  if (!chunks.length) return {};
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new AppError("VALIDATION_FAILED", "Booking request body is not valid JSON");
+  }
+}
+
 function adminHeaders(request: IncomingMessage): Readonly<Record<string, string | undefined>> {
   return Object.freeze({
     authorization: header(request, "authorization"),
@@ -87,6 +120,23 @@ function adminHeaders(request: IncomingMessage): Readonly<Record<string, string 
     origin: header(request, "origin"),
     cookie: header(request, "cookie")
   });
+}
+
+function bookingHeaders(request: IncomingMessage, correlationId: string): Readonly<Record<string, string | undefined>> {
+  return Object.freeze({
+    authorization: header(request, "authorization"),
+    "x-airen-service-assertion": header(request, "x-airen-service-assertion"),
+    "x-airen-correlation-id": correlationId,
+    "x-airen-deadline-ms": header(request, "x-airen-deadline-ms"),
+    "idempotency-key": header(request, "idempotency-key")
+  });
+}
+
+function requestHostname(request: IncomingMessage): string {
+  const host = header(request, "host")?.trim();
+  if (!host) throw new AppError("VALIDATION_FAILED", "Host header is required for RISTOAIREN Booking routing");
+  try { return new URL(`http://${host}`).hostname.toLowerCase(); }
+  catch { throw new AppError("VALIDATION_FAILED", "Host header is invalid for RISTOAIREN Booking routing"); }
 }
 
 const ADMIN_ASSETS: Readonly<Record<string, Readonly<{ file: string; contentType: string }>>> = Object.freeze({
@@ -116,7 +166,8 @@ async function serveAdminAsset(request: IncomingMessage, response: ServerRespons
 
 export async function startFoundationHttpServer(environment: EnvironmentInput = process.env) {
   const deployment = parseDeploymentRuntimeOptions(environment);
-  const runtime = await bootstrapFoundationRuntime(environment, referenceSecretProvider(environment), {
+  const secretProvider = referenceSecretProvider(environment);
+  const runtime = await bootstrapFoundationRuntime(environment, secretProvider, {
     logSink: new StdoutJsonLogSink(),
     metricSink: new StdoutJsonMetricSink()
   });
@@ -129,6 +180,16 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
   );
   const tenantRepository = new PostgresTenantRepositoryAdapter(foundationReads);
   const locationRepository = new PostgresLocationRepositoryAdapter(foundationReads);
+  const bookingRuntime = await createRistoBookingRuntime({
+    environment,
+    pool,
+    authentication,
+    foundationReads,
+    tenantRepository,
+    locationRepository,
+    secretProvider,
+    appBaseDomain: runtime.config.appBaseDomain
+  });
 
   const adminDeps: AdminApiDependencies = Object.freeze({
     authentication,
@@ -208,6 +269,42 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
         const outcome = readiness.status === "READY" ? "success" : "degraded";
         await runtime.observability.metrics.request("health.ready", outcome, Date.now() - started);
         await runtime.observability.logger.emit(readiness.status === "READY" ? "info" : "warn", "http.health_ready", context, { operation: "health.ready", outcome, durationMs: Date.now() - started, attributes: { readiness: readiness.status } });
+        return;
+      }
+
+      if (isRistoBookingApiRequest(request.url)) {
+        let result;
+        if (!bookingRuntime.enabled) {
+          result = await bookingRuntime.dispatch({ method: request.method ?? "GET", url: request.url ?? "", hostname: "", headers: {} });
+        } else {
+          let body: unknown;
+          try {
+            body = await readBookingJsonBody(request);
+          } catch (error) {
+            const classification = classifyError(error);
+            json(response, classification.code === "VALIDATION_FAILED" ? 422 : 500, {
+              error: classification.code,
+              correlation_id: context.correlationId
+            });
+            return;
+          }
+          result = await bookingRuntime.dispatch({
+            method: request.method ?? "GET",
+            url: request.url ?? "",
+            hostname: requestHostname(request),
+            headers: bookingHeaders(request, context.correlationId),
+            body
+          });
+        }
+        json(response, result.status, result.body, result.headers);
+        const outcome = result.status < 400 ? "success" : result.status >= 500 ? "failed" : "denied";
+        await runtime.observability.metrics.request("ristoairen.booking.api", outcome, Date.now() - started);
+        await runtime.observability.logger.emit(result.status >= 500 ? "error" : result.status >= 400 ? "warn" : "info", "http.ristoairen_booking_api", context, {
+          operation: "ristoairen.booking.api",
+          outcome,
+          durationMs: Date.now() - started,
+          attributes: { method: request.method, statusCode: result.status }
+        });
         return;
       }
 
