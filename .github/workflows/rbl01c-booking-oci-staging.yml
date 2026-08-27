@@ -25,6 +25,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
       RBL01C_IMAGE_TAG: airenos-foundation-rbl01c:${{ github.sha }}
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/RBL01C_MIGRATION_DATABASE_URL
+      RBL01C_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,10 +37,8 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Apply canonical Foundation runtime schema
-        run: bash scripts/run-postgres-runtime-tests.sh
-      - name: Apply isolated T20 Booking migration
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/persistence-postgres/src/migrations/20260826_001_risto_bookings.sql
+      - name: Apply governed Foundation + Booking deploy migrations twice
+        run: npm run migrate:rbl01c2-booking && npm run migrate:rbl01c2-booking
       - name: Build exact RBL portable OCI image
         run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t "$RBL01C_IMAGE_TAG" -f deploy/Dockerfile .
       - name: Prove Booking through staging OCI artifact
