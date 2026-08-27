@@ -101,7 +101,7 @@ async function requestJson(port: number, method: string, path: string, headers: 
 test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RLS/audit/outbox", async () => {
   const root = new Pool({ connectionString: DATABASE_URL });
   let service: Awaited<ReturnType<typeof startFoundationHttpServer>> | undefined;
-  const correlationId = `rbl01b-${randomUUID()}`;
+  const correlationId = randomUUID();
   let bookingId: string | undefined;
 
   try {
@@ -150,10 +150,19 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
     });
 
     const auth = `Bearer ${userToken()}`;
-    const serviceToken = serviceAssertion();
+
+    const contextPreflight = await requestJson(port, "GET", "/v1/ristoairen/bookings?limit=1", {
+      authorization: auth,
+      "x-airen-service-assertion": serviceAssertion(),
+      "x-airen-correlation-id": correlationId
+    });
+    assert.equal(contextPreflight.status, 200, `context preflight failed: ${JSON.stringify(contextPreflight.body)}`);
+    assert.ok(Array.isArray(contextPreflight.body.data?.items));
+    assert.equal(contextPreflight.body.correlation_id, correlationId);
+
     const create = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
       authorization: auth,
-      "x-airen-service-assertion": serviceToken,
+      "x-airen-service-assertion": serviceAssertion(),
       "x-airen-correlation-id": correlationId,
       "idempotency-key": "rbl01b-booking-create-0001"
     }, {
@@ -165,24 +174,26 @@ test("RBL-01B real HTTP socket traverses governed Booking stack to PostgreSQL/RL
       customerNameSnapshot: "Synthetic Live HTTP Proof"
     });
 
-    assert.equal(create.status, 201);
-    bookingId = create.body.booking?.id;
+    assert.equal(create.status, 201, `create failed: ${JSON.stringify(create.body)}`);
+    bookingId = create.body.data?.booking?.id;
     assert.ok(bookingId);
-    assert.equal(create.body.replayed, false);
+    assert.equal(create.body.data?.replayed, false);
+    assert.equal(create.body.correlation_id, correlationId);
     assert.equal(create.headers["x-correlation-id"], correlationId);
 
     const read = await requestJson(port, "GET", `/v1/ristoairen/bookings/${bookingId}`, {
       authorization: auth,
       "x-airen-service-assertion": serviceAssertion(),
-      "x-airen-correlation-id": `${correlationId}-read`
+      "x-airen-correlation-id": correlationId
     });
     assert.equal(read.status, 200);
-    assert.equal(read.body.id, bookingId);
-    assert.equal(read.body.customerNameSnapshot, "Synthetic Live HTTP Proof");
+    assert.equal(read.body.data?.id, bookingId);
+    assert.equal(read.body.data?.customerNameSnapshot, "Synthetic Live HTTP Proof");
 
+    const deniedCorrelation = randomUUID();
     const noServiceAssertion = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
       authorization: auth,
-      "x-airen-correlation-id": `${correlationId}-denied`,
+      "x-airen-correlation-id": deniedCorrelation,
       "idempotency-key": "rbl01b-booking-denied-0001"
     }, {
       source: "RBL01B_SYNTHETIC",
