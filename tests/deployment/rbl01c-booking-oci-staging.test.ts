@@ -1,0 +1,251 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createHmac, generateKeyPairSync, randomBytes, randomUUID, sign as signData } from "node:crypto";
+import { request as httpRequest } from "node:http";
+import { createServer as createNetServer } from "node:net";
+import { spawnSync } from "node:child_process";
+import { Pool } from "pg";
+import { T20, cleanupT20BookingData, seedT20BookingTopology } from "../helpers/t20-booking-fixtures.ts";
+
+const DATABASE_URL = process.env.DATABASE_URL;
+const IMAGE_TAG = process.env.RBL01C_IMAGE_TAG;
+if (!DATABASE_URL) throw new Error("DATABASE_URL required");
+if (!IMAGE_TAG) throw new Error("RBL01C_IMAGE_TAG required");
+
+const RUNTIME_ROLE = "airen_runtime_ci";
+const ENTITLEMENT = "rbl01c.booking.oci.staging";
+const PROVIDER = "rbl01c-auth";
+const AUDIENCE = "airenos-foundation";
+const SERVICE_KID = "rbl01c-k1";
+const CONTAINER_NAME = `airen-rbl01c-${process.pid}`;
+const RUNTIME_PASSWORD = randomBytes(24).toString("hex");
+const AUTH_KEY = randomBytes(32).toString("hex");
+const CURSOR_KEY = randomBytes(32).toString("hex");
+const { publicKey: SERVICE_PUBLIC_KEY, privateKey: SERVICE_PRIVATE_KEY } = generateKeyPairSync("ed25519");
+
+type Json = Record<string, any>;
+
+async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createNetServer();
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") return reject(new Error("Unable to allocate test port"));
+      server.close((error) => error ? reject(error) : resolve(address.port));
+    });
+  });
+}
+
+function exec(command: string, args: string[]): string {
+  const result = spawnSync(command, args, { encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`${command} failed: ${result.stderr || result.stdout}`);
+  return result.stdout.trim();
+}
+
+function provisionRuntimeLogin(): void {
+  exec("psql", [DATABASE_URL!, "-v", "ON_ERROR_STOP=1", "-v", `runtime_password=${RUNTIME_PASSWORD}`, "-f", "tests/deployment/provision_runtime_login.sql"]);
+}
+
+function runtimeDatabaseUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.username = RUNTIME_ROLE;
+  parsed.password = RUNTIME_PASSWORD;
+  parsed.hostname = "127.0.0.1";
+  return parsed.toString();
+}
+
+function userToken(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = Buffer.from(JSON.stringify({
+    iss: PROVIDER,
+    aud: AUDIENCE,
+    sub: "manager-a",
+    sid: `rbl01c-${randomUUID()}`,
+    iat: now - 5,
+    exp: now + 300
+  })).toString("base64url");
+  return `${payload}.${createHmac("sha256", AUTH_KEY).update(payload).digest("base64url")}`;
+}
+
+function serviceAssertion(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: "EdDSA", kid: SERVICE_KID })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({
+    iss: "ristoairen-rbl01c-staging-experience",
+    sub: "synthetic-booking-oci-proof",
+    aud: AUDIENCE,
+    iat: now - 5,
+    exp: now + 120,
+    jti: randomUUID()
+  })).toString("base64url");
+  const signingInput = `${header}.${payload}`;
+  const signature = signData(null, Buffer.from(signingInput), SERVICE_PRIVATE_KEY).toString("base64url");
+  return `${signingInput}.${signature}`;
+}
+
+async function requestJson(port: number, method: string, path: string, headers: Readonly<Record<string, string>>, body?: unknown) {
+  return new Promise<{ status: number; body: Json; headers: Record<string, string | string[] | undefined> }>((resolve, reject) => {
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    const request = httpRequest({
+      hostname: "127.0.0.1",
+      port,
+      path,
+      method,
+      headers: {
+        host: "t20-a.ristoairen.test",
+        ...(payload ? { "content-type": "application/json", "content-length": String(Buffer.byteLength(payload)) } : {}),
+        ...headers
+      }
+    }, (response) => {
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      response.on("end", () => {
+        const text = Buffer.concat(chunks).toString("utf8");
+        let parsed: Json = {};
+        try { parsed = text ? JSON.parse(text) : {}; } catch { parsed = { raw: text }; }
+        resolve({ status: response.statusCode ?? 0, body: parsed, headers: response.headers });
+      });
+    });
+    request.on("error", reject);
+    if (payload) request.write(payload);
+    request.end();
+  });
+}
+
+async function waitReady(port: number): Promise<void> {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    try {
+      const response = await requestJson(port, "GET", "/health/ready", {});
+      if (response.status === 200 && response.body.status === "READY") return;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  const logs = spawnSync("docker", ["logs", CONTAINER_NAME], { encoding: "utf8" });
+  throw new Error(`OCI staging container did not become READY: ${logs.stderr || logs.stdout}`);
+}
+
+function startContainer(port: number, runtimeUrl: string, publicJwk: Json): void {
+  const env = [
+    "NODE_ENV=staging",
+    "APP_BASE_DOMAIN=ristoairen.test",
+    `AUTH_ADAPTER=signed-session`,
+    `AUTH_PROVIDER_KEY=${PROVIDER}`,
+    `AUTH_AUDIENCE=${AUDIENCE}`,
+    "SECRET_MANAGER_ADAPTER=env",
+    "DATABASE_URL_SECRET_REF=secret://env/RBL01C_DATABASE_URL",
+    "AUTH_SESSION_KEY_SECRET_REF=secret://env/RBL01C_AUTH_KEY",
+    `RBL01C_DATABASE_URL=${runtimeUrl}`,
+    `RBL01C_AUTH_KEY=${AUTH_KEY}`,
+    "OBJECT_STORAGE_ADAPTER=s3-compatible",
+    "REALTIME_ADAPTER=provider-neutral",
+    "HOST=0.0.0.0",
+    `PORT=${port}`,
+    `RELEASE_REVISION=${process.env.GITHUB_SHA ?? "rbl01c-local"}`,
+    "SHUTDOWN_TIMEOUT_MS=5000",
+    "RISTOAIREN_BOOKING_ADAPTER_ENABLED=true",
+    "RISTOAIREN_BOOKING_PROJECTION_ENABLED=true",
+    "RISTOAIREN_BOOKING_MUTATION_ENABLED=true",
+    `RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT=${ENTITLEMENT}`,
+    "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF=secret://env/RBL01C_CURSOR_KEY",
+    `RBL01C_CURSOR_KEY=${CURSOR_KEY}`,
+    `RISTOAIREN_BOOKING_SERVICE_PUBLIC_KEYS_JSON=${JSON.stringify({ [SERVICE_KID]: { key: publicJwk, enabled: true } })}`
+  ];
+  const args = ["run", "-d", "--name", CONTAINER_NAME, "--network", "host"];
+  for (const value of env) args.push("-e", value);
+  args.push(IMAGE_TAG!);
+  exec("docker", args);
+}
+
+test("RBL-01C staging OCI image serves governed Booking runtime without production enablement", async () => {
+  const root = new Pool({ connectionString: DATABASE_URL });
+  let bookingId: string | undefined;
+  let containerStarted = false;
+
+  try {
+    await seedT20BookingTopology(root);
+    await cleanupT20BookingData(root);
+    await root.query(`INSERT INTO identity.provider_subject_links(identity_id,provider_key,provider_subject)
+      VALUES($1,$2,'manager-a') ON CONFLICT(provider_key,provider_subject) DO UPDATE SET identity_id=EXCLUDED.identity_id`, [T20.managerA, PROVIDER]);
+    await root.query(`INSERT INTO billing.entitlement_catalog(entitlement_key,description,status)
+      VALUES($1,'Synthetic RBL-01C Booking OCI staging proof','active')
+      ON CONFLICT(entitlement_key) DO UPDATE SET status='active',description=EXCLUDED.description,retired_at=NULL,updated_at=now()`, [ENTITLEMENT]);
+    await root.query(`INSERT INTO billing.tenant_entitlements(tenant_id,entitlement_key,source_kind,source_ref,enabled,valid_from,config)
+      VALUES($1,$2,'rbl01c_test','synthetic_oci_staging',true,now(),'{}'::jsonb)
+      ON CONFLICT(tenant_id,entitlement_key) DO UPDATE SET enabled=true,source_kind=EXCLUDED.source_kind,source_ref=EXCLUDED.source_ref,valid_from=EXCLUDED.valid_from,valid_until=NULL,revoked_at=NULL,expired_at=NULL,updated_at=now()`, [T20.tenantA, ENTITLEMENT]);
+
+    provisionRuntimeLogin();
+    const port = await freePort();
+    const publicJwk = SERVICE_PUBLIC_KEY.export({ format: "jwk" }) as Json;
+    startContainer(port, runtimeDatabaseUrl(DATABASE_URL), publicJwk);
+    containerStarted = true;
+    await waitReady(port);
+
+    const runtimeUid = exec("docker", ["exec", CONTAINER_NAME, "id", "-u"]);
+    assert.notEqual(runtimeUid, "0", "OCI runtime must remain non-root");
+
+    const auth = `Bearer ${userToken()}`;
+    const preflight = await requestJson(port, "GET", "/v1/ristoairen/bookings?limit=1", {
+      authorization: auth,
+      "x-airen-service-assertion": serviceAssertion()
+    });
+    assert.equal(preflight.status, 200, `OCI Booking preflight failed: ${JSON.stringify(preflight.body)}`);
+    assert.ok(Array.isArray(preflight.body.data?.items));
+
+    const create = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
+      authorization: auth,
+      "x-airen-service-assertion": serviceAssertion(),
+      "idempotency-key": "rbl01c-booking-create-0001"
+    }, {
+      source: "RBL01C_SYNTHETIC_OCI",
+      partySize: 2,
+      bookingDate: "2026-09-09",
+      bookingTimeLocal: "19:45",
+      expectedDurationMinutes: 90,
+      customerNameSnapshot: "Synthetic OCI Staging Proof"
+    });
+    assert.equal(create.status, 201, `OCI Booking create failed: ${JSON.stringify(create.body)}`);
+    bookingId = create.body.data?.booking?.id;
+    assert.ok(bookingId);
+
+    const read = await requestJson(port, "GET", `/v1/ristoairen/bookings/${bookingId}`, {
+      authorization: auth,
+      "x-airen-service-assertion": serviceAssertion()
+    });
+    assert.equal(read.status, 200);
+    assert.equal(read.body.data?.id, bookingId);
+
+    const denied = await requestJson(port, "POST", "/v1/ristoairen/bookings", {
+      authorization: auth,
+      "idempotency-key": "rbl01c-booking-denied-0001"
+    }, {
+      source: "RBL01C_SYNTHETIC_OCI",
+      partySize: 3,
+      bookingDate: "2026-09-09",
+      bookingTimeLocal: "20:45",
+      expectedDurationMinutes: 90,
+      customerNameSnapshot: "Must Not Persist"
+    });
+    assert.equal(denied.status, 401);
+
+    const booking = (await root.query(`SELECT tenant_id,location_id,environment_class FROM risto_bookings WHERE id=$1`, [bookingId])).rows[0];
+    assert.equal(booking.tenant_id, T20.tenantA);
+    assert.equal(booking.location_id, T20.locationA1);
+    assert.equal(booking.environment_class, "TEST_TEMPORARY");
+
+    const audit = (await root.query(`SELECT action_key,outcome FROM audit.audit_events WHERE tenant_id=$1 AND resource_id=$2 ORDER BY created_at DESC LIMIT 1`, [T20.tenantA, bookingId])).rows[0];
+    assert.equal(audit.action_key, "BOOKING_CREATED");
+    assert.equal(audit.outcome, "success");
+
+    const outbox = (await root.query(`SELECT event_type,payload FROM events.outbox_events WHERE tenant_id=$1 AND aggregate_id=$2 ORDER BY created_at DESC LIMIT 1`, [T20.tenantA, bookingId])).rows[0];
+    assert.equal(outbox.event_type, "booking.created.v1");
+    assert.equal(outbox.payload.booking_id, bookingId);
+  } finally {
+    if (containerStarted) spawnSync("docker", ["rm", "-f", CONTAINER_NAME], { encoding: "utf8" });
+    await cleanupT20BookingData(root);
+    await root.query(`DELETE FROM billing.tenant_entitlements WHERE tenant_id=$1 AND entitlement_key=$2`, [T20.tenantA, ENTITLEMENT]);
+    await root.query(`DELETE FROM billing.entitlement_catalog WHERE entitlement_key=$1`, [ENTITLEMENT]);
+    await root.query(`DELETE FROM identity.provider_subject_links WHERE provider_key=$1 AND provider_subject='manager-a'`, [PROVIDER]);
+    await root.query(`DROP ROLE IF EXISTS ${RUNTIME_ROLE}`);
+    await root.end();
+  }
+});
