@@ -126,7 +126,7 @@ async function waitReady(port: number): Promise<void> {
 
 function startContainer(port: number, runtimeUrl: string, publicJwk: Json): void {
   const env = [
-    "NODE_ENV=staging",
+    "NODE_ENV=test",
     "APP_BASE_DOMAIN=ristoairen.test",
     `AUTH_ADAPTER=signed-session`,
     `AUTH_PROVIDER_KEY=${PROVIDER}`,
