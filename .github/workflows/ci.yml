@@ -106,6 +106,9 @@ jobs:
       - name: Execute T20 Portable Booking cleanup tests
         if: startsWith(github.ref, 'refs/heads/t20/') || startsWith(github.ref, 'refs/heads/rbl/') || github.event_name == 'pull_request'
         run: npm run test:t20-booking-cleanup
+      - name: Execute RBL-01B Booking synthetic live HTTP process proof
+        if: startsWith(github.ref, 'refs/heads/rbl/')
+        run: npm run test:rbl01b-booking-live-http
 
   deployment-path-runtime:
     if: ${{ !startsWith(github.ref, 'refs/heads/t20/') && !startsWith(github.ref, 'refs/heads/rbl/') }}
