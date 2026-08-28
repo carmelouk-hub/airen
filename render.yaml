@@ -23,11 +23,13 @@ services:
       - key: APP_BASE_DOMAIN
         value: ristoairen.test
       - key: AUTH_ADAPTER
-        value: signed-session
+        value: ed25519-signed-session
       - key: AUTH_PROVIDER_KEY
-        value: rbl01c2
+        value: base44-rbl01c2
       - key: AUTH_AUDIENCE
         value: airenos-foundation
+      - key: AUTH_SESSION_PUBLIC_KEYS_JSON
+        value: '{"base44-user-20260828-k1":{"key":{"crv":"Ed25519","x":"S3Vniu5dCC2vFW3Sx84df7OGsL1X5Mlf7z1m98MA_fI","kty":"OKP"},"enabled":true}}'
       - key: SECRET_MANAGER_ADAPTER
         value: env
       - fromGroup: rbl01c2-postgres-private
@@ -62,10 +64,14 @@ services:
         value: secret://env/RBL01C2_BOOKING_CURSOR_KEY
       - key: RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT
         value: rbl01c2.booking.external
+      - key: RISTOAIREN_BOOKING_SERVICE_PUBLIC_KEYS_JSON
+        value: '{"base44-service-20260828-k1":{"key":{"crv":"Ed25519","x":"e_20uQ9zRm7gvO15-RgfKZ1ShAayXz4wBC5ImfPFghg","kty":"OKP"},"enabled":true}}'
+      - key: RBL01D_BASE44_SEED_ENABLED
+        value: "true"
       - key: RISTOAIREN_BOOKING_ADAPTER_ENABLED
-        value: "false"
+        value: "true"
       - key: RISTOAIREN_BOOKING_PROJECTION_ENABLED
-        value: "false"
+        value: "true"
       - key: RISTOAIREN_BOOKING_MUTATION_ENABLED
         value: "false"
       - key: HOST
