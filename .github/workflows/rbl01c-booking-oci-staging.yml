@@ -23,6 +23,7 @@ jobs:
           --health-timeout 5s
           --health-retries 12
     env:
+      NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
       RBL01C_IMAGE_TAG: airenos-foundation-rbl01c:${{ github.sha }}
       MIGRATION_SECRET_MANAGER_ADAPTER: env
@@ -33,6 +34,7 @@ jobs:
       RBL01C2_RUNTIME_DB_NAME: airen_test
       RBL01C2_RUNTIME_DB_USER: airen_runtime_rbl01c2_ci
       RBL01C2_RUNTIME_DB_SEED: ci-rbl01c2-runtime-principal-seed-20260828-validated-postgres16
+      RBL01D_BASE44_SEED_ENABLED: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +46,20 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Apply governed Foundation + Booking deploy migrations twice
         run: npm run migrate:rbl01c2-booking && npm run migrate:rbl01c2-booking
+      - name: Verify RBL-01D Base44 seed and idempotence
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "
+            SELECT
+              (SELECT count(*) FROM platform.tenants WHERE id='51000000-0000-4000-8000-000000000001' AND slug='rbl01d-base44' AND status='active'),
+              (SELECT count(*) FROM platform.locations WHERE id='51000000-0000-4000-8000-000000000011' AND tenant_id='51000000-0000-4000-8000-000000000001' AND status='active' AND is_primary),
+              (SELECT count(*) FROM identity.identities WHERE id='53000000-0000-4000-8000-000000000001' AND status='active'),
+              (SELECT count(*) FROM identity.provider_subject_links WHERE identity_id='53000000-0000-4000-8000-000000000001' AND provider_key='base44-rbl01c2' AND provider_subject='6a9034a15aadd6259d2d88e4'),
+              (SELECT count(*) FROM authz.tenant_memberships WHERE tenant_id='51000000-0000-4000-8000-000000000001' AND identity_id='53000000-0000-4000-8000-000000000001' AND role_key='manager' AND status='active'),
+              (SELECT count(*) FROM authz.location_memberships lm JOIN authz.tenant_memberships tm ON tm.id=lm.tenant_membership_id WHERE lm.tenant_id='51000000-0000-4000-8000-000000000001' AND lm.location_id='51000000-0000-4000-8000-000000000011' AND tm.identity_id='53000000-0000-4000-8000-000000000001' AND lm.role_key='manager' AND lm.status='active'),
+              (SELECT count(*) FROM authz.role_permission_grants WHERE scope_kind='location' AND role_key='manager' AND permission_key IN ('booking.read','booking.create','booking.update','booking.status.update') AND effect='allow'),
+              (SELECT count(*) FROM billing.tenant_entitlements WHERE tenant_id='51000000-0000-4000-8000-000000000001' AND entitlement_key='rbl01c2.booking.external' AND enabled AND revoked_at IS NULL AND expired_at IS NULL),
+              (SELECT count(*) FROM platform.tenant_domains WHERE tenant_id='51000000-0000-4000-8000-000000000001' AND location_id='51000000-0000-4000-8000-000000000011' AND lower(hostname)='ristoairen-booking-rbl01c2-20260827.onrender.com' AND status='active' AND verification_state='verified');
+          " | grep -Fx '1|1|1|1|1|1|4|1|1'
       - name: Verify RBL-01C2 runtime login can activate airen_app
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT rolcanlogin,rolsuper,rolbypassrls,pg_has_role('airen_runtime_rbl01c2_ci','airen_app','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_auth','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_control_plane','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_control_plane_owner','MEMBER') FROM pg_roles WHERE rolname='airen_runtime_rbl01c2_ci'" | grep -Fx 't|f|f|t|t|t|f'
