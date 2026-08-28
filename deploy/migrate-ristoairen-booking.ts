@@ -6,6 +6,7 @@ import { AppError } from "../packages/shared-contracts/src/index.ts";
 import { parseSecretRef } from "../packages/platform-core/src/index.ts";
 import { EnvironmentSecretProvider } from "../packages/integrations/src/index.ts";
 import { migrateFoundationDatabase } from "./migrate.ts";
+import { provisionRblRuntimeDatabasePrincipal } from "./runtime-database-principal.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 
@@ -98,6 +99,9 @@ export async function migrateRistoairenBookingDatabase(environment: EnvironmentI
   await migrateFoundationDatabase(environment);
   process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "foundation", state: "complete" })}\n`);
   const connectionString = await resolveMigrationConnectionString(environment);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "runtime-principal", state: "start" })}\n`);
+  await provisionRblRuntimeDatabasePrincipal(connectionString, environment);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "runtime-principal", state: "complete" })}\n`);
   process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "start" })}\n`);
   await migrateBookingDatabase(connectionString);
   process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "complete" })}\n`);
