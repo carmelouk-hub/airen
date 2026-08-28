@@ -42,7 +42,7 @@ services:
       - key: MIGRATION_DATABASE_URL_SECRET_REF
         value: secret://env/RBL01C2_DATABASE_URL
       - key: AIREN_RUNTIME_ROLE_PROVISIONING_MODE
-        value: external
+        value: bootstrap
       - key: RBL01C2_BOOKING_CURSOR_KEY
         generateValue: true
       - key: RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF
