@@ -31,8 +31,18 @@ services:
       - key: SECRET_MANAGER_ADAPTER
         value: env
       - fromGroup: rbl01c2-postgres-private
+      - key: RBL01C2_RUNTIME_DB_SEED
+        generateValue: true
+      - key: RBL01C2_RUNTIME_DB_HOST
+        value: ristoairen-postgres-rbl01c2
+      - key: RBL01C2_RUNTIME_DB_PORT
+        value: "5432"
+      - key: RBL01C2_RUNTIME_DB_NAME
+        value: ristoairen
+      - key: RBL01C2_RUNTIME_DB_USER
+        value: airen_runtime
       - key: DATABASE_URL_SECRET_REF
-        value: secret://env/RBL01C2_DATABASE_URL
+        value: secret://env/RBL01C2_RUNTIME_DATABASE_URL
       - key: RBL01C2_AUTH_SESSION_KEY
         generateValue: true
       - key: AUTH_SESSION_KEY_SECRET_REF
