@@ -1,0 +1,23 @@
+import { classifyError } from "../packages/observability/src/index.ts";
+import { startFoundationHttpServer } from "../apps/api/src/server.ts";
+import { loadRblRuntimeDatabaseConfig, materializeRblRuntimeDatabaseUrl } from "./runtime-database-principal.ts";
+
+async function main(): Promise<void> {
+  const runtimeConfig = loadRblRuntimeDatabaseConfig(process.env);
+  const runtimeDatabaseUrl = materializeRblRuntimeDatabaseUrl(process.env);
+  if (runtimeConfig && runtimeDatabaseUrl) {
+    process.env.RBL01C2_RUNTIME_DATABASE_URL = runtimeDatabaseUrl;
+    process.stdout.write(`${JSON.stringify({ event: "deployment.runtime_database.materialized", principal: runtimeConfig.user })}\n`);
+  }
+
+  const service = await startFoundationHttpServer(process.env);
+  const shutdown = (signal: string) => { void service.stop(signal).then(() => { process.exitCode = 0; }); };
+  process.once("SIGTERM", () => shutdown("sigterm"));
+  process.once("SIGINT", () => shutdown("sigint"));
+}
+
+main().catch((error: unknown) => {
+  const classification = classifyError(error);
+  process.stderr.write(`${JSON.stringify({ event: "service.start_failed", errorCode: classification.code })}\n`);
+  process.exitCode = 1;
+});
