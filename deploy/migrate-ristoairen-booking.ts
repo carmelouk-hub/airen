@@ -7,6 +7,7 @@ import { parseSecretRef } from "../packages/platform-core/src/index.ts";
 import { EnvironmentSecretProvider } from "../packages/integrations/src/index.ts";
 import { migrateFoundationDatabase } from "./migrate.ts";
 import { provisionRblRuntimeDatabasePrincipal } from "./runtime-database-principal.ts";
+import { seedRbl01dBase44BookingTopology } from "./seed-rbl01d-base44.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 
@@ -105,6 +106,9 @@ export async function migrateRistoairenBookingDatabase(environment: EnvironmentI
   process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "start" })}\n`);
   await migrateBookingDatabase(connectionString);
   process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "booking", state: "complete" })}\n`);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "base44-seed", state: "start" })}\n`);
+  await seedRbl01dBase44BookingTopology(connectionString, environment);
+  process.stdout.write(`${JSON.stringify({ event: "ristoairen.booking.migration.phase", phase: "base44-seed", state: "complete" })}\n`);
 }
 
 if (process.argv[1]?.endsWith("deploy/migrate-ristoairen-booking.ts")) {
