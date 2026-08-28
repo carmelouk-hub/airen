@@ -11,6 +11,7 @@ type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 const revisionPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{6,79}$/;
 
 function fail(message: string, field: string): never {
+  process.stderr.write(`${JSON.stringify({ event: "deployment.runtime_config_invalid", field })}\n`);
   throw new AppError("RUNTIME_CONFIGURATION_INVALID", message, { field });
 }
 
