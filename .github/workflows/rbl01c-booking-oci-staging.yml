@@ -28,6 +28,11 @@ jobs:
       MIGRATION_SECRET_MANAGER_ADAPTER: env
       MIGRATION_DATABASE_URL_SECRET_REF: secret://env/RBL01C_MIGRATION_DATABASE_URL
       RBL01C_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+      RBL01C2_RUNTIME_DB_HOST: 127.0.0.1
+      RBL01C2_RUNTIME_DB_PORT: "5432"
+      RBL01C2_RUNTIME_DB_NAME: airen_test
+      RBL01C2_RUNTIME_DB_USER: airen_runtime_rbl01c2_ci
+      RBL01C2_RUNTIME_DB_SEED: ci-rbl01c2-runtime-principal-seed-20260828-validated-postgres16
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,6 +44,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Apply governed Foundation + Booking deploy migrations twice
         run: npm run migrate:rbl01c2-booking && npm run migrate:rbl01c2-booking
+      - name: Verify RBL-01C2 runtime login can activate airen_app
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atc "SELECT rolcanlogin,rolsuper,rolbypassrls,pg_has_role('airen_runtime_rbl01c2_ci','airen_app','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_auth','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_control_plane','MEMBER'),pg_has_role('airen_runtime_rbl01c2_ci','airen_control_plane_owner','MEMBER') FROM pg_roles WHERE rolname='airen_runtime_rbl01c2_ci'" | grep -Fx 't|f|f|t|t|t|f'
       - name: Build exact RBL portable OCI image
         run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t "$RBL01C_IMAGE_TAG" -f deploy/Dockerfile .
       - name: Prove Booking through staging OCI artifact
