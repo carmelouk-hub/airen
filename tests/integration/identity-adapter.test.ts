@@ -57,6 +57,11 @@ function validClaims(subject = "alice-subject") {
   return { iss: providerKey, aud: audience, sub: subject, sid: "session-1", iat: now - 5, exp: now + 300 };
 }
 
+function validEdClaims(subject = "alice-subject") {
+  const now = Math.floor(nowMs / 1000);
+  return { iss: providerKey, aud: audience, sub: subject, sid: "session-ed-1", iat: now - 2, exp: now + 120 };
+}
+
 test("verified signed session resolves provider subject to AIRenOS Identity", async () => {
   const token = issueToken(key, validClaims());
   const principal = await adapter.authenticate({ authorization: `Bearer ${token}`, tenant_id: "attacker-tenant", role: "platform_super_admin" });
@@ -101,11 +106,22 @@ test("Ed25519 signed session authenticates the same provider-neutral Identity co
     clockSkewSeconds: 0
   });
   const edAdapter = new ProviderNeutralAuthenticationAdapter(edVerifier, identities);
-  const token = issueEd25519Token(privateKey, kid, validClaims());
+  const token = issueEd25519Token(privateKey, kid, validEdClaims());
   const principal = await edAdapter.authenticate({ authorization: `Bearer ${token}` });
   assert.ok(principal);
   assert.equal(principal.identityId, "alice-id");
   assert.equal(principal.providerSubject, "alice-subject");
-  assert.equal(principal.sessionId, "session-1");
+  assert.equal(principal.sessionId, "session-ed-1");
   assert.equal(await edAdapter.authenticate({ authorization: `Bearer ${mutateSignatureByte(token)}` }), null);
+
+  const now = Math.floor(nowMs / 1000);
+  const overlong = issueEd25519Token(privateKey, kid, {
+    iss: providerKey,
+    aud: audience,
+    sub: "alice-subject",
+    sid: "session-overlong",
+    iat: now,
+    exp: now + 301
+  });
+  assert.equal(await edAdapter.authenticate({ authorization: `Bearer ${overlong}` }), null);
 });
