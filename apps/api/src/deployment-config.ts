@@ -29,7 +29,7 @@ export function parseDeploymentRuntimeOptions(input: EnvironmentInput): Deployme
 
   const port = parseInteger(input.PORT, 3000, "PORT", 1, 65535);
   const shutdownTimeoutMs = parseInteger(input.SHUTDOWN_TIMEOUT_MS, 10000, "SHUTDOWN_TIMEOUT_MS", 1000, 30000);
-  const releaseRevision = input.RELEASE_REVISION?.trim();
+  const releaseRevision = input.RELEASE_REVISION?.trim() || input.RENDER_GIT_COMMIT?.trim();
   if (!releaseRevision || !revisionPattern.test(releaseRevision)) return fail("RELEASE_REVISION must be a stable release identifier", "RELEASE_REVISION");
 
   return Object.freeze({ host, port, releaseRevision, shutdownTimeoutMs });
