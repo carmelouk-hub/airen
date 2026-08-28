@@ -38,7 +38,10 @@ services:
       - key: RBL01C2_RUNTIME_DB_PORT
         value: "5432"
       - key: RBL01C2_RUNTIME_DB_NAME
-        value: ristoairen
+        fromService:
+          type: pserv
+          name: ristoairen-postgres-rbl01c2
+          envVarKey: POSTGRES_DB
       - key: RBL01C2_RUNTIME_DB_USER
         value: airen_runtime
       - key: DATABASE_URL_SECRET_REF
