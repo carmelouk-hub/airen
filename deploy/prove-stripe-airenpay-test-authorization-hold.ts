@@ -41,9 +41,9 @@ function connection(): TenantPaymentGatewayConnectionProjectionV1 {
 
 function operationContext(activeConnection: TenantPaymentGatewayConnectionProjectionV1): AirenPayGatewayOperationContextV1 {
   return Object.freeze({
-    orchestrationId: "00000000-0000-4000-8000-000000000920",
-    correlationId: "rbl09-stripe-test-authorization-hold-proof-v1",
-    idempotencyKey: "rbl09-stripe-test-authorization-hold-proof-v1",
+    orchestrationId: "00000000-0000-4000-8000-000000000921",
+    correlationId: "rbl09-stripe-test-authorization-hold-proof-v2",
+    idempotencyKey: "rbl09-stripe-test-authorization-hold-proof-v2",
     connection: activeConnection
   });
 }
