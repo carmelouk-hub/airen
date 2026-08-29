@@ -7,3 +7,4 @@ export interface RistoApplicationService<TInput, TResult> {
 }
 
 export * from "./booking/index.ts";
+export * from "./airenpay/index.ts";
