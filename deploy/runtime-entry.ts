@@ -1,5 +1,6 @@
 import { classifyError } from "../packages/observability/src/index.ts";
 import { startFoundationHttpServer } from "../apps/api/src/server.ts";
+import { createRistoBookingHoldRuntime } from "../apps/api/src/ristoairen-booking-hold-runtime.ts";
 import { loadRblRuntimeDatabaseConfig, materializeRblRuntimeDatabaseUrl } from "./runtime-database-principal.ts";
 
 async function main(): Promise<void> {
@@ -11,7 +12,28 @@ async function main(): Promise<void> {
   }
 
   const service = await startFoundationHttpServer(process.env);
-  const shutdown = (signal: string) => { void service.stop(signal).then(() => { process.exitCode = 0; }); };
+  let bookingHoldRuntime;
+  try {
+    bookingHoldRuntime = createRistoBookingHoldRuntime({
+      environment: process.env,
+      pool: service.pool,
+      requiredEntitlement: process.env.RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT?.trim() ?? ""
+    });
+    bookingHoldRuntime.startExpiryWorker();
+    process.stdout.write(`${JSON.stringify({
+      event: "ristoairen.booking_hold.runtime",
+      enabled: bookingHoldRuntime.enabled,
+      expiryWorkerEnabled: bookingHoldRuntime.switches.expiryWorkerEnabled
+    })}\n`);
+  } catch (error) {
+    await service.stop("booking_hold_runtime_start_failed");
+    throw error;
+  }
+
+  const shutdown = (signal: string) => {
+    bookingHoldRuntime.stop();
+    void service.stop(signal).then(() => { process.exitCode = 0; });
+  };
   process.once("SIGTERM", () => shutdown("sigterm"));
   process.once("SIGINT", () => shutdown("sigint"));
 }
