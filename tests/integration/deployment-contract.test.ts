@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { AppError } from "../../packages/shared-contracts/src/index.ts";
 import { parseDeploymentRuntimeOptions } from "../../apps/api/src/deployment-config.ts";
 import {
@@ -66,4 +67,20 @@ test("RBL-01C2 runtime database configuration is optional but fails closed when 
     () => materializeRblRuntimeDatabaseUrl({ RBL01C2_RUNTIME_DB_USER: "airen_runtime" }),
     (error: unknown) => error instanceof AppError && error.code === "RUNTIME_CONFIGURATION_INVALID"
   );
+});
+
+test("RBL-03 BookingHold deployment remains explicit default-off with no public route", async () => {
+  const [render, runtimeEntry, server] = await Promise.all([
+    readFile(new URL("../../render.yaml", import.meta.url), "utf8"),
+    readFile(new URL("../../deploy/runtime-entry.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../apps/api/src/server.ts", import.meta.url), "utf8")
+  ]);
+
+  assert.match(render, /RISTOAIREN_BOOKING_HOLD_RUNTIME_ENABLED\n\s+value: "false"/);
+  assert.match(render, /RISTOAIREN_BOOKING_HOLD_EXPIRY_WORKER_ENABLED\n\s+value: "false"/);
+  assert.match(render, /RISTOAIREN_BOOKING_MUTATION_ENABLED\n\s+value: "false"/);
+  assert.match(runtimeEntry, /createRistoBookingHoldRuntime/);
+  assert.match(runtimeEntry, /bookingHoldRuntime\.startExpiryWorker\(\)/);
+  assert.match(runtimeEntry, /service\.stop\("booking_hold_runtime_start_failed"\)/);
+  assert.doesNotMatch(server, /\/v1\/ristoairen\/booking-holds/);
 });
