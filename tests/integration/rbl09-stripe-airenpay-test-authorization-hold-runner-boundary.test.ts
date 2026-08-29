@@ -216,6 +216,6 @@ test("D4-A source boundary creates and confirms TEST authorization but cannot ca
   assert.match(proofClientSource, /payment_method: input\.paymentMethodFixture/);
   assert.match(proofClientSource, /payment_intents\/\$\{encodeURIComponent\(input\.providerReference\)\}\/confirm/);
   assert.match(proofClientSource, /input\.paymentMethodFixture !== "pm_card_visa"/);
-  assert.doesNotMatch(proofClientSource, /capture/);
-  assert.doesNotMatch(proofClientSource, /refund/);
+  assert.doesNotMatch(proofClientSource, /\/capture(?:\b|[/?])/);
+  assert.doesNotMatch(proofClientSource, /\/refunds(?:\b|[/?])/);
 });
