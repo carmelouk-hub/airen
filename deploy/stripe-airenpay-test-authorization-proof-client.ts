@@ -24,6 +24,8 @@ export type ConfirmStripeTestAuthorizationProofInput = Readonly<{
   timeoutMs?: number;
 }>;
 
+const TEST_RETURN_URL = "https://example.com/airenpay-stripe-test-authorization-proof-return";
+
 function requiredString(value: unknown, field: string): string {
   if (typeof value !== "string" || !value.length) throw new AppError("INTERNAL_ERROR", `Stripe authorization proof missing ${field}`);
   return value;
@@ -80,7 +82,10 @@ export async function confirmStripeTestAuthorizationForProof(input: ConfirmStrip
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), input.timeoutMs ?? 10_000);
     try {
-      const body = new URLSearchParams({ payment_method: input.paymentMethodFixture });
+      const body = new URLSearchParams({
+        payment_method: input.paymentMethodFixture,
+        return_url: TEST_RETURN_URL
+      });
       const response = await fetchImpl(`${apiBaseUrl}/payment_intents/${encodeURIComponent(input.providerReference)}/confirm`, {
         method: "POST",
         signal: controller.signal,
