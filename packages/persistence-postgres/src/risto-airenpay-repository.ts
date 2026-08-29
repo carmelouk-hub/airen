@@ -236,7 +236,7 @@ export class PostgresAirenPayPersistence implements AirenPayPersistencePort {
       if (claim.kind === "REPLAY") return Object.freeze({ ...claim.result, replayed: true });
 
       const connectionResult = await client.query(
-        `SELECT ${CONNECTION_COLUMNS} FROM risto_payment_gateway_connections WHERE id=$1 FOR SHARE`,
+        `SELECT ${CONNECTION_COLUMNS} FROM risto_payment_gateway_connections WHERE id=$1`,
         [supplied.id]
       );
       if (!connectionResult.rows[0]) throw new AppError("NOT_FOUND", "PAYMENT_GATEWAY_CONNECTION_NOT_VISIBLE");
@@ -251,7 +251,7 @@ export class PostgresAirenPayPersistence implements AirenPayPersistencePort {
       const hold = holdResult.rows[0] as { id: string; guarantee_mode: string; status: string; expires_at: Date } | undefined;
       if (!hold) throw new AppError("NOT_FOUND", "BOOKING_HOLD_NOT_VISIBLE");
       if (hold.guarantee_mode !== request.guaranteeMode) throw new AppError("CONFLICT", "AIRenPay guarantee mode does not match BookingHold");
-      if (!['GUARANTEE_REQUIRED','GUARANTEE_PENDING'].includes(hold.status)) throw new AppError("CONFLICT", "BookingHold is not awaiting guarantee");
+      if (!["GUARANTEE_REQUIRED", "GUARANTEE_PENDING"].includes(hold.status)) throw new AppError("CONFLICT", "BookingHold is not awaiting guarantee");
       if (hold.expires_at <= new Date()) throw new AppError("CONFLICT", "BookingHold expired before AIRenPay orchestration creation");
 
       let inserted;
@@ -321,7 +321,7 @@ export class PostgresAirenPayPersistence implements AirenPayPersistencePort {
     const hash = semanticHash(event);
     return this.scoped(context, async (client) => {
       const connectionResult = await client.query(
-        `SELECT ${CONNECTION_COLUMNS} FROM risto_payment_gateway_connections WHERE id=$1 FOR SHARE`,
+        `SELECT ${CONNECTION_COLUMNS} FROM risto_payment_gateway_connections WHERE id=$1`,
         [connectionId]
       );
       if (!connectionResult.rows[0]) throw new AppError("NOT_FOUND", "PAYMENT_GATEWAY_CONNECTION_NOT_VISIBLE");
