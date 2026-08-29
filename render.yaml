@@ -74,5 +74,9 @@ services:
         value: "true"
       - key: RISTOAIREN_BOOKING_MUTATION_ENABLED
         value: "false"
+      - key: RISTOAIREN_BOOKING_HOLD_RUNTIME_ENABLED
+        value: "false"
+      - key: RISTOAIREN_BOOKING_HOLD_EXPIRY_WORKER_ENABLED
+        value: "false"
       - key: HOST
         value: 0.0.0.0
