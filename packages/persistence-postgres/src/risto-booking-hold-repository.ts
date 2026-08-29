@@ -24,6 +24,18 @@ function iso(value: unknown): string {
   return new Date(String(value)).toISOString();
 }
 
+function dateOnly(value: unknown): string {
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  const raw = String(value);
+  if (!/^\d{4}-\d{2}-\d{2}/.test(raw)) throw new AppError("INTERNAL_ERROR", "Invalid PostgreSQL date projection");
+  return raw.slice(0, 10);
+}
+
 function mapHold(row: QueryResultRow): BookingHoldPrivateProjectionV1 {
   return Object.freeze({
     id: String(row.id),
@@ -33,7 +45,7 @@ function mapHold(row: QueryResultRow): BookingHoldPrivateProjectionV1 {
     resourceKey: String(row.resource_key),
     partySize: Number(row.party_size),
     capacityClaim: Number(row.capacity_claim),
-    bookingDate: String(row.booking_date).slice(0, 10),
+    bookingDate: dateOnly(row.booking_date),
     bookingTimeLocal: String(row.booking_time_local),
     startsAt: iso(row.starts_at),
     expectedDurationMinutes: Number(row.expected_duration_minutes),
@@ -64,8 +76,8 @@ function mapPolicy(row: QueryResultRow): BookingGuaranteePolicyProjectionV1 {
     resourceKey: row.resource_key == null ? undefined : String(row.resource_key),
     minPartySize: row.min_party_size == null ? undefined : Number(row.min_party_size),
     maxPartySize: row.max_party_size == null ? undefined : Number(row.max_party_size),
-    effectiveFrom: row.effective_from == null ? undefined : String(row.effective_from).slice(0, 10),
-    effectiveUntil: row.effective_until == null ? undefined : String(row.effective_until).slice(0, 10)
+    effectiveFrom: row.effective_from == null ? undefined : dateOnly(row.effective_from),
+    effectiveUntil: row.effective_until == null ? undefined : dateOnly(row.effective_until)
   });
 }
 
