@@ -1,0 +1,203 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { AppError, type SecurityContext } from "../../packages/shared-contracts/src/index.ts";
+import type { BookingHoldApplicationService } from "../../packages/ristoairen/src/booking/index.ts";
+import {
+  BookingHoldOrchestrationBoundary,
+  createRistoBookingHoldRuntime,
+  loadRistoBookingHoldRuntimeSwitches,
+  type BookingHoldLifecyclePort
+} from "../../apps/api/src/ristoairen-booking-hold-runtime.ts";
+
+const ENTITLEMENT = "rbl01c2.booking.external";
+
+function context(overrides: Partial<SecurityContext> = {}): SecurityContext {
+  return Object.freeze({
+    correlationId: "rbl03-correlation",
+    actorIdentityId: "00000000-0000-4000-8000-000000000301",
+    platformRoles: [],
+    platformPermissions: [],
+    tenantId: "00000000-0000-4000-8000-000000000302",
+    locationId: "00000000-0000-4000-8000-000000000303",
+    tenantMembershipId: "00000000-0000-4000-8000-000000000304",
+    locationMembershipId: "00000000-0000-4000-8000-000000000305",
+    tenantRole: "manager",
+    locationRole: "manager",
+    permissions: ["booking.read", "booking.create", "booking.update", "booking.status.update"],
+    entitlements: [ENTITLEMENT],
+    ...overrides
+  });
+}
+
+const hold = Object.freeze({
+  id: "00000000-0000-4000-8000-000000000311",
+  status: "GUARANTEED" as const,
+  sourceChannel: "DIRECT_WEB",
+  resourceKey: "DINNER",
+  partySize: 2,
+  capacityClaim: 2,
+  bookingDate: "2026-09-01",
+  bookingTimeLocal: "20:00",
+  startsAt: "2026-09-01T18:00:00.000Z",
+  expectedDurationMinutes: 120,
+  expiresAt: "2026-09-01T17:10:00.000Z",
+  guaranteePolicyId: "00000000-0000-4000-8000-000000000312",
+  guaranteeMode: "NONE" as const,
+  customerNameSnapshot: "RBL03 Guest",
+  createdAt: "2026-08-29T00:00:00.000Z",
+  updatedAt: "2026-08-29T00:00:00.000Z",
+  rowVersion: 2
+});
+
+const booking = Object.freeze({
+  id: "00000000-0000-4000-8000-000000000313",
+  status: "REQUESTED" as const,
+  partySize: 2,
+  bookingDate: "2026-09-01",
+  bookingTimeLocal: "20:00",
+  startsAt: "2026-09-01T18:00:00.000Z",
+  expectedDurationMinutes: 120,
+  source: "DIRECT_WEB",
+  customerNameSnapshot: "RBL03 Guest",
+  createdAt: "2026-08-29T00:00:01.000Z",
+  updatedAt: "2026-08-29T00:00:01.000Z",
+  rowVersion: 1
+});
+
+function fakeService() {
+  const calls: string[] = [];
+  const service = {
+    async create() { calls.push("create"); return Object.freeze({ hold, replayed: false }); },
+    async cancel() { calls.push("cancel"); return Object.freeze({ hold: Object.freeze({ ...hold, status: "CANCELLED" as const, rowVersion: 3 }), replayed: false }); }
+  } as unknown as BookingHoldApplicationService;
+  return { service, calls };
+}
+
+function fakeLifecycle() {
+  const calls: string[] = [];
+  const lifecycle: BookingHoldLifecyclePort = {
+    async convert(_context, _holdId, rowVersion, key) {
+      calls.push(`convert:${rowVersion}:${key}`);
+      return Object.freeze({ hold: Object.freeze({ ...hold, status: "CONVERTED" as const, conversionBookingId: booking.id, rowVersion: 3 }), booking, replayed: false });
+    },
+    async expireDue(_context, now, limit) {
+      calls.push(`expire:${now?.toISOString()}:${limit}`);
+      return Object.freeze([Object.freeze({ ...hold, status: "EXPIRED" as const, rowVersion: 3 })]);
+    }
+  };
+  return { lifecycle, calls };
+}
+
+function boundary(enabled = true) {
+  const commands = fakeService();
+  const lifecycle = fakeLifecycle();
+  return {
+    value: new BookingHoldOrchestrationBoundary({ enabled, service: commands.service, lifecycle: lifecycle.lifecycle, entitlementKey: ENTITLEMENT }),
+    commandCalls: commands.calls,
+    lifecycleCalls: lifecycle.calls
+  };
+}
+
+test("RBL03-C01 BookingHold runtime switches default fail-closed", () => {
+  assert.deepEqual(loadRistoBookingHoldRuntimeSwitches({}), { runtimeEnabled: false, expiryWorkerEnabled: false });
+});
+
+test("RBL03-C02 expiry worker cannot be enabled while Hold runtime is disabled", () => {
+  assert.throws(
+    () => loadRistoBookingHoldRuntimeSwitches({ RISTOAIREN_BOOKING_HOLD_EXPIRY_WORKER_ENABLED: "true" }),
+    (error: any) => error instanceof AppError && error.code === "RUNTIME_CONFIGURATION_INVALID"
+  );
+});
+
+test("RBL03-C03 disabled orchestration boundary denies internal mutation", async () => {
+  const runtime = boundary(false);
+  await assert.rejects(
+    () => runtime.value.create(context(), {} as any, "k"),
+    (error: any) => error instanceof AppError && error.code === "PERMISSION_DENIED"
+  );
+  assert.deepEqual(runtime.commandCalls, []);
+});
+
+test("RBL03-C04 convert requires booking.create before persistence lifecycle", async () => {
+  const runtime = boundary();
+  await assert.rejects(
+    () => runtime.value.convert(context({ permissions: ["booking.status.update"], entitlements: [ENTITLEMENT] }), hold.id, { rowVersion: 2 }, "convert-k"),
+    (error: any) => error instanceof AppError && error.code === "PERMISSION_DENIED"
+  );
+  assert.deepEqual(runtime.lifecycleCalls, []);
+});
+
+test("RBL03-C05 convert requires product entitlement", async () => {
+  const runtime = boundary();
+  await assert.rejects(
+    () => runtime.value.convert(context({ permissions: ["booking.create"], entitlements: [] }), hold.id, { rowVersion: 2 }, "convert-k"),
+    (error: any) => error instanceof AppError && error.code === "ENTITLEMENT_REQUIRED"
+  );
+  assert.deepEqual(runtime.lifecycleCalls, []);
+});
+
+test("RBL03-C06 convert rejects client scope spoof and validates row_version", async () => {
+  const runtime = boundary();
+  await assert.rejects(
+    () => runtime.value.convert(context(), hold.id, { rowVersion: 2, tenant_id: "spoof" } as any, "convert-k"),
+    (error: any) => error instanceof AppError && error.code === "TENANT_SCOPE_VIOLATION"
+  );
+  await assert.rejects(
+    () => runtime.value.convert(context(), hold.id, { rowVersion: 0 }, "convert-k"),
+    (error: any) => error instanceof AppError && error.code === "VALIDATION_FAILED"
+  );
+  assert.deepEqual(runtime.lifecycleCalls, []);
+});
+
+test("RBL03-C07 authorized convert delegates once to certified B2 lifecycle", async () => {
+  const runtime = boundary();
+  const result = await runtime.value.convert(context(), hold.id, { rowVersion: 2 }, "convert-k");
+  assert.equal(result.booking.id, booking.id);
+  assert.deepEqual(runtime.lifecycleCalls, ["convert:2:convert-k"]);
+});
+
+test("RBL03-C08 expiry sweep requires booking.status.update and entitlement", async () => {
+  const runtime = boundary();
+  await assert.rejects(
+    () => runtime.value.runExpirySweep(context({ permissions: ["booking.create"], entitlements: [ENTITLEMENT] }), new Date("2026-08-29T01:00:00Z"), 10),
+    (error: any) => error instanceof AppError && error.code === "PERMISSION_DENIED"
+  );
+  await assert.rejects(
+    () => runtime.value.runExpirySweep(context({ permissions: ["booking.status.update"], entitlements: [] }), new Date("2026-08-29T01:00:00Z"), 10),
+    (error: any) => error instanceof AppError && error.code === "ENTITLEMENT_REQUIRED"
+  );
+  assert.deepEqual(runtime.lifecycleCalls, []);
+});
+
+test("RBL03-C09 authorized expiry sweep delegates to certified B2 lifecycle", async () => {
+  const runtime = boundary();
+  const expired = await runtime.value.runExpirySweep(context({ permissions: ["booking.status.update"], entitlements: [ENTITLEMENT] }), new Date("2026-08-29T01:00:00Z"), 10);
+  assert.equal(expired[0].status, "EXPIRED");
+  assert.deepEqual(runtime.lifecycleCalls, ["expire:2026-08-29T01:00:00.000Z:10"]);
+});
+
+test("RBL03-C10 enabled worker fails closed without trusted scope provider", () => {
+  assert.throws(
+    () => createRistoBookingHoldRuntime({
+      environment: {
+        NODE_ENV: "test",
+        RISTOAIREN_BOOKING_HOLD_RUNTIME_ENABLED: "true",
+        RISTOAIREN_BOOKING_HOLD_EXPIRY_WORKER_ENABLED: "true"
+      },
+      pool: {} as any,
+      requiredEntitlement: ENTITLEMENT
+    }),
+    (error: any) => error instanceof AppError && error.code === "RUNTIME_CONFIGURATION_INVALID"
+  );
+});
+
+test("RBL03-C11 Hold runtime cannot be enabled in production", () => {
+  assert.throws(
+    () => createRistoBookingHoldRuntime({
+      environment: { NODE_ENV: "production", RISTOAIREN_BOOKING_HOLD_RUNTIME_ENABLED: "true" },
+      pool: {} as any,
+      requiredEntitlement: ENTITLEMENT
+    }),
+    (error: any) => error instanceof AppError && error.code === "RUNTIME_CONFIGURATION_INVALID"
+  );
+});
