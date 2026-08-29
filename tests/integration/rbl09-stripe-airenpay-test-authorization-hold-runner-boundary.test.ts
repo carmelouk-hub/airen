@@ -17,6 +17,7 @@ const ENABLE_FLAG = "AIRENPAY_STRIPE_TEST_AUTHORIZATION_HOLD_PROOF_ENABLED";
 const SECRET_ENV_KEY = "STRIPE_AIRENPAY_TEST_SECRET_KEY";
 const TEST_KEY = ["rk", "test", "rbl09", "fixture"].join("_");
 const LIVE_KEY = ["sk", "live", "rbl09", "fixture"].join("_");
+const TEST_RETURN_URL = "https://example.com/airenpay-stripe-test-authorization-proof-return";
 
 class FixtureSecretMaterial implements SecretMaterial {
   private readonly value: string;
@@ -83,7 +84,7 @@ function confirmInput(fetchImpl: StripeAuthorizationProofFetch, credential = TES
   };
 }
 
-test("authorization proof confirmation uses only fixed TEST fixture and idempotent confirm endpoint", async () => {
+test("authorization proof confirmation uses fixed TEST fixture, fixed return URL and idempotent confirm endpoint", async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const fetchImpl: StripeAuthorizationProofFetch = async (input, init) => {
     calls.push({ url: String(input), init });
@@ -113,7 +114,10 @@ test("authorization proof confirmation uses only fixed TEST fixture and idempote
   assert.equal(headers.get("authorization"), `Bearer ${TEST_KEY}`);
   assert.equal(headers.get("idempotency-key"), "rbl09-proof-confirm");
   const body = new URLSearchParams(String(calls[0].init?.body));
-  assert.deepEqual(Array.from(body.entries()), [["payment_method", "pm_card_visa"]]);
+  assert.deepEqual(Array.from(body.entries()), [
+    ["payment_method", "pm_card_visa"],
+    ["return_url", TEST_RETURN_URL]
+  ]);
 });
 
 test("authorization proof rejects any payment-method fixture other than pm_card_visa before fetch", async () => {
@@ -214,6 +218,9 @@ test("D4-A source boundary creates and confirms TEST authorization but cannot ca
   assert.doesNotMatch(runnerSource, /\b(?:card_number|pan|cvv|cvc)\b/i);
 
   assert.match(proofClientSource, /payment_method: input\.paymentMethodFixture/);
+  assert.match(proofClientSource, /return_url: TEST_RETURN_URL/);
+  assert.match(proofClientSource, /const TEST_RETURN_URL = "https:\/\/example\.com\/airenpay-stripe-test-authorization-proof-return"/);
+  assert.doesNotMatch(proofClientSource, /input\.(?:returnUrl|return_url)/);
   assert.match(proofClientSource, /payment_intents\/\$\{encodeURIComponent\(input\.providerReference\)\}\/confirm/);
   assert.match(proofClientSource, /input\.paymentMethodFixture !== "pm_card_visa"/);
   assert.doesNotMatch(proofClientSource, /\/capture(?:\b|[/?])/);
