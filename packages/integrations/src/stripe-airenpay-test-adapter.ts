@@ -273,7 +273,11 @@ function webhookEvent(input: StripeVerifiedWebhookProjection): AirenPayNormalize
 }
 
 export class StripeAirenPayTestAdapter implements PaymentGatewayPort {
-  constructor(private readonly clients: StripeAirenPayTestClientFactory) {}
+  private readonly clients: StripeAirenPayTestClientFactory;
+
+  constructor(clients: StripeAirenPayTestClientFactory) {
+    this.clients = clients;
+  }
 
   private async client(context: AirenPayGatewayOperationContextV1): Promise<{ context: AirenPayGatewayOperationContextV1; client: StripeAirenPayTestClientPort }> {
     const validated = operationContext(context);
