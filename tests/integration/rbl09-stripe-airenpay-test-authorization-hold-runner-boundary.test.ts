@@ -203,6 +203,9 @@ test("D4-A source boundary creates and confirms TEST authorization but cannot ca
   const runnerSource = readFileSync(RUNNER, "utf8");
   const proofClientSource = readFileSync(PROOF_CLIENT, "utf8");
 
+  assert.match(runnerSource, /rbl09-stripe-test-authorization-hold-proof-v2/);
+  assert.doesNotMatch(runnerSource, /rbl09-stripe-test-authorization-hold-proof-v1/);
+  assert.match(runnerSource, /00000000-0000-4000-8000-000000000921/);
   assert.match(runnerSource, /\.createAuthorizationHold\s*\(/);
   assert.match(runnerSource, /confirmStripeTestAuthorizationForProof\s*\(/);
   assert.match(runnerSource, /pm_card_visa/);
