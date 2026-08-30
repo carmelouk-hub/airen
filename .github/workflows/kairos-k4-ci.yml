@@ -26,6 +26,15 @@ jobs:
         run: node --experimental-strip-types --test tests/integration/k4a-kairos-graph-api-contract.test.ts
       - name: Execute K4-C HTTP origin and browser-boundary contract tests
         run: node --experimental-strip-types --test tests/integration/k4c-kairos-http-boundary.test.ts
+      - name: Execute K4-C3 staging deploy fail-closed contract tests
+        run: node --experimental-strip-types --test tests/integration/k4c3-kairos-staging-deploy-contract.test.ts
+
+  k4-staging-container-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build dedicated Kairos staging container
+        run: docker build -f deploy/Dockerfile.kairos --build-arg VCS_REF="$GITHUB_SHA" -t airenos-kairos-k4-staging:test .
 
   k4-postgres-graph-runtime:
     runs-on: ubuntu-latest

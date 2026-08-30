@@ -1,0 +1,77 @@
+databases:
+  - name: airenos-kairos-k4-staging-db
+    plan: free
+    region: frankfurt
+    databaseName: airen_kairos_k4_staging
+    user: airen_kairos_admin
+
+services:
+  - type: web
+    name: airenos-kairos-k4-staging-20260830
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    branch: kairos/k4-interactive-map-base44-20260830
+    dockerfilePath: ./deploy/Dockerfile.kairos
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    preDeployCommand: node --experimental-strip-types deploy/migrate-kairos-staging.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_BASE_DOMAIN
+        value: airenos-kairos-k4-staging-20260830.onrender.com
+      - key: AUTH_ADAPTER
+        value: ed25519-signed-session
+      - key: AUTH_PROVIDER_KEY
+        value: airenos-kairos-staging
+      - key: AUTH_AUDIENCE
+        value: airenos-foundation
+      - key: AUTH_SESSION_PUBLIC_KEYS_JSON
+        sync: false
+      - key: SECRET_MANAGER_ADAPTER
+        value: env
+      - key: KAIROS_STAGING_AUTH_REF_MATERIAL
+        generateValue: true
+      - key: AUTH_SESSION_KEY_SECRET_REF
+        value: secret://env/KAIROS_STAGING_AUTH_REF_MATERIAL
+      - key: KAIROS_RUNTIME_DB_HOST
+        fromDatabase:
+          name: airenos-kairos-k4-staging-db
+          property: host
+      - key: KAIROS_RUNTIME_DB_PORT
+        fromDatabase:
+          name: airenos-kairos-k4-staging-db
+          property: port
+      - key: KAIROS_RUNTIME_DB_NAME
+        fromDatabase:
+          name: airenos-kairos-k4-staging-db
+          property: database
+      - key: KAIROS_RUNTIME_DB_USER
+        value: airen_kairos_runtime
+      - key: KAIROS_RUNTIME_DB_SEED
+        generateValue: true
+      - key: DATABASE_URL_SECRET_REF
+        value: secret://env/KAIROS_RUNTIME_DATABASE_URL
+      - key: KAIROS_MIGRATION_DATABASE_URL
+        fromDatabase:
+          name: airenos-kairos-k4-staging-db
+          property: connectionString
+      - key: MIGRATION_SECRET_MANAGER_ADAPTER
+        value: env
+      - key: MIGRATION_DATABASE_URL_SECRET_REF
+        value: secret://env/KAIROS_MIGRATION_DATABASE_URL
+      - key: AIREN_RUNTIME_ROLE_PROVISIONING_MODE
+        value: bootstrap
+      - key: KAIROS_CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: RELEASE_REVISION
+        value: k4c3-staging-bootstrap
+
+# K4-C3 deployment invariants:
+# - this blueprint is isolated from render.yaml and the RISTOAIREN RBL service;
+# - AUTH_SESSION_PUBLIC_KEYS_JSON must be explicitly supplied from the real AIRenOS issuer key set;
+# - KAIROS_CORS_ALLOWED_ORIGINS must be the exact HTTPS Base44/presentation origin, never '*';
+# - no issuer/login service is created by this blueprint;
+# - K4-C3 remains OPEN until a real issuer + live Base44->AIRenOS->Kairos E2E is provider-verified.
