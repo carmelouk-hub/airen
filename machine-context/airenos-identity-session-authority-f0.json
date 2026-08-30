@@ -1,0 +1,37 @@
+{
+  "pack": "AIRENOS-ISA-F0",
+  "title": "AIRenOS Identity & Session Authority — Trust and Crypto Contract",
+  "status": "IMPLEMENTED_CONTRACT_LOCAL_TEST_PASS",
+  "base_commit": "ff97685ec4d427c8793c0c8b8bbceece5258fc8a",
+  "protected_boundaries_modified": false,
+  "base44_auth_is_airenos_authority": false,
+  "real_idp_selected": false,
+  "real_browser_login_certified": false,
+  "k4_c3_closed": false,
+  "normative_baseline": [
+    "OpenID Connect Core 1.0 errata set 2",
+    "RFC 9700 OAuth 2.0 Security BCP",
+    "PKCE S256"
+  ],
+  "airenos_access_token": {
+    "algorithm": "Ed25519/EdDSA",
+    "type": "at+jwt",
+    "max_ttl_seconds": 300,
+    "subject": "AIRenOS identityId",
+    "forbidden_authority_claims": [
+      "tenant_id",
+      "tenant_role",
+      "location_role",
+      "platform_roles",
+      "entitlements"
+    ]
+  },
+  "gates": {
+    "ISA_F0_TRUST_CRYPTO_CONTRACT": "IMPLEMENTED_LOCAL_TEST_PASS",
+    "ISA_F1_SESSION_LIFECYCLE_REVOCATION": "OPEN",
+    "ISA_F2_REAL_UPSTREAM_OIDC_PROVIDER_ADAPTER": "OPEN",
+    "ISA_F3_BROWSER_AUTHORIZATION_HANDOFF": "OPEN",
+    "ISA_F4_STAGING_PROVIDER_VERIFIED_E2E": "OPEN"
+  },
+  "governance_note": "Generated-key and test-double contract tests are not real IdP/browser evidence and must never be used to close K4-C3."
+}

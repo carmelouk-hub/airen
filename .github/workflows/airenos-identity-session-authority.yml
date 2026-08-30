@@ -1,0 +1,28 @@
+name: airenos-identity-session-authority-foundation
+
+on:
+  push:
+    branches:
+      - "foundation/airenos-identity-session-authority-**"
+  workflow_dispatch:
+
+jobs:
+  isa-f0-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Preserve repository boundaries
+        run: npm run check:boundaries
+      - name: Validate machine context JSON
+        run: npm run check:machine-context
+      - name: Preserve existing foundation contracts
+        run: npm run check:foundation-contracts
+      - name: Regress existing provider-neutral identity adapter
+        run: npm run test:identity-adapter
+      - name: Verify AIRenOS Identity and Session Authority F0 contract
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
