@@ -29,7 +29,7 @@ jobs:
       - name: Build pinned optimized AIRenOS Keycloak image
         run: docker build -f deploy/keycloak/Containerfile -t airenos-keycloak-contract:${GITHUB_SHA} .
       - name: Verify governed Keycloak image version label
-        run: test "$(docker image inspect airenos-keycloak-contract:${GITHUB_SHA} --format '{{ index .Config.Labels \"org.opencontainers.image.version\" }}')" = "26.7.2"
+        run: test "$(docker image inspect airenos-keycloak-contract:${GITHUB_SHA} --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')" = "26.7.2"
       - name: Verify Keycloak binary from exact built image
         run: docker run --rm airenos-keycloak-contract:${GITHUB_SHA} --version
 
