@@ -1,0 +1,228 @@
+{
+  "schema": "airen.kairos.drive-item-census.v0.1",
+  "date": "2026-08-30",
+  "status": "SELECTED_FOLDER_DIRECT_CHILD_CENSUS_PASS_FULL_EXPANSION_IN_PROGRESS",
+  "parent_root_manifest": {
+    "path": "machine-context/kairos-initial-census-v0.1.json",
+    "blob_sha": "a8aae47ca51d0fd60b7472f5da470da2fda838b1",
+    "parent_commit": "21756cbec8f6335a723dda12da9ad34fe05f8fbe"
+  },
+  "human_census_authority": {
+    "drive_id": "1iNVcTh7X1mo0wlNdT4TE8a9kAnXAnk3TJUoUQ7KoARQ",
+    "revision": "ANLCKQma3_TlE1o6eta8GmNGT1jwcsbaaRyHNMbkaXqmVIoi-H4n4IvFfxweV6S8-3Hp3bkXaAjIiaO8GWTQXgvsOqxGoScBy_VO9UZ9hD0"
+  },
+  "invariants": {
+    "censused_equals_ingested": false,
+    "runtime_ingestion_authorized": false,
+    "secret_values_allowed": false,
+    "retrieval_authorization": "pre_retrieval",
+    "full_item_expansion_complete": false,
+    "archive_payload_expansion_default": "DENY",
+    "base44_canonical_residence": false
+  },
+  "authority_ranking_rules": [
+    {
+      "scope": "04.1",
+      "rule": "Machine evidence and forensic registers are EVIDENCE. CLOSED_PASS evidence may certify a gate but does not silently replace the governing human design authority."
+    },
+    {
+      "scope": "04.2",
+      "rule": "Authority is child-specific: human reconciliation/design documents may govern their declared scope; JSON evidence remains EVIDENCE; SQL/source artifacts remain implementation or contract artifacts."
+    },
+    {
+      "scope": "04.3",
+      "rule": "Immutable archives are indexed by manifest, integrity metadata, closure coordinates and hashes by default. Raw ZIP/tar payload contents are not recursively ingested unless a later governed gate explicitly authorizes it."
+    },
+    {
+      "scope": "06",
+      "rule": "Archive and superseded material is HISTORICAL/SUPERSEDED and must never outrank current canonical authority."
+    },
+    {
+      "scope": "08",
+      "rule": "Generated deliverables are DERIVED_FROM their sources and cannot outrank the source authority from which they were generated."
+    },
+    {
+      "scope": "09",
+      "rule": "Review, backlog, proposal and North Star material is DRAFT/REVIEW/PROPOSAL until formally promoted; it cannot be returned as canonical answer when a promoted authority exists."
+    },
+    {
+      "scope": "10",
+      "rule": "Baseline subtype is mandatory. EB-001 is ENGINEERING_BASELINE only and must not be represented as RELEASE_CANDIDATE or PRODUCTION_RELEASE."
+    }
+  ],
+  "folder_surveys": [
+    {
+      "folder": "04.1 — Forensic Registers & Machine Evidence",
+      "drive_id": "1bVBk6pUtY9ZwTELy7StBWdhgz6d-zO2b",
+      "coordinate": "AOS.DOC.FOLDER.FORENSIC",
+      "direct_child_count": 23,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "EVIDENCE",
+      "items": [
+        {"id":"17BWaTzLZCessTbqhszgyVlKHwtrSKsw1","title":"AIRenOS_R3-J_RULE-DOC-21_DUAL_SOURCE_VERIFICATION.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"195jbFeBPgdJO8cr4bVJ56hPLbCZ0tdeR","title":"AIRenOS_R3-J_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1OPSV6RLkZo18oX4hRn7MVW8pQoZC0lwQ","title":"AIRenOS_R3-I_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1WT_pI1zAYftt3ZVlmiJoZ4lIJO3tFowi","title":"AIRenOS_R3-H_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"182I83j7dG1tbhUEThdDn_RQKDFa3ijhc","title":"AIRenOS_R3-G_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1QKl_q08WuYE03cDD4FA2-B_AuISYGiPI","title":"AIRenOS_R3-F_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1U3lWO_yiNIg3D9oBi-jNQTuNVLpvz9QY","title":"AIRenOS_R3-E_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1yv19obLZOFClTecs6_sdg6mAXOEHZfu8","title":"AIRenOS_BIBLE-REC-01_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1SZyVfrfXDKkRUSGESQMOT5r3FtMSqz2u","title":"AIRenOS_R3-D_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1izq1aSwveQf_rLCT2rOnJgDShuifo7cK","title":"AIRenOS_R3-C_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1hN6L7IilhxQq2jwX8Cu6EuNsSV4yU3u1","title":"AIRenOS_R3-B_FINAL_CLOSURE_EVIDENCE.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1z0sqL4T0Zx6x1GkqThxGmBMPuIk7_S_s","title":"R3-A — Final Closure Machine Evidence.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1Ty7cQNVObMGV9uGZfcbqM6FrjG2QHtqf","title":"R3-A1 — Final Closure Machine Evidence.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1S-w8KgQQPd4ElS3O8G_97P-bwcyLyhinJLrYqyPF8cI","title":"R3-A1 — Final Closure Machine Evidence — source","type":"GOOGLE_DOC","ingestion":"NATIVE_DOC_STRUCTURE"},
+        {"id":"17aN4mxJFVR3MWF2MgTlIn32bdj4GD-LEDtBdOrbFweY","title":"B44-FX-005 — Decision Queue Reconciliation & ADR Pack","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1S8qS7TRfK7XwJdL3hnb2bQUzEhKAV22ZMYpgnOGdG8M","title":"B44-FX-004 — Consolidated Boundary & Portability Matrix","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1ZYOojuJKo3Ubl2sWjnVbicf1GfCrVLj4BTUu_P1a07c","title":"B44-FX — Consolidated Cross-Snapshot Register","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1l48Larsb9BpLhxt5hhLGLs0dU4gL6ybkNPS5r_5URDc","title":"B44-FX-003 — Corte delle Stelle Machine Registers","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1MmxVfzncjsIjruVntmm9LDxPXtyRGoEpPaYaRCksNms","title":"B44-FX-002 — RISTOAIREN Machine Registers","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1b0iRjHyuNkYhw2kWpFCmVkE67houH2pRCeFxkM93I_I","title":"B44-FX-001 — AIRenOS Machine Registers","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1VWPCZVDl4wGmU3o0XR78IwoL-5YH9RGc","title":"B44-FX-003 — Corte delle Stelle Root Manifest.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1DO9pFfJkcQeE-XtOqJPKXFnr09T5bMzj","title":"B44-FX-002 — RISTOAIREN Root Manifest.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1h_8VaPhawOgZ0bpyQvYfrvT_b7yGALQI","title":"B44-FX-001 — AIRenOS Root Manifest.json","type":"JSON","ingestion":"JSON_EVIDENCE"}
+      ]
+    },
+    {
+      "folder": "04.2 — Portable Foundation Repository & Migration Contracts",
+      "drive_id": "1KmdO5XnRlrxP1m9BPkAkAe96MYYh7ATG",
+      "coordinate": "AOS.DOC.FOLDER.PORTABLE_FOUNDATION",
+      "direct_child_count": 28,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "CHILD_SPECIFIC",
+      "items": [
+        {"id":"1uv84obeoRaj7RVRaHFPIkj1o8gHxH8TFKVQev24fiNc","title":"T20 Portable Booking — Governance Amendment Decision Packet — PROPOSAL v0.1","type":"GOOGLE_DOC","authority":"PROPOSAL"},
+        {"id":"1ewgenwG38RdQzd6yecjAxdqmrI4JZ2ZTdF9ebJWTv00","title":"T20-0A-001 — Portable Booking Exact File & Contract Census — v0.1","type":"GOOGLE_DOC","authority":"GOVERNANCE_CENSUS"},
+        {"id":"17JADehm20AN9V6ew3IB-TwC64l8qq3UWzYM1nPTdK30","title":"T20-0-001 — Security Certification Scope Freeze & Portable Booking Slice — v0.1","type":"GOOGLE_DOC","authority":"DESIGN_FROZEN"},
+        {"id":"1vIy0R4hjwtMP67AnvxRtJOAB3YRDglNp78whfoKd-Mo","title":"R3-J-001 — Integrated Control Plane Runtime Certification Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC","authority":"CANONICAL_GATE_AUTHORITY"},
+        {"id":"1RlXG2kasjJGRKiPVSJ_yzAqQW_LUkjaA","title":"R3-CP-001 — Control Plane Gap Reconciliation.json","type":"JSON","authority":"MACHINE_COMPANION"},
+        {"id":"1LvsK1XH8I0uZMS-l8SSYGfDFV_g6New7-LnMLYBKgBQ","title":"R3-I-001 — Admin API & Admin UI Surfaces Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"11HJcrM9-2bH9riGb65IYw6c6hd4QrdW5ZgQsuRfW2jk","title":"R3-H-001 — Platform Audit Query Surface Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1Gf6NUU3XAtETuHnke6pFZESI-bOGu0u5xZp2UGANzeU","title":"R3-G-001 — Feature & Capability Resolution Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1Ona61lDeJWPBNn27NwEBPZqYb5DRxZeW1EFeTtUfxWk","title":"R3-F-001 — Entitlement Administration & Effective Resolution Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1gs4HU4iyB0_hC3tWDnY7wqTX9fHEa3c65P4irqMWcPM","title":"R3-E-001 — Plan & Subscription Lifecycle Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1FxgcdX0eWt4Q9dMyb1huHT6aePA9gtLZXgWzx34eHG4","title":"R3-D-001 — Platform Principal & Role Administration Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1ZDe0oz6QHNdMWIB3LmsBjKnCCMPdrdRL2SK8Uklv4iA","title":"R3-C-001 — TenantDomain Registry Lifecycle Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1thTitaTQ42HeMCwdBqVK84FrxDsOnQIeavxCrVjlQhA","title":"R3-B-001 — Location Lifecycle Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1z8kVaJsfKFUjjYHAlVZbyivur-V3mb7TwTmTScru_k8","title":"R3-A1 — Platform Authority & Tenant Provisioning Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1QbTKEAmgxEt4yscGQpieSrmT_9p0jPfK","title":"G4-R2 — Foundation Completion Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1FIZiquEs1pJk4DRlpFexy-ytz7oVNJaB","title":"B44-FX-014 — Deployment Path Runtime Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1Rf7umn71CERdDKmzhiqmtKk3GzHQK9pA","title":"B44-FX-013 — Observability Runtime Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1xCGqMWsfWHZwwMLfPRkeGdVDodz5-hGm","title":"B44-FX-012 — Environment & Secret Provider Runtime Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1G4OulFTXsWYJpjr3NLK-2GjEJuBS3z2h","title":"B44-FX-011-R1 — Auth Token Canonicalization Runtime Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1YNZ8rd-Z3OaCut1YXtpY_rUTTR4UCXIA","title":"B44-FX-011 — Authenticated Principal Runtime Evidence.json","type":"JSON","authority":"HISTORICAL_EVIDENCE"},
+        {"id":"1b6_4NZQliKFSBQjEKFVaY0jwNSqBiAIf","title":"B44-FX-010 — Persistent Governed Command Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1ohkrgGN_Vu2wetZnQlhBqiB-AamHkJtt","title":"B44-FX-009 — PostgreSQL RLS Harness Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"14svpRAEWNLq9gJbeU5dz_JlTh5uV_0zd","title":"B44-FX-008 — Foundation Runtime Slice 1 Evidence.json","type":"JSON","authority":"EVIDENCE"},
+        {"id":"1i12oI37od3JuWBA6Yt-kj7UcALVjlnV4","title":"AIRenOS Foundation Portable Skeleton — v0.1.zip","type":"ZIP","ingestion":"ARCHIVE_MANIFEST_ONLY"},
+        {"id":"1iDrskphFajjWHzY17p9NTPYJjyUHV8jP","title":"B44-FX-006 — Foundation Schema Register.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1zae9wxZ8k74Dzew-iSTL39iE9wBmZTP1","title":"B44-FX-006 — Migration Contracts.json","type":"JSON","ingestion":"JSON_EVIDENCE"},
+        {"id":"1tSf-_CnrH56279Ha4lthP8XM5madWwwcy3XZyTpgEfM","title":"B44-FX-006 — Portable Foundation Repository & Migration Contract Pack","type":"GOOGLE_SHEET","ingestion":"NATIVE_SHEETS_STRUCTURE"},
+        {"id":"1FjdaLOq1MqrMk64xa6BpnYrYKMg1cuMY","title":"B44-FX-006 — 0001 Foundation PostgreSQL Contract.sql","type":"SQL","ingestion":"SQL_MIGRATION"}
+      ]
+    },
+    {
+      "folder": "04.3 — Foundation Code Snapshots & Release Archives",
+      "drive_id": "1CShs_fLvqepKtSO5LpCkzPgiTZ851nrG",
+      "coordinate": "AOS.DOC.FOLDER.ARCHIVES",
+      "direct_child_count": 24,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "ARCHIVE_EVIDENCE",
+      "default_ingestion": "ARCHIVE_MANIFEST_ONLY",
+      "items": [
+        {"id":"1HDZ3AVmb7nbSf6B08wr4_qsgNCjpQQC3","title":"R3-J — Integrated Control Plane Runtime Certification — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1kaV4yhjKt8Q-_izJeGihJ4PrThrTS3XB","title":"R3-I — Admin API & Admin UI Surfaces — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1WoYRYLqUWixBBNeKOKi2BVNqnJp38027","title":"R3-H — Platform Audit Query Surface — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1X7k8RDa4Ixgc9ojkUhCtcQ6OZTwNSiqL","title":"R3-G — Feature & Capability Resolution — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1_lxOvaGQdb2f5037k936qWZYV9vk_oqr","title":"R3-F — Entitlement Administration & Effective Resolution — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1MhOSE3ntPaahZBxI_iJif0Epic6c2Srs","title":"R3-E — Plan & Subscription Lifecycle — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1glnd1b1E-ebBT2nmvzJFGNKv6YtnMogn","title":"R3-D — Platform Principal & Role Administration — Exact Closure Archive","type":"FOLDER"},
+        {"id":"12BNdqBCgTiGc8JWegfgpZWrFq3ildsHX","title":"R3-C — TenantDomain Registry Lifecycle — Exact Closure Archive","type":"FOLDER"},
+        {"id":"1m9z9oh2fH23dAvOOldf27cXg9ktgYkbj","title":"R3-B — Location Lifecycle Closure — 2026-08-22","type":"FOLDER"},
+        {"id":"1ppni9dTbrey81Wo_ZSK9Rb_DnpQy2sydUCbacRHEImw","title":"R3-A — Integrity Record — v0.1","type":"GOOGLE_DOC","ingestion":"NATIVE_DOC_STRUCTURE"},
+        {"id":"1FZsxtMF5N9B51H26bZLA95Z-t9p3JWEt9kpDv5ua4rU","title":"R3-A — Closure Snapshot Manifest — v0.1","type":"GOOGLE_DOC","ingestion":"NATIVE_DOC_STRUCTURE"},
+        {"id":"12TFezXB1jos3Xt5yz6Ci3Ax-FuRhP3Fb","title":"AIRenOS-R3-A-6ffdc757-exact-source-snapshot.zip","type":"ZIP"},
+        {"id":"1Yldjt-UaEMrWfxOxsJFRffS6EKheWKw0","title":"R3-A1 — Platform Authority & Tenant Provisioning — bf274805 — 2026-08-22","type":"FOLDER"},
+        {"id":"13XwQL5-3YZVMR8N9aCDHI0ICDC2pYNbP50E20TcfoI0","title":"04.3 — Foundation Code Snapshot Baseline Register — v0.1","type":"GOOGLE_DOC","ingestion":"NATIVE_DOC_STRUCTURE"},
+        {"id":"115TeD36SbF1HcaFvI13CyUKmABBb4WHG","title":"B44-FX-014 — Deployment Path Verification Snapshot","type":"FOLDER"},
+        {"id":"1VYGsiHFAMWuKQErWCHVXV7OzGDD8Wx0A","title":"B44-FX-013 — Observability Baseline Snapshot","type":"FOLDER"},
+        {"id":"1jbnXvUQ_bD_ajELv5znUAmONpou6GZDI","title":"B44-FX-012 — Environment & Secret Provider Runtime Snapshot","type":"FOLDER"},
+        {"id":"1_Hc7EPJjLKQKOiIdEiwTW9rdD6w_1IK2","title":"B44-FX-011-R1 — Auth Token Canonicalization Reconciliation Snapshot","type":"FOLDER"},
+        {"id":"1gNSustDC9uln-Pgbf5IeuP8JNzg5Idij","title":"B44-FX-011 — Authenticated Principal Runtime Snapshot","type":"FOLDER","authority":"HISTORICAL_ARCHIVE"},
+        {"id":"1ZJJRPktIhJe1Alwf8KYpsVhK8EubhG4CaiTkN2MhglU","title":"04.3 — Foundation Code Snapshot & Release Archive Policy — v0.1","type":"GOOGLE_DOC","ingestion":"NATIVE_DOC_STRUCTURE"},
+        {"id":"1cYDf2mmBQOkQMc9DPKWvvP4ohqh1OUsu","title":"B44-FX-010 — Governed Command Snapshot","type":"FOLDER"},
+        {"id":"10aW58HURY-ZK7OtfO0UoIHFenAW4ZXhg","title":"B44-FX-009-R1 — PostgreSQL RLS Runtime Snapshot","type":"FOLDER"},
+        {"id":"1Blcamhuha2RK6ZIzbIsZtASBIUfroAhI","title":"B44-FX-008 — Runtime Slice 1 Snapshot","type":"FOLDER"},
+        {"id":"1LjxPUhEJxTgpaDzJdl-kORxFz0o1m0-J","title":"B44-FX-007 — GitHub Bootstrap Snapshot","type":"FOLDER"}
+      ]
+    },
+    {
+      "folder": "06 — Archive & Superseded Decisions",
+      "drive_id": "1hq4Piv579zRdE9-Zuk33yJna2ujMCfmW",
+      "direct_child_count": 1,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "HISTORICAL_OR_POLICY",
+      "items": [
+        {"id":"1l83QZME3jCHAQ1WEt5svTHtpH6MzRk6L7Vbqwu8ZJDo","title":"06 — Archive & Superseded Decisions — Population & Supersession Policy — v1.0","type":"GOOGLE_DOC","authority":"GOVERNANCE_POLICY"}
+      ]
+    },
+    {
+      "folder": "08 — Generated Deliverables",
+      "drive_id": "1fIN4n9Wl0iAejAOSggTJJmlRzwWT7xD9",
+      "direct_child_count": 1,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "DERIVED",
+      "items": [
+        {"id":"1eYavuL5OPeVyTYD7SfTQLcVFW9LsYPGiRkDF5xUj-4E","title":"08 — Generated Deliverables — Population & Derivation Policy — v1.0","type":"GOOGLE_DOC","authority":"GOVERNANCE_POLICY"}
+      ]
+    },
+    {
+      "folder": "09 — Review & Approval Working Area",
+      "drive_id": "1Mw48_itH3gezN0bsa2Ao-wHPzflBJw_x",
+      "direct_child_count": 3,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "REVIEW_NON_CANONICAL_UNTIL_PROMOTED",
+      "items": [
+        {"id":"1ZOLUZjSsYbxC2GopMr-C0XPvH_jLbxRMKEHaS8Xd69Q","title":"NEXT-AIR-002 — AIRen Relationship Intelligence OS — North Star Proposal — v0.1","type":"GOOGLE_DOC","authority":"PROPOSAL"},
+        {"id":"1i3HLJIAItBnXC1MSKV55pscI6nTtdlpei3ndavuBrBM","title":"AIRenOS NEXT — Future Innovation & Implementation Registry — v0.1","type":"GOOGLE_DOC","authority":"ACTIVE_BACKLOG_NON_CANONICAL"},
+        {"id":"1eMTdVlapxR5nsTfCMBiec1q6GgEkQP0S8S00b-CtNwk","title":"09 — Review & Approval Working Area — Promotion Policy — v1.0","type":"GOOGLE_DOC","authority":"GOVERNANCE_POLICY"}
+      ]
+    },
+    {
+      "folder": "10 — Release Baselines",
+      "drive_id": "1e8e0urcf7VG-hVIqwcxcJAc8k0hCrEOt",
+      "direct_child_count": 2,
+      "survey_state": "DIRECT_CHILD_LIST_COMPLETE",
+      "default_authority": "BASELINE_SUBTYPE_REQUIRED",
+      "items": [
+        {"id":"1sYckSQE4BGbEQoE0QtdC7cmEocg0GRuoGWiB_cO1Prk","title":"EB-001 — AIRenOS Foundation Frozen Engineering Baseline — v1.0","type":"GOOGLE_DOC","authority":"ENGINEERING_BASELINE","not_release_candidate":true,"not_production_release":true},
+        {"id":"1aGBH4perWikUb-hfI4i1Zsppo3Wc21NSP1FpWU7ekRE","title":"10 — Release Baselines — Classification & Promotion Policy — v1.0","type":"GOOGLE_DOC","authority":"GOVERNANCE_POLICY"}
+      ]
+    }
+  ],
+  "selected_folder_total_direct_children": 82,
+  "remaining_unswept_direct_child_folders": [
+    "AIRenOS Platform Bible root",
+    "01 — AIRenOS Core Specifications",
+    "02 — RISTOAIREN Vertical Specifications",
+    "03 — Security, Testing & Certification",
+    "04 — Portability, Rebuild & AI Build Packs root",
+    "05 — ADR, Changelog & Technical Provenance",
+    "07 — Machine-Readable Specs"
+  ],
+  "k2": {
+    "root_and_canonical_family_pass": true,
+    "selected_folder_item_expansion_pass": true,
+    "full_item_expansion_complete": false,
+    "closed": false
+  },
+  "k3": {
+    "runtime_ingestion_search_ocr_vector_implementation": "NOT_AUTHORIZED"
+  },
+  "airenpay_resume": {
+    "d4_c": "CLOSED_PASS",
+    "d4_d_refund_test": "DEFERRED_NEXT_PAYMENT_GATE_NOT_EXECUTED",
+    "rbl_resume_sha": "d055fba86d938aa38cee648171425046c7d972a4"
+  }
+}
