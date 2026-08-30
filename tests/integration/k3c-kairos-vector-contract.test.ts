@@ -23,11 +23,11 @@ test("K3-C embedding model registration is explicit and provider/model agnostic"
     },
   );
   assert.throws(
-    () => normalizeKairosEmbeddingModelSpec({ modelKey: "m", providerKey: "p", dimensions: 0, distanceMetric: "COSINE" }),
+    () => normalizeKairosEmbeddingModelSpec({ modelKey: "valid-model", providerKey: "provider", dimensions: 0, distanceMetric: "COSINE" }),
     /explicit integer between 1 and 16000/,
   );
   assert.throws(
-    () => normalizeKairosEmbeddingModelSpec({ modelKey: "valid-model", providerKey: "p", dimensions: 3, distanceMetric: "DOT" as "COSINE" }),
+    () => normalizeKairosEmbeddingModelSpec({ modelKey: "valid-model", providerKey: "provider", dimensions: 3, distanceMetric: "DOT" as "COSINE" }),
     /distance metric/,
   );
 });
