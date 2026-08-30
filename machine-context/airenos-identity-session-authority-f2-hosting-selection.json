@@ -1,0 +1,79 @@
+{
+  "pack": "ISA-F2-HOSTING-SELECTION",
+  "date": "2026-08-31",
+  "gate": "ISA_F2_HOSTING_TARGET_SELECTION",
+  "status": "DECIDED_NO_DEPLOYMENT",
+  "branch": "foundation/airenos-identity-session-authority-f2-ovh-milan-selection-20260831",
+  "base_sha": "542e7854598de0d1778adfcf297296c2fd66d577",
+  "selected_provider": {
+    "name": "OVHcloud Public Cloud",
+    "region": "MIL",
+    "region_name": "3-AZ Milan",
+    "jurisdiction_target": "EU_ITALY",
+    "selection_reason": "Current provider matrix combines 3-AZ Milan with Managed Kubernetes, Load Balancer, Private Network, Secret Manager, KMS and Managed PostgreSQL."
+  },
+  "staging_target": {
+    "kubernetes": "OVHCLOUD_MANAGED_KUBERNETES_PROVIDER_VERIFIED_HA_TIER",
+    "keycloak_replicas_minimum": 2,
+    "keycloak_image": "quay.io/keycloak/keycloak:26.7.2",
+    "pod_failure_domain_separation_required": true,
+    "pod_disruption_budget_required": true,
+    "database": "OVHCLOUD_MANAGED_POSTGRESQL_PRODUCTION_MULTI_AZ",
+    "database_nodes_expected": 2,
+    "database_automatic_failover_required": true,
+    "database_pitr_required": true,
+    "private_network_required": true,
+    "managed_load_balancer_required": true,
+    "secret_manager_required": true,
+    "kms_required_where_supported": true,
+    "terraform_canonical": true
+  },
+  "production_target": {
+    "authorization": "SEPARATE_GATE_REQUIRED",
+    "postgresql_preference": "ADVANCED_THREE_NODE_CLASS",
+    "rto_rpo": "NOT_YET_FROZEN",
+    "second_region_dr": "NOT_YET_FROZEN"
+  },
+  "authority_boundary": {
+    "provider_is_airenos_identity_authority": false,
+    "keycloak_is_airenos_identity_authority": false,
+    "keycloak_is_airenos_session_authority": false,
+    "keycloak_roles_tenants_entitlements_authoritative": false,
+    "upstream_access_token_is_airenos_bearer": false,
+    "base44_auth_is_airenos_authority": false,
+    "airenos_identity_directory_canonical": true,
+    "airenos_session_authority_canonical": true,
+    "airenos_authorization_server_side": true
+  },
+  "portability": {
+    "oci_image_required": true,
+    "postgresql_standard_required": true,
+    "kubernetes_standard_required": true,
+    "oidc_oauth_standard_required": true,
+    "airenos_owned_dns_issuer_required": true,
+    "provider_neutral_identity_adapter_preserved": true
+  },
+  "alternatives": {
+    "scaleway": "SECONDARY_EU_TARGET_PARIS_3AZ_MILAN_CURRENTLY_1AZ",
+    "exoscale": "SECONDARY_EU_TARGET_PRIMARY_POSTGRESQL_CLUSTER_CURRENTLY_SINGLE_ZONE"
+  },
+  "provider_facts_verified_on": "2026-08-31",
+  "live_evidence": {
+    "provider_account_ready": "NOT_VERIFIED",
+    "quota_ready": "NOT_VERIFIED",
+    "milan_3az_provider_api_readback": "NOT_EXECUTED",
+    "kubernetes_cluster": "NOT_CREATED",
+    "postgresql": "NOT_CREATED",
+    "load_balancer": "NOT_CREATED",
+    "secrets": "NOT_CREATED",
+    "keycloak_deployment": "NOT_EXECUTED",
+    "realm_client_readback": "NOT_EXECUTED",
+    "dns": "NOT_PROVEN",
+    "tls": "NOT_PROVEN",
+    "real_authorization_code_exchange": "NOT_EXECUTED",
+    "real_browser_login": "NOT_CERTIFIED",
+    "base44_airenos_kairos_e2e": "NOT_EXECUTED"
+  },
+  "production_side_effects": "NONE",
+  "next": "ISA_F2_OVH_MILAN_STAGING_PROVISIONING"
+}
