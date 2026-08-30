@@ -26,6 +26,8 @@ jobs:
         run: node --experimental-strip-types --test tests/integration/k3a-kairos-knowledge-contract.test.ts
       - name: Execute K3-B source adapter, parser, OCR fallback and secret-exclusion tests
         run: node --experimental-strip-types --test tests/integration/k3b-kairos-ingestion-pipeline.test.ts
+      - name: Execute K3-C provider/model-agnostic vector contract tests
+        run: node --experimental-strip-types --test tests/integration/k3c-kairos-vector-contract.test.ts
 
   k3-postgres-acl-runtime:
     runs-on: ubuntu-latest
@@ -55,7 +57,7 @@ jobs:
           node-version: 22
       - name: Install locked dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
-      - name: Apply canonical migration chain including K3-A
+      - name: Apply canonical migration chain including K3-C optional vector foundation
         run: node --experimental-strip-types deploy/migrate.ts
       - name: Verify migration checksum/idempotency on second pass
         shell: bash
@@ -71,3 +73,50 @@ jobs:
           fi
       - name: Execute K3-A pre-retrieval ACL and cross-tenant runtime tests
         run: node --experimental-strip-types --test tests/postgres/k3a-kairos-knowledge-foundation.test.ts
+      - name: Execute K3-C no-pgvector supported fail-closed runtime test
+        run: node --experimental-strip-types --test tests/postgres/k3c-kairos-vector-unavailable.test.ts
+
+  k3-pgvector-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_kairos_k3_vector
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_kairos_k3_vector"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_kairos_k3_vector
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/AIREN_K3_VECTOR_MIGRATION_DATABASE_URL
+      AIREN_K3_VECTOR_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_kairos_k3_vector
+      AIREN_RUNTIME_ROLE_PROVISIONING_MODE: bootstrap
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Apply canonical migration chain on pgvector runtime
+        run: node --experimental-strip-types deploy/migrate.ts
+      - name: Verify pgvector migration checksum/idempotency on second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/k3-vector-migration-second.log"
+          node --experimental-strip-types deploy/migrate.ts | tee "$log"
+          expected="$(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | wc -l | tr -d ' ')"
+          skips="$(grep -c '\"event\":\"migration.skip\"' "$log" || true)"
+          if [[ "$skips" -ne "$expected" ]]; then
+            echo "K3 pgvector migration second pass expected $expected checksum-verified skips, got $skips" >&2
+            exit 1
+          fi
+      - name: Execute K3-C pgvector storage, HNSW and ACL-first semantic runtime proof
+        run: node --experimental-strip-types --test tests/postgres/k3c-kairos-pgvector-runtime.test.ts
