@@ -28,6 +28,8 @@ jobs:
         run: node --experimental-strip-types --test tests/integration/k3b-kairos-ingestion-pipeline.test.ts
       - name: Execute K3-C provider/model-agnostic vector contract tests
         run: node --experimental-strip-types --test tests/integration/k3c-kairos-vector-contract.test.ts
+      - name: Execute K3-D governed persistence and hybrid boundary contract tests
+        run: node --experimental-strip-types --test tests/integration/k3d-kairos-runtime-boundary.test.ts
 
   k3-postgres-acl-runtime:
     runs-on: ubuntu-latest
@@ -57,7 +59,7 @@ jobs:
           node-version: 22
       - name: Install locked dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
-      - name: Apply canonical migration chain including K3-C optional vector foundation
+      - name: Apply canonical migration chain including K3-D governed runtime boundary
         run: node --experimental-strip-types deploy/migrate.ts
       - name: Verify migration checksum/idempotency on second pass
         shell: bash
@@ -75,6 +77,8 @@ jobs:
         run: node --experimental-strip-types --test tests/postgres/k3a-kairos-knowledge-foundation.test.ts
       - name: Execute K3-C no-pgvector supported fail-closed runtime test
         run: node --experimental-strip-types --test tests/postgres/k3c-kairos-vector-unavailable.test.ts
+      - name: Execute K3-D ingestion persistence, provenance and hybrid fail-closed runtime proof
+        run: node --experimental-strip-types --test tests/postgres/k3d-kairos-ingestion-runtime.test.ts
 
   k3-pgvector-runtime:
     runs-on: ubuntu-latest
@@ -120,3 +124,5 @@ jobs:
           fi
       - name: Execute K3-C pgvector storage, HNSW and ACL-first semantic runtime proof
         run: node --experimental-strip-types --test tests/postgres/k3c-kairos-pgvector-runtime.test.ts
+      - name: Execute K3-D ingestion-to-hybrid ACL-first pgvector runtime proof
+        run: node --experimental-strip-types --test tests/postgres/k3d-kairos-hybrid-runtime.test.ts
