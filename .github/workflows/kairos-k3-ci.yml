@@ -1,0 +1,71 @@
+name: kairos-k3-foundation-ci
+
+on:
+  push:
+    branches:
+      - "kairos/**"
+  workflow_dispatch:
+
+jobs:
+  k3-application-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Preserve foundation boundaries
+        run: npm run check:boundaries
+      - name: Validate machine context JSON
+        run: npm run check:machine-context
+      - name: Preserve foundation contracts
+        run: npm run check:foundation-contracts
+      - name: Execute K3-A Kairos knowledge contract tests
+        run: node --experimental-strip-types --test tests/integration/k3a-kairos-knowledge-contract.test.ts
+
+  k3-postgres-acl-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_kairos_k3
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_kairos_k3"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_kairos_k3
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/AIREN_K3_MIGRATION_DATABASE_URL
+      AIREN_K3_MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_kairos_k3
+      AIREN_RUNTIME_ROLE_PROVISIONING_MODE: bootstrap
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Apply canonical migration chain including K3-A
+        run: node --experimental-strip-types deploy/migrate.ts
+      - name: Verify migration checksum/idempotency on second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/k3-migration-second.log"
+          node --experimental-strip-types deploy/migrate.ts | tee "$log"
+          expected="$(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | wc -l | tr -d ' ')"
+          skips="$(grep -c '\"event\":\"migration.skip\"' "$log" || true)"
+          if [[ "$skips" -ne "$expected" ]]; then
+            echo "K3 migration second pass expected $expected checksum-verified skips, got $skips" >&2
+            exit 1
+          fi
+      - name: Execute K3-A pre-retrieval ACL and cross-tenant runtime tests
+        run: node --experimental-strip-types --test tests/postgres/k3a-kairos-knowledge-foundation.test.ts
