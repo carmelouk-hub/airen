@@ -24,6 +24,8 @@ jobs:
         run: npm run check:foundation-contracts
       - name: Execute K4-A secured graph and API contract tests
         run: node --experimental-strip-types --test tests/integration/k4a-kairos-graph-api-contract.test.ts
+      - name: Execute K4-C HTTP origin and browser-boundary contract tests
+        run: node --experimental-strip-types --test tests/integration/k4c-kairos-http-boundary.test.ts
 
   k4-postgres-graph-runtime:
     runs-on: ubuntu-latest
@@ -69,3 +71,5 @@ jobs:
           fi
       - name: Execute K4-A ACL-first graph node, edge, detail and timeline runtime proof
         run: node --experimental-strip-types --test tests/postgres/k4a-kairos-graph-runtime.test.ts
+      - name: Execute K4-C signed-session live HTTP and Base44 authority-denial proof
+        run: node --experimental-strip-types --test tests/postgres/k4c-kairos-live-http.test.ts
