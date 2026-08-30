@@ -24,6 +24,8 @@ jobs:
         run: npm run check:foundation-contracts
       - name: Execute K3-A Kairos knowledge contract tests
         run: node --experimental-strip-types --test tests/integration/k3a-kairos-knowledge-contract.test.ts
+      - name: Execute K3-B source adapter, parser, OCR fallback and secret-exclusion tests
+        run: node --experimental-strip-types --test tests/integration/k3b-kairos-ingestion-pipeline.test.ts
 
   k3-postgres-acl-runtime:
     runs-on: ubuntu-latest
