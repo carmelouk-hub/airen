@@ -18,6 +18,7 @@ jobs:
       - run: npm run test:identity-adapter
       - run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-session-lifecycle.test.ts
+      - run: node --experimental-strip-types --test tests/integration/airenos-oidc-upstream-provider.test.ts
   isa-f1-postgres-runtime:
     runs-on: ubuntu-latest
     services:

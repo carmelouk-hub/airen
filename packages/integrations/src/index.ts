@@ -120,3 +120,4 @@ export class HmacSignedSessionVerifier implements SessionCredentialVerifier {
 }
 
 export * from "./stripe-airenpay-test-adapter.ts";
+export * from "./oidc-upstream-provider.ts";

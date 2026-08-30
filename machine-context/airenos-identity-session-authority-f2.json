@@ -1,0 +1,42 @@
+{
+  "pack": "ISA-F2",
+  "date": "2026-08-31",
+  "gate": "ISA_F2_REAL_UPSTREAM_OIDC_PROVIDER_ADAPTER",
+  "status": "IMPLEMENTED_CONTRACT_REAL_IDP_BINDING_PENDING",
+  "branch": "foundation/airenos-identity-session-authority-f2-oidc-20260831",
+  "base_sha": "a6f1575472aa17de608bb1d45bbbebd13936a50d",
+  "extends": [
+    "ISA_F0_TRUST_CRYPTO_CONTRACT",
+    "ISA_F1_SESSION_LIFECYCLE_REVOCATION"
+  ],
+  "protocol_authority": {
+    "openid_connect_core": "1.0_ERRATA_2",
+    "oauth_security_bcp": "RFC9700",
+    "pkce": "RFC7636_S256",
+    "oauth_authorization_server_metadata": "RFC8414_APPLICABLE_PRINCIPLES",
+    "oauth_2_1": "NON_NORMATIVE_INTERNET_DRAFT"
+  },
+  "controls": {
+    "exact_https_issuer": true,
+    "discovery_issuer_exact_match": true,
+    "authorization_code_only": true,
+    "pkce_s256_required": true,
+    "redirect_uri_server_configured_exact": true,
+    "public_client_secret_from_browser_forbidden": true,
+    "jwks_signature_verification": true,
+    "id_token_alg_allowlist": ["RS256", "ES256", "EdDSA"],
+    "nonce_binding_required": true,
+    "issuer_audience_azp_time_validation": true,
+    "jwks_unknown_kid_forced_refresh": true,
+    "upstream_access_token_as_airenos_authority": false,
+    "browser_role_tenant_entitlement_authority": false,
+    "base44_auth_as_airenos_authority": false,
+    "real_idp_selected": false,
+    "real_provider_exchange_proven": false,
+    "real_browser_login_certified": false
+  },
+  "database_migration": "NONE",
+  "production_side_effects": "FORBIDDEN",
+  "k4_c3_runtime_handoff_proof": "OPEN_NOT_YET_EXECUTED",
+  "next": "Bind an explicitly selected real OIDC provider and prove real provider exchange before F2 closure; then proceed to F3 browser authorization handoff."
+}
