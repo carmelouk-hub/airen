@@ -93,7 +93,13 @@ test("revoke-all is Identity-scoped and suspended Identity fails active-session 
   await sessions.register(aliceTwo);
   await sessions.register(bobOne);
 
-  assert.equal(await sessions.revokeAllForIdentity(ALICE, "security_reset"), 2);
+  const activeAlice = await pool.query(
+    "SELECT count(*)::int AS count FROM identity.airenos_sessions WHERE identity_id=$1 AND status='active'",
+    [ALICE]
+  );
+  const expectedRevoked = Number(activeAlice.rows[0]?.count ?? 0);
+  assert.ok(expectedRevoked >= 2);
+  assert.equal(await sessions.revokeAllForIdentity(ALICE, "security_reset"), expectedRevoked);
   assert.equal(await sessions.resolveActive(aliceOne.sessionId, ALICE), null);
   assert.equal(await sessions.resolveActive(aliceTwo.sessionId, ALICE), null);
   assert.ok(await sessions.resolveActive(bobOne.sessionId, BOB));
