@@ -146,15 +146,23 @@ test("K3-C pgvector storage, HNSW foundation and ACL-first semantic retrieval", 
       assert.equal(result.rows[0].coordinate, "AOS.KAIROS.K3C.TENANT_A");
       assert.equal(result.rows[0].model_key, "k3.synthetic.3d");
       assert.equal(Number(result.rows[0].semantic_distance), 0);
+    });
 
+    await inAppScope(pool, { identityId: IDS.tenantIdentity, tenantId: IDS.tenantA }, async (client) => {
       await assert.rejects(
         () => client.query("SELECT * FROM security.kairos_search_semantic('k3.synthetic.3d','[1,0]',10)"),
         /AIRENOS_KAIROS_EMBEDDING_DIMENSION_MISMATCH/,
       );
+    });
+
+    await inAppScope(pool, { identityId: IDS.tenantIdentity, tenantId: IDS.tenantA }, async (client) => {
       await assert.rejects(
         () => client.query("SELECT * FROM security.kairos_search_semantic('unknown.model','[1,0,0]',10)"),
         /AIRENOS_KAIROS_EMBEDDING_MODEL_UNAVAILABLE/,
       );
+    });
+
+    await inAppScope(pool, { identityId: IDS.tenantIdentity, tenantId: IDS.tenantA }, async (client) => {
       await assert.rejects(
         () => client.query("SELECT embedding FROM kairos.knowledge_embedding_vectors LIMIT 1"),
         /permission denied|does not exist/i,
