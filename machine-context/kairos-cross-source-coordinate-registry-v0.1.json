@@ -1,0 +1,296 @@
+{
+  "schema": "airen.kairos.cross-source-coordinate-registry.v0.1",
+  "date": "2026-08-30",
+  "status": "INITIAL_BINDING_REGISTRY_PASS",
+  "purpose": "Bind multiple source artifacts to stable AIRenOS logical coordinates without collapsing authority, provenance or access control.",
+  "invariants": {
+    "one_logical_node_may_have_multiple_source_artifacts": true,
+    "source_artifacts_keep_independent_versions": true,
+    "title_similarity_is_not_deduplication_proof": true,
+    "implementation_is_not_design_mirror": true,
+    "evidence_is_not_design_mirror": true,
+    "governed_drive_human_authority_preferred_when_declared": true,
+    "authorization_is_evaluated_before_retrieval_and_before_relation_traversal": true,
+    "deduplication_must_not_expand_access_scope": true,
+    "secret_values_allowed": false,
+    "secret_value_hashing_for_search": false,
+    "base44_canonical_residence": false,
+    "censused_equals_ingested": false,
+    "k3_runtime_ingestion_authorized": false
+  },
+  "relation_types": [
+    "MIRRORS",
+    "IMPLEMENTS",
+    "TESTS",
+    "EVIDENCES",
+    "CERTIFIES",
+    "MACHINE_SPEC_FOR",
+    "CLOSURE_RECORD_FOR",
+    "SUPERSEDES",
+    "DERIVED_FROM",
+    "HAS_SOURCE_ARTIFACT"
+  ],
+  "authority_order": [
+    "GOVERNANCE_BINDING",
+    "CURRENT_CANONICAL_HUMAN_AUTHORITY",
+    "CERTIFIED_GATE_AUTHORITY",
+    "FROZEN_DESIGN_AUTHORITY",
+    "MACHINE_SPEC_AUTHORITY",
+    "IMPLEMENTATION_SOURCE",
+    "TEST_OR_RUNTIME_EVIDENCE",
+    "DERIVED_DELIVERABLE",
+    "PROPOSAL_REVIEW",
+    "HISTORICAL_SUPERSEDED"
+  ],
+  "source_snapshots": {
+    "drive_census": {
+      "manifest": "machine-context/kairos-drive-full-census-v0.1.json",
+      "blob": "30f44413c0b8ba07fad01cc90eaf18edb6ec5547"
+    },
+    "github_tree_census": {
+      "manifest": "machine-context/kairos-github-tree-census-v0.1.json",
+      "manifest_blob": "62d7258cbd2e92bdd9d05e4cd86f87db12db139c",
+      "source_commit": "d815cf8e2103ae2e1cf5aba7dd262028b0af62eb",
+      "source_tree": "770e0339cad6bc4d2ec98604b2b6bda561ca1b3a",
+      "truncated": false
+    }
+  },
+  "coordinates": [
+    {
+      "coordinate": "AOS.KAIROS.DESIGN.V0_1",
+      "logical_title": "AIRen Kairos — Canonical Design v0.1",
+      "authority": "CURRENT_CANONICAL_HUMAN_AUTHORITY",
+      "sources": [
+        {
+          "source": "GOOGLE_DRIVE",
+          "id": "1ljI-xA8lMCq8hNS1sySCBtRun20DXSIzkCm46UVqT6A",
+          "title": "AIREN KAIROS — Canonical Design v0.1 — 2026-08-30",
+          "revision_observed": "AIroW36UJtAC_Vru307YvUxXyYBwiSJk--7jUCxXuzQdg3NHLINJylH79mwcft5U6pAfv0TKVE-vHQ9Q1uAWIRT1TzfGdu5qSs1QunwsPHE",
+          "role": "CANONICAL_HUMAN_AUTHORITY"
+        },
+        {
+          "source": "GITHUB",
+          "repository": "carmelouk-hub/airen",
+          "path": "docs/AIREN_KAIROS_CANONICAL_DESIGN_v0.1.md",
+          "blob": "04b558f641924faccf72ebb6170fac8a884f438e",
+          "role": "MIRROR"
+        }
+      ],
+      "relations": ["GITHUB MIRRORS GOOGLE_DRIVE"]
+    },
+    {
+      "coordinate": "AOS.RISTO.BOOKING.AIRENPAY.DESIGN.V0_1",
+      "logical_title": "AIRen Booking Channel Hub + AIRenPay — Canonical Design v0.1",
+      "authority": "CURRENT_CANONICAL_HUMAN_AUTHORITY",
+      "sources": [
+        {
+          "source": "GOOGLE_DRIVE",
+          "id": "1c4O5bsu00OyG-qw_cSnq84VD8DH68FaYzPqxhW5E67A",
+          "title": "AIREN BOOKING CHANNEL HUB + AIRENPAY — Canonical Design v0.1 — 2026-08-29",
+          "revision_observed": "ANLCKQl1Ew2UkG-zI_FQUxMNVRuaQXN9Wp9iZT43wNkUH68t67Y41bJeaNiEECUG1xCbsvYOuY3bCHNJY4Cc9eHXm8isjDF40Z5Yi_fUpTc",
+          "role": "CANONICAL_HUMAN_AUTHORITY"
+        },
+        {
+          "source": "GITHUB",
+          "repository": "carmelouk-hub/airen",
+          "path": "docs/AIREN_BOOKING_CHANNEL_HUB_AIRENPAY_DESIGN_v0.1.md",
+          "blob": "922661195ec09b69d2752c936ac08f7a6e4729b0",
+          "role": "MIRROR"
+        }
+      ],
+      "relations": ["GITHUB MIRRORS GOOGLE_DRIVE"]
+    },
+    {
+      "coordinate": "AOS.R3.A1",
+      "logical_title": "R3-A1 — Platform Authority & Tenant Provisioning Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1z8kVaJsfKFUjjYHAlVZbyivur-V3mb7TwTmTScru_k8","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-A1_PLATFORM_AUTHORITY_TENANT_PROVISIONING_RECONCILIATION.md","blob":"660f74121145e576c2af8c049165cc24218748d2","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-a1-tenant-provisioning-runtime-evidence.json","blob":"18722140c729ff7d0e3ed936332962e17532540d","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.B",
+      "logical_title": "R3-B — Location Lifecycle Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1thTitaTQ42HeMCwdBqVK84FrxDsOnQIeavxCrVjlQhA","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-B_LOCATION_LIFECYCLE_RECONCILIATION.md","blob":"a3f1765e29bd24a36285145aa0ccfca853a9ba10","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-b-location-lifecycle-runtime-evidence.json","blob":"0093604da6687f5b8ebfcc97b04818d96856468e","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.C",
+      "logical_title": "R3-C — TenantDomain Registry Lifecycle Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1ZDe0oz6QHNdMWIB3LmsBjKnCCMPdrdRL2SK8Uklv4iA","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-C_TENANT_DOMAIN_LIFECYCLE_RECONCILIATION.md","blob":"d6a4c4afe7bb60cea5c09808bd26e275386548b0","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-c-tenant-domain-runtime-evidence.json","blob":"272e83f72c5c69b70f2c777a6140d18236098542","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.D",
+      "logical_title": "R3-D — Platform Principal & Role Administration Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1FxgcdX0eWt4Q9dMyb1huHT6aePA9gtLZXgWzx34eHG4","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-D_PLATFORM_ROLE_ADMIN_RECONCILIATION.md","blob":"ed5f6daa70b5cd225e1d471df1eb12f89795c3b1","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-d-platform-role-admin-runtime-evidence.json","blob":"71d67c54ea5161edfa9db441bdc3962dd4cfd8f0","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.E",
+      "logical_title": "R3-E — Plan & Subscription Lifecycle Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1gs4HU4iyB0_hC3tWDnY7wqTX9fHEa3c65P4irqMWcPM","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-E_PLAN_SUBSCRIPTION_LIFECYCLE_RECONCILIATION.md","blob":"b0b3058d8408894a28a3c9a29eb2938cdcd6688b","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-e-plan-subscription-runtime-evidence.json","blob":"a123df7c4e55708e31c8e0ed03e607dc8a02a68b","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.F",
+      "logical_title": "R3-F — Entitlement Administration & Effective Resolution Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1Ona61lDeJWPBNn27NwEBPZqYb5DRxZeW1EFeTtUfxWk","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-F_ENTITLEMENT_ADMIN_EFFECTIVE_RESOLUTION_RECONCILIATION.md","blob":"9e161f964b0e647df1df5f3f0d6b6294dddaa92d","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-f-entitlement-runtime-evidence.json","blob":"18682217c1ee41eba3d6c01b4fc864fd71b528bd","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.G",
+      "logical_title": "R3-G — Feature & Capability Resolution Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1Gf6NUU3XAtETuHnke6pFZESI-bOGu0u5xZp2UGANzeU","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-G_FEATURE_CAPABILITY_RESOLUTION_RECONCILIATION.md","blob":"a757a86397b68821ff6a1c27ade2818ee075ea00","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-g-capability-runtime-evidence.json","blob":"7e8332a6b843a219df708d04017c20482bb78d64","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.H",
+      "logical_title": "R3-H — Platform Audit Query Surface Reconciliation",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"11HJcrM9-2bH9riGb65IYw6c6hd4QrdW5ZgQsuRfW2jk","role":"HUMAN_GATE_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/R3-H_PLATFORM_AUDIT_QUERY_RECONCILIATION.md","blob":"f344daddb7b0d0ac0e1ef3c6b618ced63f811131","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/r3-h-platform-audit-runtime-evidence.json","blob":"b077b85fdd13f1d5f3ebe7f6ba294a4700081e7a","role":"RUNTIME_EVIDENCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.R3.J",
+      "logical_title": "R3-J — Integrated Control Plane Runtime Certification",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {
+          "source":"GOOGLE_DRIVE",
+          "id":"1vIy0R4hjwtMP67AnvxRtJOAB3YRDglNp78whfoKd-Mo",
+          "title":"R3-J-001 — Integrated Control Plane Runtime Certification Scope & Gap Reconciliation — v0.1",
+          "revision_observed":"ANLCKQnvB8twFpkNk0FVHYp4xlB18rvR7d6q4kWi9wJt2FC57OCai5EUtpSbYIcUrow_jL1nVQ-ZkhOF_S49gTSDO1WTrDchzNsUxlvqiVo",
+          "role":"HUMAN_GATE_AUTHORITY"
+        },
+        {"source":"GOOGLE_DRIVE","id":"1jNGi1ffH-qeyASUUAx1IMAKa0HHObIxOR48dMbciLAM","role":"MACHINE_SPEC_AUTHORITY"},
+        {"source":"GITHUB","path":"tests/integration/r3j-integrated-control-plane-runtime.test.ts","blob":"d11990237858a55bb04e204f5693ecd2c43f6054","role":"IMPLEMENTATION_TEST_SOURCE"}
+      ],
+      "relations": ["MRS-010 MACHINE_SPEC_FOR R3-J", "GitHub integration test TESTS R3-J"]
+    },
+    {
+      "coordinate": "AOS.T20.SCOPE",
+      "logical_title": "T20 Security Certification Scope & Portable Booking Slice",
+      "authority": "FROZEN_DESIGN_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"17JADehm20AN9V6ew3IB-TwC64l8qq3UWzYM1nPTdK30","role":"HUMAN_SCOPE_AUTHORITY"},
+        {"source":"GOOGLE_DRIVE","id":"1XLcmWw5dcQBeqETwCVfTfKmHNB_j3_Cj1zVCF5lbNZQ","role":"MACHINE_SPEC_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/T20-0_SECURITY_CERTIFICATION_SCOPE_FREEZE.md","blob":"852dfcfc471ee390a4514d5e7a3c5a80b111d007","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/t20-security-certification-baseline.json","blob":"f4f48d2d061434474ddf27fca675f7569f474a25","role":"MACHINE_CONTEXT"}
+      ]
+    },
+    {
+      "coordinate": "AOS.T20.BOOKING.FILE_CONTRACT_CENSUS",
+      "logical_title": "T20 Portable Booking Exact File & Contract Census",
+      "authority": "FROZEN_DESIGN_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1ewgenwG38RdQzd6yecjAxdqmrI4JZ2ZTdF9ebJWTv00","role":"HUMAN_CENSUS_AUTHORITY"},
+        {"source":"GOOGLE_DRIVE","id":"1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE","role":"MACHINE_SPEC_AUTHORITY"},
+        {"source":"GITHUB","path":"docs/T20_PORTABLE_BOOKING_EXACT_FILE_CONTRACT_CENSUS.md","blob":"dbe02d5ca7c32373b06f60303869fb549fd27cc2","role":"MIRROR"},
+        {"source":"GITHUB","path":"machine-context/t20-portable-booking-file-contract-census.json","blob":"262f077b00ce9b0bd6095dead7153904fa7c8fb0","role":"MACHINE_CONTEXT"}
+      ]
+    },
+    {
+      "coordinate": "AOS.RISTO.BOOKING.AIRENPAY.D4A",
+      "logical_title": "AIRenPay D4-A — Stripe TEST Authorization Hold Provider Proof",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"18dpqVkJw8cNySS2hEquu8ZP73MnObvJCbPJHuvtP4BU","section":"71","role":"CLOSURE_RECORD"},
+        {"source":"GITHUB","path":"deploy/prove-stripe-airenpay-test-authorization-hold.ts","blob":"80a6469e9d9be6bf8c9d10fa949cb6c17bdb2fb1","role":"PROOF_RUNNER_SOURCE"},
+        {"source":"GITHUB","path":"tests/integration/rbl09-stripe-airenpay-test-authorization-hold-runner-boundary.test.ts","blob":"be59326b274acdf479fb883c07441af34aada90f","role":"BOUNDARY_TEST_SOURCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.RISTO.BOOKING.AIRENPAY.D4B",
+      "logical_title": "AIRenPay D4-B — Stripe TEST Authorization Release Provider Proof",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"18dpqVkJw8cNySS2hEquu8ZP73MnObvJCbPJHuvtP4BU","section":"76","role":"CLOSURE_RECORD"},
+        {"source":"GITHUB","path":"deploy/prove-stripe-airenpay-test-authorization-release.ts","blob":"c977f85e7c3861361457b6e466b8cc5383499a7f","role":"PROOF_RUNNER_SOURCE"},
+        {"source":"GITHUB","path":"tests/integration/rbl10-stripe-airenpay-test-authorization-release-runner-boundary.test.ts","blob":"e536aea7484b9576909b57e4c2146e08539906fc","role":"BOUNDARY_TEST_SOURCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.RISTO.BOOKING.AIRENPAY.D4C",
+      "logical_title": "AIRenPay D4-C — Stripe TEST Authorization Capture Provider Proof",
+      "authority": "CERTIFIED_GATE_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"18dpqVkJw8cNySS2hEquu8ZP73MnObvJCbPJHuvtP4BU","section":"81","role":"CLOSURE_RECORD"},
+        {"source":"GITHUB","path":"deploy/prove-stripe-airenpay-test-authorization-capture.ts","blob":"c9c6fecc89578b6d7ecda02aef07858445a31f9d","role":"PROOF_RUNNER_SOURCE"},
+        {"source":"GITHUB","path":"tests/integration/rbl11-stripe-airenpay-test-authorization-capture-runner-boundary.test.ts","blob":"467bb75aacc9e69d71a9df9fffe1a91721850809","role":"BOUNDARY_TEST_SOURCE"},
+        {"source":"GITHUB","path":"packages/ristoairen/src/airenpay/contracts.ts","blob":"af1ea45337b0a0f059d66564f00f97d6fbfa1467","role":"DOMAIN_CONTRACT_SOURCE"},
+        {"source":"GITHUB","path":"packages/integrations/src/stripe-airenpay-test-adapter.ts","blob":"17985288795ad6ba8e0da2b38f750bca39668ed1","role":"PROVIDER_ADAPTER_SOURCE"}
+      ]
+    },
+    {
+      "coordinate": "AOS.DOC.REGISTRY.DOC000",
+      "logical_title": "AIRenOS Documentation Index & Governance Registry",
+      "authority": "CURRENT_CANONICAL_HUMAN_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1p8ES5MBaJjWQdm9q8IDNnXu2tC5vDLxo3JTmvJkz_fI","role":"CANONICAL_REGISTRY"}
+      ],
+      "github_mirror": null
+    },
+    {
+      "coordinate": "AOS.BIBLE.PLATFORM",
+      "logical_title": "AIRenOS Platform Bible",
+      "authority": "CURRENT_CANONICAL_HUMAN_AUTHORITY",
+      "sources": [
+        {"source":"GOOGLE_DRIVE","id":"1ZlppAFqaJvhWUxwHyUdMJIaREBPzSAsn9hy7kupX9DA","role":"ACTIVE_FOUNDATION"}
+      ],
+      "github_mirror": null
+    }
+  ],
+  "deduplication_policy": {
+    "logical_dedup_key": "stable coordinate plus explicit governed binding",
+    "content_hash_alone_is_insufficient_for_authority_merge": true,
+    "same_blob_may_back_multiple_paths": true,
+    "same_content_may_exist_under_different_acl": true,
+    "acl_is_never_union_merged_during_deduplication": true,
+    "drive_revision_and_git_blob_are_preserved_as_source_version_coordinates": true,
+    "future_parser_may_verify_content_equivalence_but_may_not_promote_authority": true
+  },
+  "k2_closure_readiness": {
+    "drive_direct_child_census": "PASS",
+    "github_recursive_tree_census": "PASS",
+    "authority_and_ingestion_classes": "PASS",
+    "cross_source_coordinate_binding_seed": "PASS",
+    "secret_exclusion": "PASS",
+    "pre_retrieval_authorization_rule": "PASS",
+    "censused_not_ingested_rule": "PASS",
+    "k2_ready_for_final_reconciliation": true,
+    "k2_closed": false
+  },
+  "k3": "NOT_AUTHORIZED",
+  "d4_d_refund_test": "DEFERRED_NEXT_PAYMENT_GATE_NOT_EXECUTED",
+  "airenpay_resume_sha": "d055fba86d938aa38cee648171425046c7d972a4"
+}
