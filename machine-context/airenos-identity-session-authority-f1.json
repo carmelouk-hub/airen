@@ -1,0 +1,35 @@
+{
+  "pack": "AIRENOS-ISA-F1",
+  "title": "AIRenOS Identity & Session Authority — Session Lifecycle and Revocation",
+  "status": "IMPLEMENTED_CONTRACT_RUNTIME_VALIDATION_REQUIRED",
+  "base_commit": "9ee41fe4b533bcafcd91693cdc3d0b9b7eb0a27e",
+  "protected_boundaries_modified": false,
+  "base44_auth_is_airenos_authority": false,
+  "real_idp_selected": false,
+  "real_browser_login_certified": false,
+  "k4_c3_closed": false,
+  "lifecycle": {
+    "access_token_max_ttl_seconds": 300,
+    "canonical_session_required_after_signature_verification": true,
+    "persist_before_bearer_release": true,
+    "immediate_revocation": true,
+    "identity_suspension_denies_sessions": true,
+    "raw_bearer_persisted": false,
+    "refresh_token_implemented": false
+  },
+  "postgres_authority": {
+    "migration": "db/migrations/0035_airenos_session_lifecycle.sql",
+    "table": "identity.airenos_sessions",
+    "runtime_role": "airen_auth",
+    "direct_runtime_table_grants": false,
+    "security_definer_only": true
+  },
+  "gates": {
+    "ISA_F0_TRUST_CRYPTO_CONTRACT": "GOVERNANCE_REGISTERED_DEDICATED_CI_PASS",
+    "ISA_F1_SESSION_LIFECYCLE_REVOCATION": "IMPLEMENTED_RUNTIME_VALIDATION_REQUIRED",
+    "ISA_F2_REAL_UPSTREAM_OIDC_PROVIDER_ADAPTER": "OPEN",
+    "ISA_F3_BROWSER_AUTHORIZATION_HANDOFF": "OPEN",
+    "ISA_F4_STAGING_PROVIDER_VERIFIED_E2E": "OPEN"
+  },
+  "governance_note": "F1 lifecycle and PostgreSQL runtime tests are not real IdP/browser evidence and must never be used to close K4-C3."
+}

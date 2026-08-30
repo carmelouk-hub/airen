@@ -1,28 +1,46 @@
 name: airenos-identity-session-authority-foundation
-
 on:
   push:
-    branches:
-      - "foundation/airenos-identity-session-authority-**"
+    branches: ["foundation/airenos-identity-session-authority-**"]
   workflow_dispatch:
-
 jobs:
-  isa-f0-contract:
+  isa-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install locked dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
-      - name: Preserve repository boundaries
-        run: npm run check:boundaries
-      - name: Validate machine context JSON
-        run: npm run check:machine-context
-      - name: Preserve existing foundation contracts
-        run: npm run check:foundation-contracts
-      - name: Regress existing provider-neutral identity adapter
-        run: npm run test:identity-adapter
-      - name: Verify AIRenOS Identity and Session Authority F0 contract
-        run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
+      - run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - run: npm run check:boundaries
+      - run: npm run check:machine-context
+      - run: npm run check:foundation-contracts
+      - run: npm run test:identity-adapter
+      - run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
+      - run: node --experimental-strip-types --test tests/integration/airenos-session-lifecycle.test.ts
+  isa-f1-postgres-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_isa_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_isa_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_isa_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: bash scripts/run-postgres-runtime-tests.sh
+      - run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0035_airenos_session_lifecycle.sql
+      - run: node --experimental-strip-types --test tests/postgres/airenos-session-lifecycle-runtime.test.ts
