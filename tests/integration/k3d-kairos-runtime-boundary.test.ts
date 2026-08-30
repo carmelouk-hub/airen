@@ -24,7 +24,8 @@ const SOURCE: KairosSourceSnapshot = Object.freeze({
 });
 
 class StaticAdapter implements KnowledgeSourceAdapter<Readonly<{}>> {
-  constructor(private readonly snapshot: KairosSourceSnapshot) {}
+  private readonly snapshot: KairosSourceSnapshot;
+  constructor(snapshot: KairosSourceSnapshot) { this.snapshot = snapshot; }
   async read(): Promise<KairosSourceSnapshot> { return this.snapshot; }
 }
 
