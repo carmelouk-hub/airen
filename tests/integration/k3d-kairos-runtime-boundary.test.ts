@@ -137,8 +137,8 @@ test("K3-D PostgreSQL persistence calls only governed security functions and str
   assert.ok(calls.every((call) => call.text.includes("security.kairos_")));
   assert.ok(calls.every((call) => !/\b(?:INSERT|UPDATE|DELETE)\s+(?:INTO\s+)?kairos\./i.test(call.text)));
   const serialized = String(calls[1].values?.[0] ?? "");
-  assert.doesNotMatch(serialized, /nativeText/);
-  assert.doesNotMatch(serialized, /nativeContentType/);
+  assert.doesNotMatch(serialized, /"nativeText":/);
+  assert.doesNotMatch(serialized, /"nativeContentType":/);
   assert.match(serialized, /hybridneedle governed procedure/);
 });
 

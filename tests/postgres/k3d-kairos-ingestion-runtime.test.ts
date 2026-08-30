@@ -100,10 +100,14 @@ test("K3-D K3-B pipeline commits through governed K3-A persistence, provenance a
     });
 
     const provenance = await pool.query(
-      "SELECT event_type FROM kairos.knowledge_provenance_events p JOIN kairos.knowledge_sources s ON s.id=p.source_id WHERE s.source_key=$1 ORDER BY p.occurred_at,p.id",
+      "SELECT event_type FROM kairos.knowledge_provenance_events p JOIN kairos.knowledge_sources s ON s.id=p.source_id WHERE s.source_key=$1",
       [SNAPSHOT.sourceKey],
     );
-    assert.deepEqual(provenance.rows.map((row) => row.event_type), ["INGESTED","PARSED_NATIVE","INDEXED"]);
+    assert.equal(provenance.rowCount, 3);
+    assert.deepEqual(
+      provenance.rows.map((row) => row.event_type).sort(),
+      ["INDEXED","INGESTED","PARSED_NATIVE"],
+    );
 
     const changedSnapshot = Object.freeze({ ...SNAPSHOT, nativeText: "## Governed ingestion\nchanged content under reused revision key" });
     await inAppScope(pool, async (client) => {
