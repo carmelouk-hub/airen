@@ -1,0 +1,170 @@
+{
+  "schema": "airen.kairos.github-tree-census.v0.1",
+  "date": "2026-08-30",
+  "status": "GITHUB_NATIVE_RECURSIVE_TREE_CENSUS_COMPLETE",
+  "source_snapshot": {
+    "repository": "carmelouk-hub/airen",
+    "branch_at_snapshot": "kairos/bootstrap-20260830",
+    "commit": "d815cf8e2103ae2e1cf5aba7dd262028b0af62eb",
+    "tree_sha": "770e0339cad6bc4d2ec98604b2b6bda561ca1b3a",
+    "recursive_tree_complete": true,
+    "github_truncated_flag": false,
+    "immutability_note": "This manifest is created in the next commit and therefore describes the exact parent tree 770e0339cad6bc4d2ec98604b2b6bda561ca1b3a. The manifest itself is intentionally outside the described snapshot to avoid recursive self-description."
+  },
+  "invariants": {
+    "censused_equals_ingested": false,
+    "runtime_ingestion_authorized": false,
+    "secret_values_allowed": false,
+    "retrieval_authorization": "pre_retrieval",
+    "base44_canonical_residence": false,
+    "legacy_can_outrank_current": false,
+    "proposal_can_outrank_canonical": false,
+    "k2_overall_closed": false
+  },
+  "path_classification_rules": [
+    {
+      "prefix": ".github/workflows/",
+      "class": "CI_WORKFLOW",
+      "ingestion": "YAML_NATIVE",
+      "authority": "IMPLEMENTATION_AUTOMATION"
+    },
+    {
+      "prefix": ".env.example",
+      "class": "ENVIRONMENT_SCHEMA_EXAMPLE",
+      "ingestion": "METADATA_AND_KEY_NAMES_ONLY",
+      "authority": "CONFIGURATION_SCHEMA",
+      "secret_values": "FORBIDDEN"
+    },
+    {
+      "prefix": "apps/",
+      "class": "APPLICATION_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "IMPLEMENTATION"
+    },
+    {
+      "prefix": "base44-apps/",
+      "class": "BASE44_PRESENTATION_AND_STAGING_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "PRESENTATION_IMPLEMENTATION",
+      "canonical_residence": false
+    },
+    {
+      "prefix": "brand/",
+      "class": "BRAND_IP_ASSET",
+      "ingestion": "FILE_METADATA_HASH_AND_VISUAL_METADATA",
+      "authority": "IP_ASSET",
+      "ocr_default": false
+    },
+    {
+      "prefix": "db/",
+      "class": "DATABASE_CONTRACT_AND_RUNTIME_SOURCE",
+      "ingestion": "SQL_NATIVE",
+      "authority": "IMPLEMENTATION_CONTRACT"
+    },
+    {
+      "prefix": "deploy/",
+      "class": "DEPLOYMENT_AND_PROOF_RUNNER_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "IMPLEMENTATION_OR_TEST_PROOF_SOURCE"
+    },
+    {
+      "prefix": "docs/",
+      "class": "REPOSITORY_DOCUMENTATION",
+      "ingestion": "MARKDOWN_NATIVE",
+      "authority": "CHILD_SPECIFIC",
+      "rule": "Drive human authority remains primary where a governed Drive authority exists; GitHub mirrors are linked as MIRRORS rather than silently promoted."
+    },
+    {
+      "prefix": "docs/NEXT_AIR_002_",
+      "class": "PROPOSAL_REVIEW_DOCUMENTATION",
+      "ingestion": "MARKDOWN_NATIVE",
+      "authority": "PROPOSAL_OR_REVIEW_UNLESS_EXPLICITLY_PROMOTED"
+    },
+    {
+      "prefix": "legacy/",
+      "class": "LEGACY_HISTORICAL_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE_OPTIONAL",
+      "authority": "HISTORICAL",
+      "rank": "BELOW_CURRENT"
+    },
+    {
+      "prefix": "machine-context/",
+      "class": "MACHINE_CONTEXT_AND_EVIDENCE",
+      "ingestion": "JSON_NATIVE",
+      "authority": "CHILD_SPECIFIC_MACHINE_AUTHORITY_OR_EVIDENCE"
+    },
+    {
+      "prefix": "machine-context/b44-fx-012-environment-secrets.json",
+      "class": "SECRET_PROVIDER_REFERENCE_EVIDENCE",
+      "ingestion": "SECRET_REFERENCE_METADATA_ONLY",
+      "authority": "EVIDENCE",
+      "secret_values": "FORBIDDEN"
+    },
+    {
+      "prefix": "packages/",
+      "class": "DOMAIN_AND_PLATFORM_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "IMPLEMENTATION"
+    },
+    {
+      "prefix": "rebuild/",
+      "class": "REBUILD_CONTRACT_AND_ADR_SOURCE",
+      "ingestion": "MARKDOWN_JSON_SQL_NATIVE",
+      "authority": "CHILD_SPECIFIC"
+    },
+    {
+      "prefix": "scripts/",
+      "class": "VERIFICATION_AND_AUTOMATION_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "IMPLEMENTATION_AUTOMATION"
+    },
+    {
+      "prefix": "tests/",
+      "class": "TEST_AND_CERTIFICATION_SOURCE",
+      "ingestion": "CODE_SYMBOL_NATIVE",
+      "authority": "TEST_EVIDENCE_OR_CONTRACT"
+    },
+    {
+      "prefix": "FOUNDATION_*_STATUS.json",
+      "class": "STATUS_EVIDENCE",
+      "ingestion": "JSON_NATIVE",
+      "authority": "EVIDENCE"
+    }
+  ],
+  "high_value_source_boundaries": {
+    "airenpay": [
+      "packages/ristoairen/src/airenpay/",
+      "packages/integrations/src/stripe-airenpay-test-adapter.ts",
+      "packages/integrations/src/stripe-airenpay-test-http-client.ts",
+      "packages/persistence-postgres/src/risto-airenpay-repository.ts",
+      "packages/persistence-postgres/src/migrations/20260829_002_risto_airenpay.sql",
+      "deploy/prove-stripe-airenpay-test-authorization-hold.ts",
+      "deploy/prove-stripe-airenpay-test-authorization-release.ts",
+      "deploy/prove-stripe-airenpay-test-authorization-capture.ts",
+      "tests/integration/rbl04-airenpay-contract.test.ts",
+      "tests/integration/rbl05-stripe-airenpay-test-adapter.test.ts",
+      "tests/integration/rbl06-stripe-airenpay-test-http-client.test.ts",
+      "tests/integration/rbl09-stripe-airenpay-test-authorization-hold-runner-boundary.test.ts",
+      "tests/integration/rbl10-stripe-airenpay-test-authorization-release-runner-boundary.test.ts",
+      "tests/integration/rbl11-stripe-airenpay-test-authorization-capture-runner-boundary.test.ts"
+    ],
+    "kairos": [
+      "docs/AIREN_KAIROS_CANONICAL_DESIGN_v0.1.md",
+      "machine-context/kairos-initial-census-v0.1.json",
+      "machine-context/kairos-drive-item-census-v0.1.json",
+      "machine-context/kairos-drive-full-census-v0.1.json"
+    ]
+  },
+  "source_snapshot_result": {
+    "full_git_tree_census_complete": true,
+    "native_recursive_tree_truncated": false,
+    "all_paths_in_parent_tree_addressable_by_path_and_blob_sha": true
+  },
+  "k2_remaining": [
+    "Cross-source Drive/GitHub coordinate and deduplication binding",
+    "K2 final reconciliation and closure decision"
+  ],
+  "k3": "NOT_AUTHORIZED",
+  "d4_d_refund_test": "DEFERRED_NEXT_PAYMENT_GATE_NOT_EXECUTED",
+  "airenpay_resume_sha": "d055fba86d938aa38cee648171425046c7d972a4"
+}
