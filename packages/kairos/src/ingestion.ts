@@ -37,11 +37,19 @@ function sha256(text: string): string {
 }
 
 export class KairosIngestionPipeline<TInput> {
+  private readonly sourceAdapter: KnowledgeSourceAdapter<TInput>;
+  private readonly parsers: NativeParserRegistry;
+  private readonly ocrFallback: OcrFallbackAdapter | undefined;
+
   constructor(
-    private readonly sourceAdapter: KnowledgeSourceAdapter<TInput>,
-    private readonly parsers: NativeParserRegistry = new NativeParserRegistry(),
-    private readonly ocrFallback?: OcrFallbackAdapter,
-  ) {}
+    sourceAdapter: KnowledgeSourceAdapter<TInput>,
+    parsers: NativeParserRegistry = new NativeParserRegistry(),
+    ocrFallback?: OcrFallbackAdapter,
+  ) {
+    this.sourceAdapter = sourceAdapter;
+    this.parsers = parsers;
+    this.ocrFallback = ocrFallback;
+  }
 
   async prepare(input: TInput, previous?: IngestionCheckpoint): Promise<KairosIngestionEnvelope> {
     const source=await this.sourceAdapter.read(input);

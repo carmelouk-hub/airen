@@ -37,7 +37,8 @@ export interface GoogleDriveNativeReader {
 }
 
 export class GoogleDriveNativeSourceAdapter implements KnowledgeSourceAdapter<Readonly<{ documentId: string }>> {
-  constructor(private readonly reader: GoogleDriveNativeReader) {}
+  private readonly reader: GoogleDriveNativeReader;
+  constructor(reader: GoogleDriveNativeReader) { this.reader = reader; }
 
   async read(input: Readonly<{ documentId: string }>): Promise<KairosSourceSnapshot> {
     const documentId = input.documentId.trim();
@@ -83,7 +84,8 @@ function githubContentType(path: string): KairosNativeContentType {
 }
 
 export class GitHubNativeSourceAdapter implements KnowledgeSourceAdapter<Readonly<{ repository: string; path: string; ref: string }>> {
-  constructor(private readonly reader: GitHubNativeReader) {}
+  private readonly reader: GitHubNativeReader;
+  constructor(reader: GitHubNativeReader) { this.reader = reader; }
 
   async read(input: Readonly<{ repository: string; path: string; ref: string }>): Promise<KairosSourceSnapshot> {
     const repository = input.repository.trim();
