@@ -1,0 +1,59 @@
+{
+  "contract": "AIRenOS Keycloak Self-Hosted Authentication Engine",
+  "version": "0.1",
+  "date": "2026-08-31",
+  "keycloak": {
+    "distribution": "quay.io/keycloak/keycloak",
+    "version": "26.7.2",
+    "realm": "airenos",
+    "public_hostname_target": "https://login.airenos.com",
+    "admin_hostname_target": "https://identity-admin.airenos.com",
+    "issuer_target": "https://login.airenos.com/realms/airenos"
+  },
+  "oidc_client": {
+    "client_id": "airenos-browser-session",
+    "client_type": "public",
+    "standard_authorization_code_flow": true,
+    "pkce_method": "S256",
+    "implicit_flow": false,
+    "direct_access_grants": false,
+    "service_accounts": false,
+    "redirect_uri_target": "https://session.airenos.com/oidc/callback",
+    "wildcard_redirect_uris": false,
+    "wildcard_web_origins": false
+  },
+  "authority_boundary": {
+    "keycloak_authenticates_upstream_subject": true,
+    "keycloak_is_airenos_canonical_identity_authority": false,
+    "keycloak_roles_are_airenos_authority": false,
+    "keycloak_tenant_claims_are_airenos_authority": false,
+    "keycloak_entitlements_are_airenos_authority": false,
+    "upstream_access_token_is_airenos_bearer": false,
+    "base44_auth_is_airenos_authority": false,
+    "airenos_identity_directory_remains_canonical": true,
+    "airenos_session_authority_remains_canonical": true
+  },
+  "database_boundary": {
+    "keycloak_database": "DEDICATED_POSTGRESQL",
+    "airenos_database_shared": false,
+    "credentials_managed_outside_source_control": true,
+    "ha_required_for_production": true
+  },
+  "topology": {
+    "production_minimum_keycloak_replicas": 2,
+    "reverse_proxy_or_load_balancer_required": true,
+    "public_and_admin_hostname_separation_required": true,
+    "admin_surface_network_restriction_required": true,
+    "health_and_metrics_required": true,
+    "preview_multicluster_features_required": false
+  },
+  "live_evidence": {
+    "dns_proven": false,
+    "tls_proven": false,
+    "keycloak_deployed": false,
+    "realm_created_on_live_provider": false,
+    "client_registered_on_live_provider": false,
+    "real_oidc_authorization_code_exchange_proven": false,
+    "real_browser_login_certified": false
+  }
+}

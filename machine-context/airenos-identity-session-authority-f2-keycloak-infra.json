@@ -1,0 +1,61 @@
+{
+  "pack": "ISA-F2-KEYCLOAK-INFRA",
+  "date": "2026-08-31",
+  "gate": "ISA_F2_KEYCLOAK_SELF_HOST_INFRA_CONTRACT",
+  "status": "IMPLEMENTED_CONTRACT_LIVE_BINDING_PENDING",
+  "branch": "foundation/airenos-identity-session-authority-f2-keycloak-infra-20260831",
+  "base_sha": "e76b3ca0f37bc6951d27999c6f18a35456906ecc",
+  "extends": [
+    "ISA_F0_TRUST_CRYPTO_CONTRACT",
+    "ISA_F1_SESSION_LIFECYCLE_REVOCATION",
+    "ISA_F2_OIDC_ADAPTER_CONTRACT"
+  ],
+  "authentication_engine": {
+    "product": "Keycloak",
+    "hosting": "SELF_HOSTED",
+    "oci_image": "quay.io/keycloak/keycloak:26.7.2",
+    "version_pinned": true,
+    "optimized_production_build": true,
+    "database": "DEDICATED_POSTGRESQL",
+    "minimum_production_replicas": 2,
+    "admin_public_surface": false
+  },
+  "canonical_targets": {
+    "public_hostname": "https://login.airenos.com",
+    "issuer": "https://login.airenos.com/realms/airenos",
+    "admin_hostname": "https://identity-admin.airenos.com",
+    "callback": "https://session.airenos.com/oidc/callback",
+    "realm": "airenos",
+    "client_id": "airenos-browser-session"
+  },
+  "authority": {
+    "keycloak_is_canonical_airenos_identity_authority": false,
+    "keycloak_is_airenos_session_authority": false,
+    "keycloak_role_tenant_entitlement_claims_authoritative": false,
+    "upstream_access_token_is_airenos_bearer": false,
+    "base44_auth_is_airenos_authority": false,
+    "airenos_identity_directory_canonical": true,
+    "airenos_session_authority_canonical": true,
+    "airenos_authorization_server_side": true
+  },
+  "protocol": {
+    "authorization_code": true,
+    "pkce": "S256",
+    "implicit": false,
+    "direct_access_grants": false,
+    "wildcard_redirects": false
+  },
+  "live_evidence": {
+    "dns": "NOT_PROVEN",
+    "tls": "NOT_PROVEN",
+    "deployment": "NOT_EXECUTED",
+    "realm_provider_readback": "NOT_EXECUTED",
+    "client_provider_readback": "NOT_EXECUTED",
+    "real_authorization_code_exchange": "NOT_EXECUTED",
+    "real_browser_login": "NOT_CERTIFIED",
+    "base44_airenos_kairos_e2e": "NOT_EXECUTED"
+  },
+  "production_side_effects": "FORBIDDEN",
+  "database_migration": "NONE",
+  "next": "Deploy the pinned Keycloak engine to governed staging, provision the real realm/client without committing secrets, and collect live provider read-back before closing F2 real-provider binding."
+}
