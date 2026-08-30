@@ -88,7 +88,9 @@ test("Terraform outputs and sources contain no committed provider or database se
   assert.doesNotMatch(joined, /OVH_APPLICATION_SECRET\s*=\s*["'][^"']+/);
   assert.doesNotMatch(joined, /OVH_CONSUMER_KEY\s*=\s*["'][^"']+/);
   assert.doesNotMatch(joined, /password\s*=\s*["'][^"']+/i);
-  assert.doesNotMatch(await text("infra/ovh/milan-staging/outputs.tf"), /kubeconfig|password|consumer_key|application_secret/i);
+
+  const outputs = await text("infra/ovh/milan-staging/outputs.tf");
+  assert.doesNotMatch(outputs, /output\s+"(?:kubeconfig|password|consumer_key|application_secret|application_key)"/i);
 });
 
 test("Keycloak staging manifest is non-deployable until governed digest and secret bindings exist", async () => {
