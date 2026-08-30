@@ -1,0 +1,184 @@
+{
+  "schema": "airen.kairos.drive-full-census.v0.1",
+  "date": "2026-08-30",
+  "status": "CANONICAL_DRIVE_DIRECT_CHILD_CENSUS_COMPLETE",
+  "scope": "AIRenOS canonical Drive root and canonical folders 01-10 including 04.1/04.2/04.3 direct-child relationships",
+  "invariants": {
+    "censused_equals_ingested": false,
+    "runtime_ingestion_authorized": false,
+    "secret_values_allowed": false,
+    "retrieval_authorization": "pre_retrieval",
+    "recursive_archive_payload_ingestion": false,
+    "drive_full_direct_child_census_complete": true,
+    "k2_overall_closed": false
+  },
+  "lineage": {
+    "root_manifest": {
+      "path": "machine-context/kairos-initial-census-v0.1.json",
+      "blob_sha": "a8aae47ca51d0fd60b7472f5da470da2fda838b1"
+    },
+    "selected_folder_item_manifest": {
+      "path": "machine-context/kairos-drive-item-census-v0.1.json",
+      "commit": "26f74647f02a546016c018ba259629638e7ce479",
+      "blob_sha": "5172f740014dc47e34497872f73d425a903744f3",
+      "direct_child_edges": 82
+    },
+    "human_census": {
+      "drive_id": "1iNVcTh7X1mo0wlNdT4TE8a9kAnXAnk3TJUoUQ7KoARQ",
+      "revision_before_this_machine_write": "ANLCKQk9unXb54PdYilBhHYsPffuAmWchZuNyKpmufWBKAfThg3P0WBcWWPfOAaKeuSBh0HSzXfOmBC5JfSG4kYzrHy5Ol6FIpgrdPUX55s"
+    }
+  },
+  "counting_semantics": {
+    "metric": "parent_child_edges",
+    "not_unique_artifact_count": true,
+    "reason": "folders are intentionally represented both as children of their parent and as surveyed containers",
+    "prior_edges": 82,
+    "completion_edges": 71,
+    "total_canonical_drive_direct_child_edges": 153
+  },
+  "completion_surveys": [
+    {
+      "folder": "AIRenOS Platform Bible root",
+      "drive_id": "1q1BklD63X_yl281gGAN4NKdK2fZ_z60y",
+      "direct_child_count": 12,
+      "authority": "CANONICAL_STRUCTURE",
+      "items": [
+        {"id":"1ZlppAFqaJvhWUxwHyUdMJIaREBPzSAsn9hy7kupX9DA","title":"AIRenOS Platform Bible — Analisi Funzionale, Architettura e Product Operating Model — v0.1","type":"GOOGLE_DOC","authority":"ACTIVE_FOUNDATION"},
+        {"id":"1p8ES5MBaJjWQdm9q8IDNnXu2tC5vDLxo3JTmvJkz_fI","title":"00 — AIRenOS Documentation Index & Governance Registry — v0.1","type":"GOOGLE_DOC","authority":"CURRENT_CANONICAL_REGISTRY"},
+        {"id":"195n2Rh3SupurLT6BCdsGDAhk7GN2T5MU","title":"01 — AIRenOS Core Specifications","type":"FOLDER"},
+        {"id":"1osaIUaT6PQuZskpX01hbQWgE42k5-wHC","title":"02 — RISTOAIREN Vertical Specifications","type":"FOLDER"},
+        {"id":"1JQchmY2_Yu8nVG1YbGBE6pk7A0Tj4pxB","title":"03 — Security, Testing & Certification","type":"FOLDER"},
+        {"id":"1VbF3GtfswDxGhnyzS1icG9XoeK0g14H9","title":"04 — Portability, Rebuild & AI Build Packs","type":"FOLDER"},
+        {"id":"1zLYLsZkgkYO50aSTUTrt-i9DFSedtEzG","title":"05 — ADR, Changelog & Technical Provenance","type":"FOLDER"},
+        {"id":"1hq4Piv579zRdE9-Zuk33yJna2ujMCfmW","title":"06 — Archive & Superseded Decisions","type":"FOLDER"},
+        {"id":"114w99r0nVUcGdJxy2QYU21hrsHN2-mec","title":"07 — Machine-Readable Specs","type":"FOLDER"},
+        {"id":"1fIN4n9Wl0iAejAOSggTJJmlRzwWT7xD9","title":"08 — Generated Deliverables","type":"FOLDER"},
+        {"id":"1Mw48_itH3gezN0bsa2Ao-wHPzflBJw_x","title":"09 — Review & Approval Working Area","type":"FOLDER"},
+        {"id":"1e8e0urcf7VG-hVIqwcxcJAc8k0hCrEOt","title":"10 — Release Baselines","type":"FOLDER"}
+      ]
+    },
+    {
+      "folder": "01 — AIRenOS Core Specifications",
+      "drive_id": "195n2Rh3SupurLT6BCdsGDAhk7GN2T5MU",
+      "direct_child_count": 6,
+      "default_ingestion": "NATIVE_DOC_STRUCTURE",
+      "items": [
+        {"id":"1uF838nQbsO1FtVeZXM_UbCIvRzWKa38r8OvEIT_ID8c","title":"01 — AIRenOS Functional Domain Map — v0.1"},
+        {"id":"14N0g73Vl7CLnndjnY1h5EKoCozKlNtR4BffU3FLO_1U","title":"02 — AIRenOS Identity & Organization Specification — v0.1"},
+        {"id":"1duQJ5eB0ki1dBLluJppOtTpG89oeig6jNnxcGOBS4LM","title":"03 — AIRenOS Product Catalog, Subscription & Entitlements Specification — v0.1"},
+        {"id":"1xJcazuB7AZHZEl_TFrq2HtU9lC0F6j6IlYEAzaB_55E","title":"04 — AIRenOS Tenant & Location Provisioning Specification — v0.1"},
+        {"id":"1ORReANVGIWVtGNEGKW9M_0Oe2nvxG44HR_My0aeDIXA","title":"05 — AIRenOS Security & Audit Bible — v0.1"},
+        {"id":"1Ve022bt1g8QQ7mJmPwpv8i-mWuz_9ZVgnvsn39QlsXY","title":"06 — AIRenOS Vertical Contract — v0.1"}
+      ]
+    },
+    {
+      "folder": "02 — RISTOAIREN Vertical Specifications",
+      "drive_id": "1osaIUaT6PQuZskpX01hbQWgE42k5-wHC",
+      "direct_child_count": 8,
+      "default_ingestion": "NATIVE_DOC_STRUCTURE",
+      "items": [
+        {"id":"1QAof-o8wHK4vLFhLguOlF1Y4y8rC8Ydp1UTQmIia0nE","title":"07 — RISTOAIREN Functional Domain Map — v0.1"},
+        {"id":"12w7LMxXuQOwEzjcYQnpF6cqEapl2lxy-2Vl9EGiadVA","title":"07A — RISTOAIREN Visual Media Brand Content Specification v0.1"},
+        {"id":"16d_ItmtJgDktWxYQXbZB7FzTJMVIKFSVzYfF5xd8ZLc","title":"08 — RISTOAIREN Entity & Data Dictionary — v0.1"},
+        {"id":"1MhfahuVL7M_1APUnzqXZY_9sCBu-1veToHxTBGGw8mY","title":"09 — RISTOAIREN RBAC & RLS Matrix — v0.1"},
+        {"id":"1686W-gU6L0Pin_xjUg4V2khyeItJ-9PtnRgMlH3Npmw","title":"10 — RISTOAIREN Backend Function Catalog — v0.1"},
+        {"id":"1XtnPRG4OC3q4JpJCSAPjKFW3Kiimg-jDOblxmC6ZCYE","title":"11 — RISTOAIREN Route, Page & UX Surface Catalog — v0.1"},
+        {"id":"1u4t0NsY0K-h9vazMzRPc1s6DXrDS3e7nyEpPmlzQ5qQ","title":"12 — STELLA Technical & Cognitive Bible — v0.1"},
+        {"id":"1Pm3Tzod7pupMdljHyRu44jz5ZvCOnEJ2TGfDTlIIk9Q","title":"13 — ATMOS Experience Engine Bible — v0.1"}
+      ]
+    },
+    {
+      "folder": "03 — Security, Testing & Certification",
+      "drive_id": "1JQchmY2_Yu8nVG1YbGBE6pk7A0Tj4pxB",
+      "direct_child_count": 2,
+      "default_ingestion": "NATIVE_DOC_STRUCTURE",
+      "items": [
+        {"id":"1zjrGrHkplrzZvhqn8TbB7XVcPgE5cKFXblgBsmt6jLU","title":"14 — T20 Security Certification Specification — v0.1","authority":"CERTIFICATION_FOUNDATION"},
+        {"id":"1PwwtL_J-q8ujR2UzQTyGt8OAyp3alhAvRqioyMw4VQI","title":"15 — Golden Restaurant E2E Specification — v0.1","authority":"CANONICAL_FOUNDATION"}
+      ]
+    },
+    {
+      "folder": "04 — Portability, Rebuild & AI Build Packs",
+      "drive_id": "1VbF3GtfswDxGhnyzS1icG9XoeK0g14H9",
+      "direct_child_count": 26,
+      "default_authority": "CHILD_SPECIFIC",
+      "items": [
+        {"id":"18xW3nEe9w-bxzcsYtddot8enYwCVeD8RWZhmIS1ctjE","title":"R3-CP-001 — AIRenOS Control Plane Scope & Gap Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1Zn8q8YeaNh5T63h-W5djG_82rUN0BfvhkAcGugS0YkQ","title":"G4-R2 — Foundation Completion Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1D50_O68fU6XNZANM1UVsxxteeH8vZ7DXE48pzL4d7sY","title":"B44-FX-014 — Deployment Path Verification — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1T1yZPbrh2j45a0QknnvQq140EcEPZtd6yuNB9nJboH0","title":"B44-FX-013 — Observability Baseline — v0.1","type":"GOOGLE_DOC"},
+        {"id":"12EXWex1NuR--a56Fi0t277khqzl5hoOC1JYc2UoCzXw","title":"B44-FX-012 — Environment & Secret Provider Runtime Contract — v0.1","type":"GOOGLE_DOC","secret_policy":"REFERENCE_METADATA_ONLY_NEVER_SECRET_VALUES"},
+        {"id":"1tc7C7QbB9rl_QI5o_ejYyKM-43IlxE1VJuQs3gIMj88","title":"B44-FX-011-R1 — Authentication Token Canonicalization & Test Reliability Reconciliation — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1g6hLSsSsPcAoia2z1qeEKmuM8aN6yBffrM5CB-g4Egw","title":"B44-FX-011 — Identity Adapter & Authenticated Principal Runtime — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1w0enNBRE9_AEzgnbGXiT6uMEsqx-OfbfIJQEA6Vx0h0","title":"B44-FX-010 — PostgreSQL Repository Adapters, Transaction Boundary & First Governed Command — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1eFTsZ7CpX6857aCjp-Yxf1IOe5sX45x0GZD4k1_q_RQ","title":"B44-FX-009-R1 — PostgreSQL/RLS CI Runtime Evidence — v0.1","type":"GOOGLE_DOC","authority":"EVIDENCE"},
+        {"id":"17zghy_QwQWdKI8T9BIkWXxRqQb_IDChHZNwNoo07GuQ","title":"B44-FX-008 — Foundation Runtime Slice 1 — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1pvESFg4Qc7xWBncKttwqQeZVmRzMJFYJdHrj3_LePsE","title":"B44-FX-007 — R0 GitHub Bootstrap & Foundation Initialization — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1CShs_fLvqepKtSO5LpCkzPgiTZ851nrG","title":"04.3 — Foundation Code Snapshots & Release Archives","type":"FOLDER"},
+        {"id":"1D2ZRLjrnu5ethfST60iD_cHBjSn8dyodyoaLCZUUdgc","title":"B44-FX-009 — PostgreSQL Harness, RLS & CI Runtime Verification — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1zLcbtCQj0KN_VS0JPmt4FNbNVbbMBrjgWMllmFk9JYM","title":"B44-FX-006 — Portable Foundation Repository & Migration Contract Pack — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1KmdO5XnRlrxP1m9BPkAkAe96MYYh7ATG","title":"04.2 — Portable Foundation Repository & Migration Contracts","type":"FOLDER"},
+        {"id":"1RFBWDvghBvmo4fIMaYzllqYvmOAq09qZBT0jOFN-HiM","title":"B44-FX-005 — Decision Queue Reconciliation & ADR Pack — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1C_lGwx5vQaE-a-i4KP3Yr4nuywUujOCOb0csHpvL0Ww","title":"B44-FX-004 — Consolidated Boundary & Portability Matrix — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1bVBk6pUtY9ZwTELy7StBWdhgz6d-zO2b","title":"04.1 — Forensic Registers & Machine Evidence","type":"FOLDER"},
+        {"id":"1n7Gh1IH5uerZ-dAlcgOcpPDO9n3bqsOKTOfaNhnSaXc","title":"B44-FX-003 — Corte delle Stelle Forensic Source Snapshot — v0.1","type":"GOOGLE_DOC","authority":"FORENSIC_SOURCE_SNAPSHOT"},
+        {"id":"1VmajOJpbUIVxvO6JSeGnB1du3xmZtqnZI5ZxUlssHBI","title":"B44-FX-002 — RISTOAIREN Forensic Source Snapshot — v0.1","type":"GOOGLE_DOC","authority":"FORENSIC_SOURCE_SNAPSHOT"},
+        {"id":"17a4Yx2DASGH2SjlfyL_wANxilrUJs-7q0O8duque6a0","title":"B44-FX-001 — AIRenOS Forensic Source Snapshot — v0.1","type":"GOOGLE_DOC","authority":"FORENSIC_SOURCE_SNAPSHOT"},
+        {"id":"1YE_4UyQO_lM195w8q00VdKeUTelV0ff550K7SOoa2U4","title":"20 — Final Rebuild & Parity Plan — v0.1","type":"GOOGLE_DOC"},
+        {"id":"128dyGHlhb2Dlhye8N0eoGzmkYzvO5iJQ3-0OlY4nrs0","title":"19 — Google AI Studio Build Context — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1sCQJRcJAB2YWpO2z95LF5lqDaa_jZQ2RG-F684NmIj0","title":"18 — Codex Rebuild Pack — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1FRWNOghd3HVxJFOYtpiVddlvW5FHWQ_a8uOpPtK-8Ds","title":"17 — Base44 → Portable Architecture Mapping — v0.1","type":"GOOGLE_DOC"},
+        {"id":"1HzPVv9CSezC5k4pM_X3VQssgj2rbUHup9tE2JPnpXQM","title":"16 — Base44 Forensic Extraction Manifest — v0.1","type":"GOOGLE_DOC"}
+      ]
+    },
+    {
+      "folder": "05 — ADR, Changelog & Technical Provenance",
+      "drive_id": "1zLYLsZkgkYO50aSTUTrt-i9DFSedtEzG",
+      "direct_child_count": 7,
+      "default_ingestion": "NATIVE_DOC_STRUCTURE",
+      "items": [
+        {"id":"1n3x0q9XUVt7saWLXvVgB1HYMzwppp0ykIzXH15DVN3k","title":"PROV-000 — AIRenOS Technical Provenance & Artifact Lineage Register — v1.0","authority":"PROVENANCE_REGISTRY"},
+        {"id":"1GSZHCB279V1RzAqHITSS1UvtrwZP1js1S6ZwiNKtshw","title":"CHANGELOG-000 — AIRenOS Canonical Engineering Changelog — v1.0","authority":"CANONICAL_CHANGELOG"},
+        {"id":"1DcX-DC7ubmRIkz8kIHE5RhkfBtqExMGr1gyUcGpAqIk","title":"ADR-000 — AIRenOS Architecture Decision Register — v1.0","authority":"ADR_REGISTRY"},
+        {"id":"1L2yqy6XiKVsdbXe6vrVmlvFXRJCUFoXncnXeu7Bbpos","title":"RULE-DOC-20 — Canonical Chat Handoff & Continuity Protocol — AIRenOS / RISTOAIREN","authority":"GOVERNANCE_BINDING"},
+        {"id":"1Juh6ENbOC_we5eL3OvmVRg0AM5t_0Fvnm2PAJYQHu5o","title":"CHAT-HANDOFF-20260824-01 — AIRenOS / RISTOAIREN — R3 Sequence Closed / Next Gate Requires Authorization","authority":"HISTORICAL_HANDOFF"},
+        {"id":"1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE","title":"RULE-DOC-21 — Dual-Source Prompt Verification Protocol — AIRenOS / RISTOAIREN","authority":"GOVERNANCE_BINDING"},
+        {"id":"1SkA1lQXMvYNCiTPJwDPCmB5l1VW0DETUHx8j3haGlLg","title":"BIBLE-REC-01 — Canonical Folder Population & Artifact Classification Reconciliation — v1.0","authority":"GOVERNANCE_RECONCILIATION"}
+      ]
+    },
+    {
+      "folder": "07 — Machine-Readable Specs",
+      "drive_id": "114w99r0nVUcGdJxy2QYU21hrsHN2-mec",
+      "direct_child_count": 10,
+      "default_ingestion": "NATIVE_SHEETS_STRUCTURE",
+      "items": [
+        {"id":"1HC0kyvyY_6c2IQ6ABeSLHkrCvK7_mHEvTU1QfHRBvlM","title":"MRS-000 — AIRenOS Machine-Readable Specification Registry — v1.0","type":"GOOGLE_SHEET","authority":"MRS_REGISTRY"},
+        {"id":"1q2VyUhoBK-Yn7zHhlDTcXEfnWD5ZSaMpRAIPTbw8rWE","title":"MRS-012 — T20 Portable Booking File & Contract Census — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1XLcmWw5dcQBeqETwCVfTfKmHNB_j3_Cj1zVCF5lbNZQ","title":"MRS-011 — T20 Security Certification Scope & Portable Booking Slice — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1jNGi1ffH-qeyASUUAx1IMAKa0HHObIxOR48dMbciLAM","title":"MRS-010 — R3-J Integrated Control Plane Certification Journey Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1In7UJnp4CD8UBDih4-31SEFs6sfYi0xfeDpiJOk0_k4","title":"MRS-009 — R3-I Admin API & UI Contract Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1rVKejVktQh6VyLm7gohIm1QEfxF62pEfXlbW4ivzMdw","title":"MRS-008 — R3-H Platform Audit Query Machine Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1TvOTK4aMNTNw4lUG3OJcmcn1S2H3eabm48H3UBoLRN0","title":"MRS-007 — R3-G Feature & Capability Resolution Machine Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1QjqGp-wctE9ULbjRU5EgT0gAt_r3LYkdTdq5MXzsBvk","title":"MRS-006 — R3-F Entitlement Administration & Effective Resolution Machine Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1LOvSAzjvVPOyq2AfBUw9qruqRX_x3kf2nlVK2HL5MDo","title":"MRS-005 — R3-E Plan & Subscription Lifecycle Machine Spec — v0.1","type":"GOOGLE_SHEET"},
+        {"id":"1Su6GxxHGktMOD7i_sj2onkYU6-Gtza3lv-4PnHz0HCQ","title":"07 — Machine-Readable Specs — Classification & Registry Policy — v1.0","type":"GOOGLE_DOC","authority":"GOVERNANCE_POLICY","ingestion":"NATIVE_DOC_STRUCTURE"}
+      ]
+    }
+  ],
+  "drive_classification_summary": {
+    "canonical_root": "COMPLETE_DIRECT_CHILD_CENSUS",
+    "folders_01_to_10": "COMPLETE_DIRECT_CHILD_CENSUS",
+    "folder_04_subfolders_04_1_to_04_3": "COMPLETE_DIRECT_CHILD_CENSUS",
+    "nested_archive_payloads": "INTENTIONALLY_NOT_RECURSIVELY_CENSUSED_BY_DEFAULT",
+    "archive_manifests_and_integrity_metadata": "ELIGIBLE_FOR_NATIVE_INDEXING",
+    "secret_values": "NEVER_INGEST"
+  },
+  "k2_remaining": [
+    "GitHub repository item-level census and source-boundary classification",
+    "cross-source deduplication/coordinate binding between Drive and GitHub",
+    "K2 closure reconciliation"
+  ],
+  "k3": "NOT_AUTHORIZED",
+  "d4_d_refund_test": "DEFERRED_NEXT_PAYMENT_GATE_NOT_EXECUTED",
+  "airenpay_resume_sha": "d055fba86d938aa38cee648171425046c7d972a4"
+}
