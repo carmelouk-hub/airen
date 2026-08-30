@@ -1,0 +1,100 @@
+{
+  "schema": "airen.kairos.k2-closure.v0.1",
+  "date": "2026-08-30",
+  "gate": "K2",
+  "state": "CLOSED_PASS",
+  "scope": "Knowledge census, source classification, provenance coordinates and cross-source binding bootstrap only",
+  "not_in_scope": [
+    "runtime ingestion",
+    "OCR execution",
+    "embeddings",
+    "vector search",
+    "full-text search runtime",
+    "voice runtime",
+    "Base44 Kairos UI",
+    "tenant runtime exposure",
+    "production deployment"
+  ],
+  "closure_parent": {
+    "kairos_branch": "kairos/bootstrap-20260830",
+    "parent_commit": "208bec5f34b7d7c352835234a6f0e895726e4a45",
+    "note": "This closure record is intentionally created in the next commit and certifies the governed K2 state at its parent plus the human read-back identified below."
+  },
+  "human_authority": {
+    "drive_id": "1iNVcTh7X1mo0wlNdT4TE8a9kAnXAnk3TJUoUQ7KoARQ",
+    "title": "AIREN KAIROS — Initial Census v0.1 — 2026-08-30",
+    "revision": "ANLCKQmwj2GKr0zfvmboA8jHC392btvFhqdbtafBT3Yk-haZ-ARiKvH7agv5Tc-CBDE43zNAw07pIbwv7wzQJg5rrYUDEBhNKXNilWbF3b8",
+    "cross_source_binding_readback": "MATCH"
+  },
+  "machine_authorities": [
+    {
+      "path": "machine-context/kairos-initial-census-v0.1.json",
+      "blob": "a8aae47ca51d0fd60b7472f5da470da2fda838b1",
+      "role": "ROOT_CENSUS_MANIFEST"
+    },
+    {
+      "path": "machine-context/kairos-drive-item-census-v0.1.json",
+      "blob": "5172f740014dc47e34497872f73d425a903744f3",
+      "role": "SELECTED_DRIVE_ITEM_CENSUS"
+    },
+    {
+      "path": "machine-context/kairos-drive-full-census-v0.1.json",
+      "blob": "30f44413c0b8ba07fad01cc90eaf18edb6ec5547",
+      "role": "FULL_CANONICAL_DRIVE_DIRECT_CHILD_CENSUS"
+    },
+    {
+      "path": "machine-context/kairos-github-tree-census-v0.1.json",
+      "blob": "62d7258cbd2e92bdd9d05e4cd86f87db12db139c",
+      "role": "GITHUB_NATIVE_RECURSIVE_TREE_CENSUS"
+    },
+    {
+      "path": "machine-context/kairos-cross-source-coordinate-registry-v0.1.json",
+      "blob": "123a0da1d3f99e9f2e75b27347aba71ec557f8d9",
+      "role": "CROSS_SOURCE_COORDINATE_AND_DEDUPLICATION_REGISTRY"
+    }
+  ],
+  "source_snapshot_evidence": {
+    "canonical_drive_direct_child_edges": 153,
+    "counting_semantics": "parent_child_edges_not_unique_artifacts",
+    "drive_direct_child_census": "PASS",
+    "github_source_commit": "d815cf8e2103ae2e1cf5aba7dd262028b0af62eb",
+    "github_source_tree": "770e0339cad6bc4d2ec98604b2b6bda561ca1b3a",
+    "github_recursive_tree_truncated": false,
+    "github_recursive_tree_census": "PASS",
+    "cross_source_coordinate_binding_seed": "PASS"
+  },
+  "security_and_authority_invariants": {
+    "secret_values_allowed": false,
+    "secret_value_hashing_for_search": false,
+    "retrieval_authorization": "PRE_RETRIEVAL",
+    "relation_traversal_authorization": "PRE_TRAVERSAL",
+    "deduplication_may_expand_acl": false,
+    "censused_equals_ingested": false,
+    "governed_drive_human_authority_preferred_when_declared": true,
+    "historical_or_proposal_material_may_outrank_current_canonical": false,
+    "base44_canonical_residence": false,
+    "recursive_raw_archive_ingestion_default": "DENY"
+  },
+  "closure_checks": {
+    "drive_census": "PASS",
+    "github_tree_census": "PASS",
+    "authority_and_ingestion_classes": "PASS",
+    "cross_source_binding": "PASS",
+    "secret_exclusion": "PASS",
+    "pre_retrieval_authorization": "PASS",
+    "censused_not_ingested": "PASS",
+    "rule_doc_21_pre_closure_reconciliation": "MATCH"
+  },
+  "protected_boundaries_at_closure_precheck": {
+    "airenpay_rbl_branch": "rbl/ristoairen-real-baseline-01-20260827",
+    "airenpay_rbl_head": "d055fba86d938aa38cee648171425046c7d972a4",
+    "protected_r3_branch": "r3/control-plane-20260822",
+    "protected_r3_head": "3d32b53bde2191c7718606cf9d3fe3497ae3f626",
+    "pr_4": "OPEN_DRAFT_UNMERGED"
+  },
+  "next_state": {
+    "k2": "CLOSED_PASS",
+    "k3_runtime_ingestion_search_ocr_vector": "NOT_AUTHORIZED",
+    "d4_d_refund_test": "DEFERRED_NEXT_PAYMENT_GATE_NOT_EXECUTED"
+  }
+}
