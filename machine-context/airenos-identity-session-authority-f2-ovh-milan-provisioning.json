@@ -1,0 +1,97 @@
+{
+  "pack": "ISA-F2-OVH-MILAN-PROVISIONING",
+  "date": "2026-08-31",
+  "gate": "ISA_F2_OVH_MILAN_STAGING_PROVISIONING",
+  "status": "PROVISIONING_CONTRACT_READY_REAL_APPLY_PENDING",
+  "branch": "foundation/airenos-identity-session-authority-f2-ovh-milan-provisioning-contract-20260831",
+  "base_sha": "6442909f1b8a9c708be24996e9a5dfe976c9eb1d",
+  "terraform": {
+    "version": "1.16.0",
+    "provider": "ovh/ovh",
+    "provider_version": "2.19.0",
+    "endpoint": "ovh-eu",
+    "remote_state_required_for_live_apply": true,
+    "remote_state_backend": "S3_COMPATIBLE_ENCRYPTED_VERSIONED_ACCESS_CONTROLLED",
+    "ci_backend_disabled": true,
+    "ci_plan": false,
+    "ci_apply": false,
+    "ci_destroy": false
+  },
+  "target": {
+    "provider": "OVHcloud Public Cloud",
+    "region_api": "EU-SOUTH-MIL",
+    "region_name": "3-AZ Milan",
+    "availability_zones": [
+      "eu-south-mil-a",
+      "eu-south-mil-b",
+      "eu-south-mil-c"
+    ],
+    "private_network_cidr": "10.42.0.0/20",
+    "kubernetes_plan": "standard",
+    "kubernetes_version": "1.34",
+    "minimum_workers": 3,
+    "keycloak_minimum_replicas": 2,
+    "keycloak_version": "26.7.2"
+  },
+  "postgresql": {
+    "engine": "postgresql",
+    "version": "17",
+    "marketing_tier": "Production",
+    "terraform_api_plan": "business",
+    "requested_nodes": 2,
+    "deletion_protection": true,
+    "multi_az_documentation_reconciliation": "CONFLICTING_PROVIDER_DOCUMENTATION_FAIL_CLOSED",
+    "live_multiaz_topology_proof": "NOT_EXECUTED"
+  },
+  "fail_closed_guards": {
+    "provider_account_preflight_verified_default": false,
+    "quota_preflight_verified_default": false,
+    "postgresql_multiaz_preflight_verified_default": false,
+    "provider_region_type_must_equal": "region-3-az",
+    "provider_zone_readback_required": true,
+    "immutable_keycloak_digest_required_before_deploy": true
+  },
+  "secrets": {
+    "provider_credentials_committed": false,
+    "database_credentials_created_by_terraform": false,
+    "keycloak_bootstrap_credentials_committed": false,
+    "secret_manager_binding": "LIVE_GATE_PENDING",
+    "kms_binding": "LIVE_GATE_PENDING"
+  },
+  "authority_boundary": {
+    "ovhcloud_is_airenos_identity_authority": false,
+    "keycloak_is_airenos_identity_authority": false,
+    "keycloak_is_airenos_session_authority": false,
+    "keycloak_roles_tenants_entitlements_authoritative": false,
+    "upstream_access_token_is_airenos_bearer": false,
+    "base44_auth_is_airenos_authority": false,
+    "airenos_identity_directory_canonical": true,
+    "airenos_session_authority_canonical": true,
+    "airenos_authorization_server_side": true
+  },
+  "live_evidence": {
+    "provider_connector_available_in_session": false,
+    "provider_account_ready": "NOT_VERIFIED",
+    "cloud_project_readback": "NOT_EXECUTED",
+    "quota_readback": "NOT_EXECUTED",
+    "milan_3az_provider_api_readback": "NOT_EXECUTED",
+    "postgresql_multiaz_topology": "NOT_PROVEN",
+    "remote_state_backend": "NOT_CREATED_OR_VERIFIED",
+    "private_network": "NOT_CREATED",
+    "gateway": "NOT_CREATED",
+    "kubernetes_cluster": "NOT_CREATED",
+    "kubernetes_node_pool": "NOT_CREATED",
+    "postgresql": "NOT_CREATED",
+    "secret_manager": "NOT_CREATED_OR_VERIFIED",
+    "kms": "NOT_CREATED_OR_VERIFIED",
+    "keycloak_deployment": "NOT_EXECUTED",
+    "realm_client_readback": "NOT_EXECUTED",
+    "dns": "NOT_PROVEN",
+    "tls": "NOT_PROVEN",
+    "real_authorization_code_exchange": "NOT_EXECUTED",
+    "real_browser_login": "NOT_CERTIFIED",
+    "base44_airenos_kairos_e2e": "NOT_EXECUTED"
+  },
+  "production_side_effects": "NONE",
+  "next": "ISA_F2_OVH_MILAN_REAL_PROVIDER_PREFLIGHT_AND_APPLY"
+}
