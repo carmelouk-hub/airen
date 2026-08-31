@@ -110,6 +110,7 @@ export interface StripeAirenPayTestClientPort {
 
   retrieveSetupIntent(providerReference: string): Promise<StripeSetupIntentProjection>;
   retrievePaymentIntent(providerReference: string): Promise<StripePaymentIntentProjection>;
+  retrievePaymentIntentWithAuthorizationExpiry?(providerReference: string): Promise<StripePaymentIntentProjection>;
 
   verifyWebhook(
     rawBody: Uint8Array,
@@ -366,7 +367,9 @@ export class StripeAirenPayTestAdapter implements PaymentGatewayPort {
         providerMetadata: Object.freeze({ stripeObject: "setup_intent", stripeStatus: setup.status, livemode: false })
       });
     }
-    const payment = await resolved.client.retrievePaymentIntent(providerReference);
+    const payment = resolved.client.retrievePaymentIntentWithAuthorizationExpiry
+      ? await resolved.client.retrievePaymentIntentWithAuthorizationExpiry(providerReference)
+      : await resolved.client.retrievePaymentIntent(providerReference);
     assertTestObject(payment.livemode);
     return Object.freeze({
       providerReference: payment.id,

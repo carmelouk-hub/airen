@@ -94,14 +94,15 @@ function factory(fetchImpl: StripeAirenPayFetch) {
   });
 }
 
-test("RBL14-D01 retrieve PaymentIntent expands latest_charge and maps capture_before to authorizationExpiresAt", async () => {
+test("RBL14-D01 expiry-aware PaymentIntent retrieval expands latest_charge and maps capture_before", async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const fetchImpl: StripeAirenPayFetch = async (input, init) => {
     calls.push({ url: String(input), init });
     return jsonResponse(paymentIntentFixture());
   };
   const client = await factory(fetchImpl).forConnection(connection());
-  const result = await client.retrievePaymentIntent("pi_rbl14");
+  assert.ok(client.retrievePaymentIntentWithAuthorizationExpiry);
+  const result = await client.retrievePaymentIntentWithAuthorizationExpiry("pi_rbl14");
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].init?.method, "GET");
@@ -111,7 +112,11 @@ test("RBL14-D01 retrieve PaymentIntent expands latest_charge and maps capture_be
 });
 
 test("RBL14-D02 AIRenPay transaction status propagates provider authorization expiry", async () => {
-  const fetchImpl: StripeAirenPayFetch = async () => jsonResponse(paymentIntentFixture());
+  const calls: string[] = [];
+  const fetchImpl: StripeAirenPayFetch = async input => {
+    calls.push(String(input));
+    return jsonResponse(paymentIntentFixture());
+  };
   const adapter = new StripeAirenPayTestAdapter(factory(fetchImpl));
   const result = await adapter.getTransactionStatus(Object.freeze({
     orchestrationId: "00000000-0000-4000-8000-000000001411",
@@ -120,6 +125,7 @@ test("RBL14-D02 AIRenPay transaction status propagates provider authorization ex
     connection: connection()
   }), "pi_rbl14");
 
+  assert.equal(calls[0], "https://api.stripe.test/v1/payment_intents/pi_rbl14?expand%5B%5D=latest_charge");
   assert.equal(result.providerReference, "pi_rbl14");
   assert.equal(result.authorizationExpiresAt, EXPECTED_EXPIRY);
   assert.deepEqual(result.amount, { amountMinor: 100, currency: "EUR" });
@@ -147,10 +153,11 @@ test("RBL14-D03 authorization-window policy accepts service before expiry and fa
   );
 });
 
-test("RBL14-D04 malformed provider capture_before fails closed", async () => {
+test("RBL14-D04 malformed provider capture_before fails closed on expiry-aware retrieval", async () => {
   const fetchImpl: StripeAirenPayFetch = async () => jsonResponse(paymentIntentFixture("not-an-integer"));
   const client = await factory(fetchImpl).forConnection(connection());
-  await expectCode(() => client.retrievePaymentIntent("pi_rbl14"), "INTERNAL_ERROR");
+  assert.ok(client.retrievePaymentIntentWithAuthorizationExpiry);
+  await expectCode(() => client.retrievePaymentIntentWithAuthorizationExpiry!("pi_rbl14"), "INTERNAL_ERROR");
 });
 
 test("RBL14-D05 governed expiry runner is explicit-opt-in and contains no Stripe mutation path", async () => {

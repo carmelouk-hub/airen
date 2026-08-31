@@ -306,6 +306,10 @@ class StripeAirenPayTestHttpClient implements StripeAirenPayTestClientPort {
   }
 
   async retrievePaymentIntent(providerReference: string): Promise<StripePaymentIntentProjection> {
+    return paymentProjection(await this.request(`/payment_intents/${encodeURIComponent(providerReference)}`, "GET"));
+  }
+
+  async retrievePaymentIntentWithAuthorizationExpiry(providerReference: string): Promise<StripePaymentIntentProjection> {
     return paymentProjection(await this.request(`/payment_intents/${encodeURIComponent(providerReference)}?expand%5B%5D=latest_charge`, "GET"));
   }
 
