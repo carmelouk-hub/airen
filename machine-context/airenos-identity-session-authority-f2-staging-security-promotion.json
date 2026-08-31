@@ -1,0 +1,61 @@
+{
+  "checkpoint": "ISA_F2_STAGING_SECURITY_PROMOTION_CONTRACT",
+  "date": "2026-08-31",
+  "scope": "Secret/KMS boundary, immutable Keycloak image promotion, DNS/TLS and AIRenOS session handoff",
+  "status": "IMPLEMENTATION_PENDING_CI_AND_GOVERNANCE",
+  "base_commit": "62c0bd82b37a821f3aa771d55189002a2110b113",
+  "governance": {
+    "rule_doc_20": "ACTIVE",
+    "rule_doc_21": "ACTIVE",
+    "real_evidence_only": true,
+    "simulated_runtime_evidence_forbidden": true
+  },
+  "provider_dependency": {
+    "ovh_account_onboarding": "PAUSED_EXTERNAL_FISCAL_DATA_PENDING",
+    "provider_account_readback": "NOT_EXECUTED",
+    "provider_apply": "NOT_EXECUTED",
+    "billable_resource_creation": "NOT_AUTHORIZED"
+  },
+  "secret_kms": {
+    "airenos_secret_reference_abstraction_preserved": true,
+    "ovh_secret_manager_candidate_binding": "OPEN_NOT_EXECUTED",
+    "ovh_kms_candidate_binding": "OPEN_NOT_EXECUTED",
+    "live_region_iam_workload_identity_readback_required": true,
+    "raw_secret_values_committed": false
+  },
+  "image_promotion": {
+    "source_containerfile": "deploy/keycloak/Containerfile",
+    "pinned_keycloak": "quay.io/keycloak/keycloak:26.7.2",
+    "private_registry": "OPEN_NOT_CREATED_OR_VERIFIED",
+    "push": "NOT_EXECUTED",
+    "registry_digest_readback": "NOT_EXECUTED",
+    "vulnerability_scan": "NOT_EXECUTED",
+    "immutable_digest_required": true
+  },
+  "dns_tls": {
+    "login_airenos_com": "NOT_PROVEN",
+    "identity_admin_airenos_com": "NOT_PROVEN",
+    "session_airenos_com": "NOT_PROVEN",
+    "certificate_san_readback": "NOT_EXECUTED",
+    "tls_private_key_binding": "NOT_EXECUTED",
+    "admin_public_exposure": "NOT_AUTHORIZED"
+  },
+  "session_handoff": {
+    "real_provider_authorization_code_exchange": "NOT_EXECUTED",
+    "real_browser_login": "NOT_CERTIFIED",
+    "airenos_session_issuance": "REAL_RUNTIME_PROOF_OPEN",
+    "authorization_before_kairos_retrieval": "REQUIRED",
+    "base44_airenos_kairos_authenticated_e2e": "NOT_EXECUTED",
+    "k4_c3_runtime_deploy_session_handoff_proof": "OPEN_NOT_YET_EXECUTED"
+  },
+  "protected_boundaries": {
+    "k4_branch_mutation": false,
+    "rbl_branch_mutation": false,
+    "r3_branch_mutation": false,
+    "main_mutation": false,
+    "production_mutation": false,
+    "pr4_merge_authorized": false,
+    "k5_authorized": false,
+    "d4_d": "DEFERRED_NOT_EXECUTED"
+  }
+}
