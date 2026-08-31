@@ -61,6 +61,26 @@ function optionalInteger(value: unknown): number | undefined {
   return Number.isSafeInteger(value) && (value as number) >= 0 ? value as number : undefined;
 }
 
+function authorizationExpiryFromLatestCharge(value: unknown): string | undefined {
+  if (value === undefined || value === null || typeof value === "string") return undefined;
+  if (typeof value !== "object") throw new AppError("INTERNAL_ERROR", "Stripe PaymentIntent latest_charge is invalid");
+  const charge = value as Record<string, unknown>;
+  const paymentMethodDetails = charge.payment_method_details;
+  if (paymentMethodDetails === undefined || paymentMethodDetails === null) return undefined;
+  if (typeof paymentMethodDetails !== "object") throw new AppError("INTERNAL_ERROR", "Stripe Charge payment_method_details is invalid");
+  const details = paymentMethodDetails as Record<string, unknown>;
+  if (optionalString(details.type) !== "card") return undefined;
+  const card = details.card;
+  if (card === undefined || card === null) return undefined;
+  if (typeof card !== "object") throw new AppError("INTERNAL_ERROR", "Stripe Charge card details are invalid");
+  const captureBefore = (card as Record<string, unknown>).capture_before;
+  if (captureBefore === undefined || captureBefore === null) return undefined;
+  const seconds = requiredInteger(captureBefore, "Charge.payment_method_details.card.capture_before");
+  const milliseconds = seconds * 1000;
+  if (!Number.isSafeInteger(milliseconds)) throw new AppError("INTERNAL_ERROR", "Stripe authorization expiry is outside supported timestamp range");
+  return new Date(milliseconds).toISOString();
+}
+
 function setupProjection(value: unknown): StripeSetupIntentProjection {
   if (!value || typeof value !== "object") throw new AppError("INTERNAL_ERROR", "Stripe SetupIntent response is invalid");
   const input = value as Record<string, unknown>;
@@ -86,6 +106,7 @@ function paymentProjection(value: unknown): StripePaymentIntentProjection {
     amount: requiredInteger(input.amount, "PaymentIntent.amount"),
     currency: requiredString(input.currency, "PaymentIntent.currency"),
     amountCapturable: optionalInteger(input.amount_capturable),
+    authorizationExpiresAt: authorizationExpiryFromLatestCharge(input.latest_charge),
     livemode: requiredBoolean(input.livemode, "PaymentIntent.livemode")
   });
 }
@@ -285,7 +306,7 @@ class StripeAirenPayTestHttpClient implements StripeAirenPayTestClientPort {
   }
 
   async retrievePaymentIntent(providerReference: string): Promise<StripePaymentIntentProjection> {
-    return paymentProjection(await this.request(`/payment_intents/${encodeURIComponent(providerReference)}`, "GET"));
+    return paymentProjection(await this.request(`/payment_intents/${encodeURIComponent(providerReference)}?expand%5B%5D=latest_charge`, "GET"));
   }
 
   async retrieveRefund(refundReference: string): Promise<StripeRefundReadbackProjection> {

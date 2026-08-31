@@ -49,6 +49,7 @@ export type StripePaymentIntentProjection = Readonly<{
   amount: number;
   currency: string;
   amountCapturable?: number;
+  authorizationExpiresAt?: string;
   livemode: boolean;
 }>;
 
@@ -214,6 +215,7 @@ function paymentResult(intent: StripePaymentIntentProjection, overrideStatus?: A
     providerReference: intent.id,
     status,
     clientAction: clientAction(intent.clientSecret, status),
+    authorizationExpiresAt: intent.authorizationExpiresAt,
     providerMetadata: Object.freeze({ stripeObject: "payment_intent", stripeStatus: intent.status, livemode: false })
   });
 }
@@ -369,6 +371,7 @@ export class StripeAirenPayTestAdapter implements PaymentGatewayPort {
     return Object.freeze({
       providerReference: payment.id,
       status: paymentStatus(payment.status),
+      authorizationExpiresAt: payment.authorizationExpiresAt,
       amount: moneyFromPayment(payment),
       providerMetadata: Object.freeze({ stripeObject: "payment_intent", stripeStatus: payment.status, livemode: false })
     });
