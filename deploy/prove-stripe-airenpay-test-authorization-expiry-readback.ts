@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   const secretProvider = new EnvironmentSecretProvider(process.env, [SECRET_ENV_KEY]);
   const factory = new StripeAirenPayTestHttpClientFactory({ secretProvider });
   const adapter = new StripeAirenPayTestAdapter(factory);
-  const result = await adapter.getTransactionStatus(Object.freeze({
+  const result = await adapter.getTransactionStatusWithAuthorizationExpiry(Object.freeze({
     orchestrationId: "00000000-0000-4000-8000-000000001411",
     correlationId: "rbl14-stripe-test-authorization-expiry-readback-v1",
     idempotencyKey: "rbl14-stripe-test-authorization-expiry-readback-v1",

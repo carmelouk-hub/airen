@@ -111,14 +111,14 @@ test("RBL14-D01 expiry-aware PaymentIntent retrieval expands latest_charge and m
   assert.equal(result.livemode, false);
 });
 
-test("RBL14-D02 AIRenPay transaction status propagates provider authorization expiry", async () => {
+test("RBL14-D02 dedicated AIRenPay expiry status path propagates provider authorization expiry", async () => {
   const calls: string[] = [];
   const fetchImpl: StripeAirenPayFetch = async input => {
     calls.push(String(input));
     return jsonResponse(paymentIntentFixture());
   };
   const adapter = new StripeAirenPayTestAdapter(factory(fetchImpl));
-  const result = await adapter.getTransactionStatus(Object.freeze({
+  const result = await adapter.getTransactionStatusWithAuthorizationExpiry(Object.freeze({
     orchestrationId: "00000000-0000-4000-8000-000000001411",
     correlationId: "rbl14-expiry-propagation",
     idempotencyKey: "rbl14-expiry-propagation",
@@ -166,7 +166,7 @@ test("RBL14-D05 governed expiry runner is explicit-opt-in and contains no Stripe
 
   assert.match(source, /AIRENPAY_STRIPE_TEST_AUTHORIZATION_EXPIRY_PROOF_ENABLED/);
   assert.match(source, /pi_3UA5bpP5zjpreN160czIgndr/);
-  assert.match(source, /getTransactionStatus\(/);
+  assert.match(source, /getTransactionStatusWithAuthorizationExpiry\(/);
   assert.match(source, /readOnly: true/);
   assert.match(source, /httpMutation: false/);
   assert.match(source, /postEndpointUsed: false/);

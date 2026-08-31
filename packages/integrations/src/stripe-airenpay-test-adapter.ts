@@ -225,6 +225,17 @@ function moneyFromPayment(intent: StripePaymentIntentProjection): AirenPayMoneyV
   return Object.freeze({ amountMinor: intent.amount, currency: intent.currency.toUpperCase() });
 }
 
+function transactionStatusFromPayment(payment: StripePaymentIntentProjection): AirenPayTransactionStatusResultV1 {
+  assertTestObject(payment.livemode);
+  return Object.freeze({
+    providerReference: payment.id,
+    status: paymentStatus(payment.status),
+    authorizationExpiresAt: payment.authorizationExpiresAt,
+    amount: moneyFromPayment(payment),
+    providerMetadata: Object.freeze({ stripeObject: "payment_intent", stripeStatus: payment.status, livemode: false })
+  });
+}
+
 function webhookEvent(input: StripeVerifiedWebhookProjection): AirenPayNormalizedWebhookEventV1 {
   assertTestObject(input.livemode);
   const occurredAt = new Date(input.created * 1000).toISOString();
@@ -367,17 +378,21 @@ export class StripeAirenPayTestAdapter implements PaymentGatewayPort {
         providerMetadata: Object.freeze({ stripeObject: "setup_intent", stripeStatus: setup.status, livemode: false })
       });
     }
-    const payment = resolved.client.retrievePaymentIntentWithAuthorizationExpiry
-      ? await resolved.client.retrievePaymentIntentWithAuthorizationExpiry(providerReference)
-      : await resolved.client.retrievePaymentIntent(providerReference);
-    assertTestObject(payment.livemode);
-    return Object.freeze({
-      providerReference: payment.id,
-      status: paymentStatus(payment.status),
-      authorizationExpiresAt: payment.authorizationExpiresAt,
-      amount: moneyFromPayment(payment),
-      providerMetadata: Object.freeze({ stripeObject: "payment_intent", stripeStatus: payment.status, livemode: false })
-    });
+    return transactionStatusFromPayment(await resolved.client.retrievePaymentIntent(providerReference));
+  }
+
+  async getTransactionStatusWithAuthorizationExpiry(
+    context: AirenPayGatewayOperationContextV1,
+    providerReference: string
+  ): Promise<AirenPayTransactionStatusResultV1> {
+    if (providerReference.startsWith("seti_")) {
+      throw new AppError("VALIDATION_FAILED", "Authorization-expiry read-back requires a Stripe PaymentIntent reference");
+    }
+    const resolved = await this.client(context);
+    if (!resolved.client.retrievePaymentIntentWithAuthorizationExpiry) {
+      throw new AppError("CONFLICT", "AUTHORIZATION_EXPIRY_READBACK_UNAVAILABLE");
+    }
+    return transactionStatusFromPayment(await resolved.client.retrievePaymentIntentWithAuthorizationExpiry(providerReference));
   }
 
   async verifyAndNormalizeWebhook(request: AirenPayWebhookRequestV1, connection: TenantPaymentGatewayConnectionProjectionV1): Promise<AirenPayNormalizedWebhookEventV1> {
