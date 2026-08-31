@@ -73,7 +73,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 
-test("RBL12 preflights captured TEST PaymentIntent then maps exactly EUR 1.00 refund with AIRen idempotency", async () => {
+test("RBL12 maps the real Stripe Refund response shape without inventing livemode and preserves AIRen idempotency", async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const fetchImpl: StripeAirenPayFetch = async (input, init) => {
     calls.push({ url: String(input), init });
@@ -95,8 +95,7 @@ test("RBL12 preflights captured TEST PaymentIntent then maps exactly EUR 1.00 re
         charge: "ch_rbl12_fixture",
         amount: 100,
         currency: "eur",
-        status: "succeeded",
-        livemode: false
+        status: "succeeded"
       });
     }
     return jsonResponse({ error: { type: "invalid_request_error" } }, 400);

@@ -91,13 +91,19 @@ function refundProjection(value: unknown): StripeRefundProjection {
   const input = value as Record<string, unknown>;
   const status = requiredString(input.status, "Refund.status") as StripeRefundStatus;
   if (!REFUND_STATUSES.has(status)) throw new AppError("INTERNAL_ERROR", "Stripe Refund status is unsupported");
+  if (input.livemode === true) throw new AppError("PERMISSION_DENIED", "Stripe LIVE Refund rejected by TEST-only HTTP client");
+  if (input.livemode !== undefined && typeof input.livemode !== "boolean") {
+    throw new AppError("INTERNAL_ERROR", "Stripe Refund response has invalid livemode");
+  }
   return Object.freeze({
     id: requiredString(input.id, "Refund.id"),
     status,
     paymentIntentId: requiredString(input.payment_intent, "Refund.payment_intent"),
     amount: requiredInteger(input.amount, "Refund.amount"),
     currency: requiredString(input.currency, "Refund.currency"),
-    livemode: requiredBoolean(input.livemode, "Refund.livemode")
+    // Stripe's real Refund response does not expose livemode. This projection is TEST-only
+    // because factory connection mode and credential material are both fail-closed before I/O.
+    livemode: false
   });
 }
 
