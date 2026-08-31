@@ -1,0 +1,30 @@
+{
+  "realm": "airenos",
+  "enabled": true,
+  "displayName": "AIRenOS",
+  "clients": [
+    {
+      "clientId": "airenos-browser-session",
+      "name": "AIRenOS Browser Session",
+      "description": "Public Authorization Code + PKCE client used only to authenticate an upstream subject before AIRenOS resolves canonical Identity and issues its own session.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://session.airenos.com/oidc/callback"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "fullScopeAllowed": false,
+      "protocolMappers": []
+    }
+  ]
+}

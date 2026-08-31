@@ -20,6 +20,7 @@ jobs:
       - run: node --experimental-strip-types --test tests/integration/airenos-session-lifecycle.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-oidc-upstream-provider.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-keycloak-infrastructure-contract.test.ts
+      - run: node --experimental-strip-types --test tests/integration/airenos-keycloak-realm-bootstrap-contract.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-provisioning-contract.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-live-preflight-contract.test.ts
 
@@ -33,6 +34,27 @@ jobs:
         run: test "$(docker image inspect airenos-keycloak-contract:${GITHUB_SHA} --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')" = "26.7.2"
       - name: Verify Keycloak binary from exact built image
         run: docker run --rm airenos-keycloak-contract:${GITHUB_SHA} --version
+
+  isa-f2-keycloak-realm-bootstrap-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: keycloak
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d keycloak"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build exact governed Keycloak realm-contract image
+        run: docker build -f deploy/keycloak/Containerfile -t airenos-keycloak-realm-contract:${GITHUB_SHA} .
+      - name: Import realm and verify runtime client read-back
+        run: bash scripts/keycloak-realm-bootstrap-runtime-ci.sh airenos-keycloak-realm-contract:${GITHUB_SHA}
 
   isa-f2-ovh-milan-terraform-contract:
     runs-on: ubuntu-latest

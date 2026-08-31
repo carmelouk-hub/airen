@@ -1,0 +1,65 @@
+{
+  "contract_id": "ISA-F2-KEYCLOAK-REALM-BOOTSTRAP-20260831",
+  "date": "2026-08-31",
+  "status": "IMPLEMENTED_CONTRACT_RUNTIME_CI_REQUIRED",
+  "source_branch": "foundation/airenos-identity-session-authority-f2-keycloak-realm-bootstrap-20260831",
+  "base_sha": "62c0bd82b37a821f3aa771d55189002a2110b113",
+  "keycloak": {
+    "version": "26.7.2",
+    "realm": "airenos",
+    "realm_seed": "deploy/keycloak/realm/airenos-realm.json",
+    "bootstrap_mode": "CLI_IMPORT_BEFORE_FIRST_LIVE_NODE",
+    "override_existing_realm": false,
+    "continuous_startup_import": false
+  },
+  "oidc_client": {
+    "client_id": "airenos-browser-session",
+    "public_client": true,
+    "standard_authorization_code_flow": true,
+    "pkce_method": "S256",
+    "implicit_flow": false,
+    "direct_access_grants": false,
+    "service_accounts": false,
+    "redirect_uris": [
+      "https://session.airenos.com/oidc/callback"
+    ],
+    "web_origins": [],
+    "full_scope_allowed": false
+  },
+  "authority_boundary": {
+    "keycloak_authentication_engine_only": true,
+    "keycloak_is_airenos_identity_authority": false,
+    "keycloak_roles_are_airenos_authority": false,
+    "keycloak_tenant_claims_are_airenos_authority": false,
+    "keycloak_entitlements_are_airenos_authority": false,
+    "keycloak_access_token_is_airenos_bearer": false,
+    "airenos_identity_directory_canonical": true,
+    "airenos_session_authority_canonical": true
+  },
+  "seed_boundary": {
+    "users_seeded": false,
+    "groups_seeded": false,
+    "business_roles_seeded": false,
+    "client_secret_committed": false,
+    "password_committed": false,
+    "provider_secret_committed": false
+  },
+  "ci_evidence": {
+    "postgresql_major": "17",
+    "real_keycloak_cli_import_required": true,
+    "real_keycloak_runtime_readback_required": true,
+    "classification": "DETERMINISTIC_RUNTIME_COMPATIBILITY_ONLY"
+  },
+  "live_evidence": {
+    "ovhcloud_deployment": "NOT_EXECUTED",
+    "dns": "NOT_PROVEN",
+    "tls": "NOT_PROVEN",
+    "realm_live_import": "NOT_EXECUTED",
+    "realm_provider_readback": "NOT_EXECUTED",
+    "client_provider_readback": "NOT_EXECUTED",
+    "real_authorization_code_exchange": "NOT_EXECUTED",
+    "real_browser_login": "NOT_CERTIFIED",
+    "base44_airenos_kairos_e2e": "NOT_EXECUTED"
+  },
+  "production_side_effects": "FORBIDDEN"
+}
