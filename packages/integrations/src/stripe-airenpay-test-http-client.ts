@@ -26,6 +26,10 @@ export type StripeAirenPayTestHttpClientFactoryOptions = Readonly<{
   now?: () => number;
 }>;
 
+export type StripeRefundReadbackProjection = StripeRefundProjection & Readonly<{
+  chargeId: string;
+}>;
+
 const SETUP_STATUSES = new Set<StripeSetupIntentStatus>([
   "requires_payment_method", "requires_confirmation", "requires_action", "processing", "canceled", "succeeded"
 ]);
@@ -86,7 +90,7 @@ function paymentProjection(value: unknown): StripePaymentIntentProjection {
   });
 }
 
-function refundProjection(value: unknown): StripeRefundProjection {
+function refundProjection(value: unknown): StripeRefundReadbackProjection {
   if (!value || typeof value !== "object") throw new AppError("INTERNAL_ERROR", "Stripe Refund response is invalid");
   const input = value as Record<string, unknown>;
   const status = requiredString(input.status, "Refund.status") as StripeRefundStatus;
@@ -99,6 +103,7 @@ function refundProjection(value: unknown): StripeRefundProjection {
     id: requiredString(input.id, "Refund.id"),
     status,
     paymentIntentId: requiredString(input.payment_intent, "Refund.payment_intent"),
+    chargeId: requiredString(input.charge, "Refund.charge"),
     amount: requiredInteger(input.amount, "Refund.amount"),
     currency: requiredString(input.currency, "Refund.currency"),
     // Stripe's real Refund response does not expose livemode. This projection is TEST-only
@@ -283,6 +288,10 @@ class StripeAirenPayTestHttpClient implements StripeAirenPayTestClientPort {
     return paymentProjection(await this.request(`/payment_intents/${encodeURIComponent(providerReference)}`, "GET"));
   }
 
+  async retrieveRefund(refundReference: string): Promise<StripeRefundReadbackProjection> {
+    return refundProjection(await this.request(`/refunds/${encodeURIComponent(refundReference)}`, "GET"));
+  }
+
   async verifyWebhook(rawBody: Uint8Array, signature: string, connection: TenantPaymentGatewayConnectionProjectionV1): Promise<StripeVerifiedWebhookProjection> {
     if (connection.id !== this.connection.id) throw new AppError("TENANT_SCOPE_VIOLATION", "Stripe webhook connection does not match active client connection");
     if (!connection.webhookSecretRef) throw new AppError("VALIDATION_FAILED", "Stripe webhook SecretRef is required for HTTP client verification");
@@ -326,10 +335,18 @@ export class StripeAirenPayTestHttpClientFactory implements StripeAirenPayTestCl
     };
   }
 
-  async forConnection(connection: TenantPaymentGatewayConnectionProjectionV1): Promise<StripeAirenPayTestClientPort> {
+  private validatedClient(connection: TenantPaymentGatewayConnectionProjectionV1): StripeAirenPayTestHttpClient {
     if (connection.providerType !== "STRIPE" || connection.mode !== "TEST" || connection.status !== "ACTIVE") {
       throw new AppError("PERMISSION_DENIED", "Stripe AIRenPay HTTP client factory accepts ACTIVE TEST Stripe connections only");
     }
     return new StripeAirenPayTestHttpClient(connection, this.options);
+  }
+
+  async forConnection(connection: TenantPaymentGatewayConnectionProjectionV1): Promise<StripeAirenPayTestClientPort> {
+    return this.validatedClient(connection);
+  }
+
+  async retrieveRefundForProof(connection: TenantPaymentGatewayConnectionProjectionV1, refundReference: string): Promise<StripeRefundReadbackProjection> {
+    return this.validatedClient(connection).retrieveRefund(refundReference);
   }
 }
