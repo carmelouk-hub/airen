@@ -1,0 +1,71 @@
+{
+  "gate": "ISA_F2_OVH_MILAN_REAL_PROVIDER_PREFLIGHT_AND_APPLY",
+  "subgate": "READ_ONLY_PROVIDER_PREFLIGHT_RUNNER",
+  "date": "2026-08-31",
+  "status": "IMPLEMENTED_READ_ONLY_RUNNER_OAUTH2_BINDING_PENDING",
+  "provider": {
+    "name": "OVHcloud Public Cloud",
+    "endpoint": "ovh-eu",
+    "terraform_provider": "ovh/ovh",
+    "terraform_provider_version": "2.19.0",
+    "terraform_version": "1.16.0",
+    "region": "EU-SOUTH-MIL",
+    "required_region_type": "region-3-az",
+    "required_availability_zones": [
+      "eu-south-mil-a",
+      "eu-south-mil-b",
+      "eu-south-mil-c"
+    ]
+  },
+  "authentication": {
+    "governed_method": "OAUTH2_SERVICE_ACCOUNT_CLIENT_CREDENTIALS",
+    "environment_variables": [
+      "OVH_CLIENT_ID",
+      "OVH_CLIENT_SECRET"
+    ],
+    "legacy_credentials_forced_unset_by_runner": [
+      "OVH_ACCESS_TOKEN",
+      "OVH_APPLICATION_KEY",
+      "OVH_APPLICATION_SECRET",
+      "OVH_CONSUMER_KEY"
+    ],
+    "real_service_account_created_or_verified": false,
+    "real_secret_binding_verified": false,
+    "github_environment_expected": "airenos-ovh-staging",
+    "github_environment_verified": false,
+    "connector_can_manage_github_environment_secrets": false
+  },
+  "read_only_preflight": {
+    "managed_terraform_resources": 0,
+    "terraform_backend_configured": false,
+    "provider_project_readback_required": true,
+    "region_status_up_required": true,
+    "exact_three_az_readback_required": true,
+    "worker_flavor": "b3-8",
+    "minimum_worker_quota": 3,
+    "postgresql_version": "17",
+    "postgresql_api_plan": "business",
+    "postgresql_flavor": "b3-8",
+    "postgresql_multiaz_topology_proven": false,
+    "live_apply_authorized": false
+  },
+  "execution": {
+    "live_provider_authenticated_readback_executed": false,
+    "provider_account_readback_executed": false,
+    "quota_capability_readback_executed": false,
+    "milan_3az_api_readback_executed": false,
+    "postgresql_multiaz_topology_proof": "OPEN_FAIL_CLOSED",
+    "terraform_apply_executed": false,
+    "terraform_destroy_executed": false,
+    "provider_write_executed": false,
+    "production_change": false
+  },
+  "non_claims": [
+    "STATIC_CI_IS_NOT_REAL_OVH_PROVIDER_EVIDENCE",
+    "DATABASE_CAPABILITIES_ARE_NOT_PHYSICAL_MULTIAZ_TOPOLOGY_PROOF",
+    "PREFLIGHT_SUCCESS_IS_NOT_TERRAFORM_APPLY_AUTHORIZATION",
+    "NO_REAL_KEYCLOAK_DEPLOYMENT_PROVEN",
+    "NO_REAL_BROWSER_LOGIN_PROVEN",
+    "NO_K4_C3_RUNTIME_HANDOFF_PROVEN"
+  ]
+}

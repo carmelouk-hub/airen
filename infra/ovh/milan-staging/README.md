@@ -39,6 +39,8 @@ The following Terraform variables default to `false` and MUST remain false until
 
 The region itself is also read back from the provider. The contract requires provider type `region-3-az` and the exact three Milan availability zones before network or compute provisioning may proceed.
 
+A separate, data-source-only preflight exists at `infra/ovh/milan-staging/preflight`, with the governed operator runner `scripts/ovh-milan-provider-preflight.sh`. That runner performs authenticated read-back only and can never authorize or execute an apply.
+
 ### PostgreSQL multi-AZ evidence conflict
 
 OVHcloud documentation available on 2026-08-31 is internally inconsistent. The current 3-AZ reference architecture describes DBaaS nodes distributed across availability zones and Production/Advanced plans tolerating an AZ failure, while a PostgreSQL HA guide updated in May 2026 still states that Public Cloud Databases for PostgreSQL do not support multi-AZ and place nodes in the same datacenter.
@@ -47,34 +49,41 @@ AIRenOS therefore does not infer multi-AZ PostgreSQL from product marketing or f
 
 The Terraform provider still names the two-node PostgreSQL tier `business`; current OVHcloud product material calls the corresponding commercial tier `Production`. The code intentionally uses the provider/API value `business`, not an invented `production` value.
 
-## Secrets and state
+## Secrets, provider identity and state
 
-No OVH credential, database password, Keycloak bootstrap credential, TLS private key or session-signing key belongs in GitHub, Drive, Base44, Terraform variables committed to source, image layers or CI logs.
+No OVH credential, database password, Keycloak bootstrap credential, TLS private key or session-signing key belongs in GitHub source, Drive, Base44, Terraform variables committed to source, image layers or CI logs.
 
-For a future live run, OVH provider credentials must be injected through an approved secret channel using provider-supported environment variables such as:
+The governed live-provider identity is an OVHcloud OAuth2 scoped service account compatible with OVH IAM. Provider credentials are injected only through an approved secret channel using:
 
-- `OVH_ENDPOINT`
-- `OVH_APPLICATION_KEY`
-- `OVH_APPLICATION_SECRET`
-- `OVH_CONSUMER_KEY`
+- `OVH_ENDPOINT=ovh-eu`
+- `OVH_CLIENT_ID`
+- `OVH_CLIENT_SECRET`
 
-`TF_VAR_cloud_project_service` may identify the existing Public Cloud project, but provider credentials MUST NOT be pasted into chat or committed anywhere.
+The provider also supports legacy application/consumer keys and short-lived access tokens, but the AIRenOS governed preflight runner deliberately unsets those credential paths to avoid ambiguous authentication and to preserve a single least-privilege service-account model.
+
+`OVH_CLOUD_PROJECT_SERVICE` identifies the existing Public Cloud project and is not itself a secret. Provider credentials MUST NOT be pasted into chat or committed anywhere.
 
 This module deliberately does not create a PostgreSQL user/password in Terraform because generated credentials would become Terraform state. Database credentials and Keycloak bootstrap material must instead be created/bound through the governed OVHcloud Secret Manager/KMS live procedure after provider access exists.
 
-Terraform state is sensitive even without explicit password resources because provider resources may expose kubeconfig, endpoints or operational metadata. The live gate MUST initialize the empty S3 backend block with a dedicated encrypted, versioned, access-controlled OVHcloud Object Storage backend. Local state and `*.tfvars` are ignored by source control.
+Terraform state is sensitive even without explicit password resources because provider resources may expose kubeconfig, endpoints or operational metadata. The future live apply gate MUST initialize the empty S3 backend block with a dedicated encrypted, versioned, access-controlled OVHcloud Object Storage backend. Local state and `*.tfvars` are ignored by source control.
 
 ## CI boundary
 
-Normal GitHub CI is restricted to:
+Normal GitHub CI is restricted to contract validation without provider credentials:
 
 ```text
-terraform fmt -check
+terraform fmt -check -recursive
 terraform init -backend=false
 terraform validate
 ```
 
-CI MUST NOT execute `terraform plan`, `terraform apply`, `terraform destroy`, OVH API writes, DNS changes or secret creation. Static/deterministic tests are contract evidence only.
+This applies both to the provisioning stack and to the read-only preflight contract. Normal CI MUST NOT execute a live provider preflight, `terraform plan` against the real account, `terraform apply`, `terraform destroy`, OVH API writes, DNS changes or secret creation.
+
+## GitHub live execution prerequisite
+
+The intended future credential surface is a protected GitHub Actions Environment named `airenos-ovh-staging`. The current ChatGPT GitHub connector cannot inspect, create or manage Actions Environments or their secrets, so this repository makes no claim that such an Environment currently exists.
+
+A live GitHub provider read-back may be enabled only after an authorized operator has independently verified that Environment protection, required reviewers/branch restrictions and the OAuth2 service-account secret binding. No secret-consuming workflow is activated by this checkpoint.
 
 ## Keycloak deployment boundary
 
@@ -84,6 +93,6 @@ Public DNS, TLS termination, the restricted administration hostname, live realm/
 
 ## Status
 
-`PROVISIONING_CONTRACT_READY / REAL_APPLY_PENDING`
+`PROVISIONING_CONTRACT_READY / READ_ONLY_PROVIDER_PREFLIGHT_RUNNER_READY / REAL_PROVIDER_BINDING_PENDING / REAL_APPLY_PENDING`
 
 No OVHcloud resource creation is certified by this directory.

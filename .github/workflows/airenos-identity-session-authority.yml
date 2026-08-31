@@ -21,6 +21,7 @@ jobs:
       - run: node --experimental-strip-types --test tests/integration/airenos-oidc-upstream-provider.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-keycloak-infrastructure-contract.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-provisioning-contract.test.ts
+      - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-live-preflight-contract.test.ts
 
   isa-f2-keycloak-image-contract:
     runs-on: ubuntu-latest
@@ -41,11 +42,15 @@ jobs:
         with:
           terraform_version: 1.16.0
       - name: Check Terraform formatting
-        run: terraform -chdir=infra/ovh/milan-staging fmt -check
+        run: terraform -chdir=infra/ovh/milan-staging fmt -check -recursive
       - name: Initialize exact OVH provider without backend or credentials
         run: terraform -chdir=infra/ovh/milan-staging init -backend=false -input=false
       - name: Validate OVH Milan provisioning contract only
         run: terraform -chdir=infra/ovh/milan-staging validate
+      - name: Initialize read-only OVH provider preflight without credentials
+        run: terraform -chdir=infra/ovh/milan-staging/preflight init -backend=false -input=false
+      - name: Validate read-only provider preflight contract only
+        run: terraform -chdir=infra/ovh/milan-staging/preflight validate
 
   isa-f1-postgres-runtime:
     runs-on: ubuntu-latest
