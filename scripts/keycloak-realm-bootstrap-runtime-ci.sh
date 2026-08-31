@@ -29,14 +29,23 @@ docker run --rm --network host \
   -e KC_DB_PASSWORD="${DB_PASSWORD}" \
   "${IMAGE}" import --optimized --file /work/airenos-realm.json --override false
 
+# The import command initializes the master realm. Therefore startup bootstrap env vars would be too late.
+# Create a temporary admin explicitly while every Keycloak server node is stopped, using the same DB options.
+docker run --rm --network host \
+  -e KC_DB_URL="${DB_URL}" \
+  -e KC_DB_USERNAME="${DB_USER}" \
+  -e KC_DB_PASSWORD="${DB_PASSWORD}" \
+  -e CI_ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
+  "${IMAGE}" bootstrap-admin user --optimized --username "${ADMIN_USER}" --password:env CI_ADMIN_PASSWORD --no-prompt
+
+# CI loopback only: dynamic hostname resolution avoids pretending that production DNS/TLS exists.
+# The governed Kubernetes staging template keeps fixed HTTPS hostnames and is not modified by this runtime proof.
 docker run -d --name "${CONTAINER_NAME}" --network host \
   -e KC_DB_URL="${DB_URL}" \
   -e KC_DB_USERNAME="${DB_USER}" \
   -e KC_DB_PASSWORD="${DB_PASSWORD}" \
-  -e KC_BOOTSTRAP_ADMIN_USERNAME="${ADMIN_USER}" \
-  -e KC_BOOTSTRAP_ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
   -e KC_HTTP_ENABLED=true \
-  -e KC_HOSTNAME="http://127.0.0.1:8080" \
+  -e KC_HOSTNAME_STRICT=false \
   "${IMAGE}" start --optimized >/dev/null
 
 ready=false
@@ -58,9 +67,12 @@ if [[ "${ready}" != true ]]; then
   exit 1
 fi
 
-curl --fail --silent --show-error \
+if ! curl --fail --silent --show-error \
   http://127.0.0.1:8080/realms/airenos/.well-known/openid-configuration \
-  >"${WORKDIR}/discovery.json"
+  >"${WORKDIR}/discovery.json"; then
+  docker logs "${CONTAINER_NAME}" >&2 || true
+  exit 1
+fi
 
 curl --fail --silent --show-error --request POST \
   http://127.0.0.1:8080/realms/master/protocol/openid-connect/token \
@@ -71,6 +83,9 @@ curl --fail --silent --show-error --request POST \
   >"${WORKDIR}/token.json"
 
 ACCESS_TOKEN="$(node -e 'const fs=require("fs"); const j=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(!j.access_token) process.exit(2); process.stdout.write(j.access_token);' "${WORKDIR}/token.json")"
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+  echo "::add-mask::${ACCESS_TOKEN}"
+fi
 
 curl --fail --silent --show-error \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \

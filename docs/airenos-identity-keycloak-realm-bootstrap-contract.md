@@ -49,12 +49,15 @@ The production Kubernetes Deployment therefore continues to start Keycloak with 
 The dedicated Identity & Session Authority workflow uses an ephemeral PostgreSQL 17 service and the exact governed Keycloak 26.7.2 image to prove that:
 
 1. Keycloak accepts the realm JSON through its real CLI import path;
-2. the imported `airenos` realm can start on the imported database;
-3. the realm exposes real OpenID Connect discovery in the ephemeral CI runtime;
-4. the Keycloak Admin API reads back exactly one `airenos-browser-session` client with the governed public-client, code-flow, redirect and PKCE settings;
-5. no user is seeded into the `airenos` realm.
+2. after import, the official `bootstrap-admin user` command creates a temporary master-realm administrator while Keycloak server nodes are stopped;
+3. the imported `airenos` realm can start on the imported database;
+4. the realm exposes real OpenID Connect discovery in the ephemeral CI runtime;
+5. the Keycloak Admin API reads back exactly one `airenos-browser-session` client with the governed public-client, code-flow, redirect and PKCE settings;
+6. no user is seeded into the `airenos` realm.
 
-Any bootstrap administrator used by this CI job is generated only for the ephemeral `master` realm and exists only to read back the imported contract. It is not a real AIRenOS user, credential, browser-login proof or provider credential.
+The temporary administrator is generated only inside CI, is masked in GitHub logs, and is discarded with the ephemeral database. It is not a real AIRenOS user, credential, browser-login proof or provider credential. It uses Keycloak's dedicated bootstrap-admin mechanism because the preceding import initializes the master realm, after which startup bootstrap environment variables are intentionally no longer authoritative.
+
+CI starts Keycloak with HTTP and `hostname-strict=false` solely on the isolated loopback runner. That setting exists only to make the ephemeral discovery/read-back endpoints addressable without pretending that AIRenOS DNS or TLS exists. The governed Kubernetes staging template remains pinned to the real HTTPS hostname targets `login.airenos.com` and `identity-admin.airenos.com` and is not weakened by the CI-only setting.
 
 ## Evidence classification
 

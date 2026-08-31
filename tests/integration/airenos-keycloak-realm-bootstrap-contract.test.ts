@@ -53,6 +53,8 @@ test("realm seed carries no user, business authority or secret material", () => 
 
 test("bootstrap strategy is first-create only and cannot silently overwrite a live realm", () => {
   assert.match(runtimeScript, /import --optimized --file .* --override false/);
+  assert.match(runtimeScript, /bootstrap-admin user --optimized/);
+  assert.match(runtimeScript, /--password:env CI_ADMIN_PASSWORD --no-prompt/);
   assert.doesNotMatch(kubernetesTemplate, /--import-realm/);
   assert.match(kubernetesTemplate, /- start\n\s+- --optimized/);
   assert.match(docs, /not an ongoing configuration-sync mechanism/i);
@@ -66,11 +68,21 @@ test("bootstrap strategy is first-create only and cannot silently overwrite a li
 test("dedicated CI must exercise real Keycloak 26.7.2 import and runtime read-back on PostgreSQL 17", () => {
   assert.match(workflow, /isa-f2-keycloak-realm-bootstrap-runtime:/);
   assert.match(workflow, /image: postgres:17/);
+  assert.match(workflow, /airenos-keycloak-realm-contract:\$\{GITHUB_SHA\}/);
   assert.match(workflow, /keycloak-realm-bootstrap-runtime-ci\.sh/);
-  assert.match(runtimeScript, /airenos-keycloak-realm-contract/);
+  assert.match(runtimeScript, /KC_HOSTNAME_STRICT=false/);
   assert.match(runtimeScript, /\/realms\/airenos\/\.well-known\/openid-configuration/);
   assert.match(runtimeScript, /\/admin\/realms\/airenos\/clients\?clientId=airenos-browser-session/);
   assert.match(runtimeScript, /\/admin\/realms\/airenos\/users\?max=1/);
+});
+
+test("CI-only dynamic hostname cannot weaken the governed staging hostname contract", () => {
+  assert.match(runtimeScript, /CI loopback only/);
+  assert.match(kubernetesTemplate, /KC_HOSTNAME/);
+  assert.match(kubernetesTemplate, /https:\/\/login\.airenos\.com/);
+  assert.match(kubernetesTemplate, /KC_HOSTNAME_ADMIN/);
+  assert.match(kubernetesTemplate, /https:\/\/identity-admin\.airenos\.com/);
+  assert.doesNotMatch(kubernetesTemplate, /KC_HOSTNAME_STRICT\s*\n\s*value:\s*["']?false/i);
 });
 
 test("runtime compatibility evidence remains explicitly non-live", () => {
