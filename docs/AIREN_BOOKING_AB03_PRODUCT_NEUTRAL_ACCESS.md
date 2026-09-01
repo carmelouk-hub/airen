@@ -1,6 +1,6 @@
 # AB-03 — AIRen Booking Product-Neutral Access & Entitlement Cutover
 
-Status: IMPLEMENTED / CI EVIDENCE REQUIRED BEFORE GOVERNANCE CLOSURE
+Status: IMPLEMENTED / INITIAL CI FAILURE PRESERVED / CORRECTIVE CI EVIDENCE REQUIRED BEFORE GOVERNANCE CLOSURE
 Protocol: RULE-DOC-20 + RULE-DOC-21
 
 ## Source authority
@@ -29,15 +29,19 @@ Permissions such as `booking.read`, `booking.create`, `booking.update` and `book
 
 ## Idempotency compatibility
 
-No database migration or destructive rewrite is introduced. New mutations persist the AIRenOS canonical function IDs. The PostgreSQL compatibility layer reads the matching historical `RST-F-BKG-*` / `RST-F-BKG-HOLD-*` alias only to preserve completed historical replay semantics. If canonical and legacy records coexist for one mutation key, or a legacy record is not safely replayable, the operation fails closed.
+New mutations persist the AIRenOS canonical function IDs. The PostgreSQL compatibility layer reads the matching historical `RST-F-BKG-*` / `RST-F-BKG-HOLD-*` alias only to preserve completed historical replay semantics. If canonical and legacy records coexist for one mutation key, or a legacy record is not safely replayable, the operation fails closed.
 
-This prevents a namespace cutover from turning a historical retry into a second mutation.
+The first AB-03 CI execution correctly exposed that the historical database CHECK constraint admitted only the `RST-*` namespace. That failure is preserved in the AB-03 lineage; it is not rewritten or treated as PASS.
+
+AB-03 therefore adds the governed, additive migration `20260901_001_airen_booking_product_neutral_idempotency.sql`. It does not rewrite existing idempotency rows. It extends the database constraint to accept the six canonical `AIREN-F-BKG-*` identifiers for new writes while retaining the six historical `RST-F-BKG-*` identifiers required for replay compatibility. The historical migrations remain unchanged so their governed checksums are preserved.
+
+This prevents a namespace cutover from turning a historical retry into a second mutation while allowing new AIRenOS-owned Booking mutations to persist under the canonical namespace.
 
 ## Preserved boundaries
 
 - `/v1/ristoairen/bookings` remains the compatibility HTTP route until AB-04.
 - RISTOAIREN runtime/file names remain compatibility-adapter names until AB-04.
-- No Booking database table or migration is renamed.
+- No Booking database table or historical migration is renamed or rewritten.
 - No Base44 app is edited.
 - No Render or Stripe operation is performed.
 - No production deployment is authorized.

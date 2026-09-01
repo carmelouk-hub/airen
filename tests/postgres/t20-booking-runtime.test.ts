@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { AppError } from "../../packages/shared-contracts/src/index.ts";
 import { BookingApplicationService, bookingSemanticHash } from "../../packages/booking-core/src/index.ts";
 import { createPostgresPool } from "../../packages/persistence-postgres/src/index.ts";
@@ -16,7 +17,9 @@ const createPayload=Object.freeze({source:"T20",partySize:2,bookingDate:"2026-09
 let bookingId="";
 let rowVersion=0;
 
-test.before(async()=>{await seedT20BookingTopology(pool);await cleanupT20BookingData(pool);});
+async function applyAirenBookingProductAccessMigration(){const url=new URL("../../packages/persistence-postgres/src/migrations/20260901_001_airen_booking_product_neutral_idempotency.sql",import.meta.url);await pool.query(await readFile(url,"utf8"));}
+
+test.before(async()=>{await applyAirenBookingProductAccessMigration();await seedT20BookingTopology(pool);await cleanupT20BookingData(pool);});
 test.after(async()=>{await cleanupT20BookingData(pool);await pool.end();});
 
 test("T20-R01 authorized create persists a REQUESTED Booking",async()=>{const r=await service.create(manager(),createPayload,"runtime-create-1");assert.equal(r.replayed,false);assert.equal(r.booking.status,"REQUESTED");bookingId=r.booking.id;rowVersion=r.booking.rowVersion;});
