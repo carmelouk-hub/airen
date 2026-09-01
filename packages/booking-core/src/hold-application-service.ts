@@ -1,14 +1,15 @@
 import { AppError, type SecurityContext, type UUID } from "../../shared-contracts/src/index.ts";
 import { bookingSemanticHash } from "./application-service.ts";
-import type {
-  BookingGuaranteePolicyProjectionV1,
-  BookingHoldCancelInputV1,
-  BookingHoldCreateInputV1,
-  BookingHoldIdempotencyScope,
-  BookingHoldMutationResultV1,
-  BookingHoldUnitOfWork
+import type { BookingProductAccessGuard } from "./contracts.ts";
+import {
+  BOOKING_HOLD_FUNCTION_IDS,
+  type BookingGuaranteePolicyProjectionV1,
+  type BookingHoldCancelInputV1,
+  type BookingHoldCreateInputV1,
+  type BookingHoldIdempotencyScope,
+  type BookingHoldMutationResultV1,
+  type BookingHoldUnitOfWork
 } from "./hold-contracts.ts";
-import type { RistoProductAccessGuard } from "./contracts.ts";
 import {
   initialBookingHoldStatus,
   requireBookingHoldCancel,
@@ -37,8 +38,8 @@ function idempotencyScope(
   });
 }
 
-async function assertProductAccess(guard: RistoProductAccessGuard, context: SecurityContext): Promise<void> {
-  await guard.assertRistoAirenAccess(context);
+async function assertProductAccess(guard: BookingProductAccessGuard, context: SecurityContext): Promise<void> {
+  await guard.assertBookingAccess(context);
 }
 
 function assertCreateReplay(result: unknown): asserts result is BookingHoldMutationResultV1 {
@@ -57,9 +58,9 @@ function selectedPolicyMetadata(policy: BookingGuaranteePolicyProjectionV1): Rea
 
 export class BookingHoldApplicationService {
   private readonly uow: BookingHoldUnitOfWork;
-  private readonly productAccess: RistoProductAccessGuard;
+  private readonly productAccess: BookingProductAccessGuard;
 
-  constructor(uow: BookingHoldUnitOfWork, productAccess: RistoProductAccessGuard) {
+  constructor(uow: BookingHoldUnitOfWork, productAccess: BookingProductAccessGuard) {
     this.uow = uow;
     this.productAccess = productAccess;
   }
@@ -68,7 +69,7 @@ export class BookingHoldApplicationService {
     requireBookingHoldCreate(context);
     await assertProductAccess(this.productAccess, context);
     const validated = validateBookingHoldCreate(input);
-    const scope = idempotencyScope(context, "RST-F-BKG-HOLD-001", idempotencyKey, validated);
+    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.create, idempotencyKey, validated);
 
     return this.uow.transaction(context, async (tx) => {
       const claim = await tx.claimHoldIdempotency(scope);
@@ -138,7 +139,7 @@ export class BookingHoldApplicationService {
     requireBookingHoldCancel(context);
     await assertProductAccess(this.productAccess, context);
     const validated = validateBookingHoldCancel(input);
-    const scope = idempotencyScope(context, "RST-F-BKG-HOLD-002", idempotencyKey, { holdId, ...validated });
+    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.cancel, idempotencyKey, { holdId, ...validated });
 
     return this.uow.transaction(context, async (tx) => {
       const claim = await tx.claimHoldIdempotency(scope);

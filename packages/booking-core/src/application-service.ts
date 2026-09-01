@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import { AppError, type SecurityContext, type UUID } from "../../shared-contracts/src/index.ts";
-import type {
-  BookingCreateInputV1, BookingMutationResultV1, BookingPrivateListResultV1, BookingPrivateProjectionV1,
-  BookingQueryInputV1, BookingReadRepository, BookingStatusTransitionInputV1, BookingUnitOfWork,
-  BookingUpdateInputV1, IdempotencyScope, RistoProductAccessGuard
+import {
+  BOOKING_FUNCTION_IDS,
+  type BookingCreateInputV1, type BookingMutationResultV1, type BookingPrivateListResultV1, type BookingPrivateProjectionV1,
+  type BookingProductAccessGuard, type BookingQueryInputV1, type BookingReadRepository, type BookingStatusTransitionInputV1,
+  type BookingUnitOfWork, type BookingUpdateInputV1, type IdempotencyScope
 } from "./contracts.ts";
 import {
   requireBookingCreate, requireBookingRead, requireBookingStatusUpdate, requireBookingUpdate,
@@ -28,13 +29,13 @@ function idempotencyScope(context: SecurityContext, canonicalFunctionId: Idempot
   if (!key || key.length > 200) throw new AppError("VALIDATION_FAILED", "A valid idempotency-key is required");
   return Object.freeze({ actorIdentityId: context.actorIdentityId, tenantId: context.tenantId, locationId: context.locationId, canonicalFunctionId, idempotencyKey: key, semanticHash: bookingSemanticHash(payload) });
 }
-async function assertProductAccess(guard: RistoProductAccessGuard, context: SecurityContext): Promise<void> { await guard.assertRistoAirenAccess(context); }
+async function assertProductAccess(guard: BookingProductAccessGuard, context: SecurityContext): Promise<void> { await guard.assertBookingAccess(context); }
 
 export class BookingApplicationService {
   private readonly reads: BookingReadRepository;
   private readonly uow: BookingUnitOfWork;
-  private readonly productAccess: RistoProductAccessGuard;
-  constructor(reads: BookingReadRepository, uow: BookingUnitOfWork, productAccess: RistoProductAccessGuard) {
+  private readonly productAccess: BookingProductAccessGuard;
+  constructor(reads: BookingReadRepository, uow: BookingUnitOfWork, productAccess: BookingProductAccessGuard) {
     this.reads = reads; this.uow = uow; this.productAccess = productAccess;
   }
   async query(context: SecurityContext, input: BookingQueryInputV1): Promise<BookingPrivateListResultV1> {
@@ -48,7 +49,7 @@ export class BookingApplicationService {
   }
   async create(context: SecurityContext, input: BookingCreateInputV1, idempotencyKey: string): Promise<BookingMutationResultV1> {
     requireBookingCreate(context); await assertProductAccess(this.productAccess, context);
-    const validated = validateBookingCreate(input); const scope = idempotencyScope(context, "RST-F-BKG-001", idempotencyKey, validated);
+    const validated = validateBookingCreate(input); const scope = idempotencyScope(context, BOOKING_FUNCTION_IDS.create, idempotencyKey, validated);
     return this.uow.transaction(context, async (tx) => {
       const claim = await tx.claimIdempotency(scope); if (claim.kind === "REPLAY") return Object.freeze({ ...claim.result, replayed: true });
       const booking = await tx.insertBooking(validated, context); const result = Object.freeze({ booking, replayed: false });
@@ -59,7 +60,7 @@ export class BookingApplicationService {
   }
   async update(context: SecurityContext, bookingId: UUID, input: BookingUpdateInputV1, idempotencyKey: string): Promise<BookingMutationResultV1> {
     requireBookingUpdate(context); await assertProductAccess(this.productAccess, context);
-    const validated=validateBookingUpdate(input); const scope=idempotencyScope(context,"RST-F-BKG-002",idempotencyKey,{bookingId,...validated});
+    const validated=validateBookingUpdate(input); const scope=idempotencyScope(context,BOOKING_FUNCTION_IDS.update,idempotencyKey,{bookingId,...validated});
     return this.uow.transaction(context,async(tx)=>{
       const claim=await tx.claimIdempotency(scope); if(claim.kind==="REPLAY") return Object.freeze({...claim.result,replayed:true});
       const current=await tx.findVisibleById(bookingId); if(!current) throw new AppError("NOT_FOUND","RESOURCE_NOT_FOUND_OR_NOT_VISIBLE");
@@ -71,7 +72,7 @@ export class BookingApplicationService {
   }
   async transitionStatus(context: SecurityContext, bookingId: UUID, input: BookingStatusTransitionInputV1, idempotencyKey: string): Promise<BookingMutationResultV1> {
     requireBookingStatusUpdate(context); await assertProductAccess(this.productAccess, context);
-    const scope=idempotencyScope(context,"RST-F-BKG-003",idempotencyKey,{bookingId,...input});
+    const scope=idempotencyScope(context,BOOKING_FUNCTION_IDS.statusUpdate,idempotencyKey,{bookingId,...input});
     return this.uow.transaction(context,async(tx)=>{
       const claim=await tx.claimIdempotency(scope); if(claim.kind==="REPLAY") return Object.freeze({...claim.result,replayed:true});
       const current=await tx.findVisibleById(bookingId); if(!current) throw new AppError("NOT_FOUND","RESOURCE_NOT_FOUND_OR_NOT_VISIBLE"); validateStatusTransition(current.status,input);

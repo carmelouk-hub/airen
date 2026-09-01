@@ -1,5 +1,14 @@
 import type { SecurityContext, UUID } from "../../shared-contracts/src/index.ts";
 
+export const AIREN_BOOKING_ENTITLEMENT = "airen.booking" as const;
+
+export const BOOKING_FUNCTION_IDS = Object.freeze({
+  create: "AIREN-F-BKG-001",
+  update: "AIREN-F-BKG-002",
+  statusUpdate: "AIREN-F-BKG-003"
+} as const);
+export type BookingFunctionId = (typeof BOOKING_FUNCTION_IDS)[keyof typeof BOOKING_FUNCTION_IDS];
+
 export const BOOKING_STATUSES = ["REQUESTED", "PENDING", "CONFIRMED", "ARRIVED", "SEATED", "COMPLETED", "CANCELLED", "NO_SHOW"] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
@@ -103,8 +112,8 @@ export type BookingOutboxEvent = Readonly<{
   payload: Readonly<Record<string, unknown>>;
 }>;
 
-export interface RistoProductAccessGuard {
-  assertRistoAirenAccess(context: SecurityContext): void | Promise<void>;
+export interface BookingProductAccessGuard {
+  assertBookingAccess(context: SecurityContext): void | Promise<void>;
 }
 
 export interface BookingReadRepository {
@@ -116,7 +125,7 @@ export type IdempotencyScope = Readonly<{
   actorIdentityId: UUID;
   tenantId: UUID;
   locationId: UUID;
-  canonicalFunctionId: "RST-F-BKG-001" | "RST-F-BKG-002" | "RST-F-BKG-003";
+  canonicalFunctionId: BookingFunctionId;
   idempotencyKey: string;
   semanticHash: string;
 }>;

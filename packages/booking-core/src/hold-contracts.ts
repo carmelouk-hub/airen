@@ -1,6 +1,13 @@
 import type { SecurityContext, UUID } from "../../shared-contracts/src/index.ts";
 import type { BookingPrivateProjectionV1 } from "./contracts.ts";
 
+export const BOOKING_HOLD_FUNCTION_IDS = Object.freeze({
+  create: "AIREN-F-BKG-HOLD-001",
+  cancel: "AIREN-F-BKG-HOLD-002",
+  convert: "AIREN-F-BKG-HOLD-003"
+} as const);
+export type BookingHoldFunctionId = (typeof BOOKING_HOLD_FUNCTION_IDS)[keyof typeof BOOKING_HOLD_FUNCTION_IDS];
+
 export const BOOKING_HOLD_STATUSES = [
   "CREATED",
   "GUARANTEE_REQUIRED",
@@ -103,7 +110,7 @@ export type BookingHoldIdempotencyScope = Readonly<{
   actorIdentityId: UUID;
   tenantId: UUID;
   locationId: UUID;
-  canonicalFunctionId: "RST-F-BKG-HOLD-001" | "RST-F-BKG-HOLD-002" | "RST-F-BKG-HOLD-003";
+  canonicalFunctionId: BookingHoldFunctionId;
   idempotencyKey: string;
   semanticHash: string;
 }>;

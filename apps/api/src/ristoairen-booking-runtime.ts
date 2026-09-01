@@ -6,7 +6,7 @@ import type { AuthenticationAdapter } from "../../../packages/identity/src/index
 import type { SecretProvider } from "../../../packages/integrations/src/index.ts";
 import { PostgresFoundationReadStore, PostgresLocationRepositoryAdapter, PostgresTenantRepositoryAdapter } from "../../../packages/persistence-postgres/src/index.ts";
 import { PostgresRistoBookingReadRepository, PostgresRistoBookingUnitOfWork } from "../../../packages/persistence-postgres/src/risto-booking-repository.ts";
-import { BookingApplicationService } from "../../../packages/ristoairen/src/booking/index.ts";
+import { AIREN_BOOKING_ENTITLEMENT, BookingApplicationService, type BookingProductAccessGuard } from "../../../packages/booking-core/src/index.ts";
 import {
   dispatchRistoBookingApiRequest,
   EdDsaServiceAssertionVerifier,
@@ -18,6 +18,8 @@ import {
 } from "./ristoairen-booking-api.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
+
+export const RBL_BOOKING_TEST_COMPATIBILITY_ENTITLEMENT = "rbl01c2.booking.external" as const;
 
 export type RistoBookingRuntimeSwitches = Readonly<{
   adapterEnabled: boolean;
@@ -95,9 +97,21 @@ class StaticServicePublicKeyRegistry implements ServicePublicKeyRegistry {
   async resolve(kid: string) { return this.records.get(kid) ?? null; }
 }
 
-function requiredEntitlementGuard(entitlementKey: string) {
+export function createBookingProductAccessGuard(environment: EnvironmentInput): BookingProductAccessGuard {
+  const configured = environment.RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT?.trim();
+  if (configured && configured !== AIREN_BOOKING_ENTITLEMENT && configured !== RBL_BOOKING_TEST_COMPATIBILITY_ENTITLEMENT) {
+    fail("RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT may only select the canonical AIRen Booking entitlement or the frozen RBL TEST compatibility entitlement", "RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT");
+  }
+  const allowLegacy = configured === RBL_BOOKING_TEST_COMPATIBILITY_ENTITLEMENT;
+  if (allowLegacy && environment.NODE_ENV?.trim() === "production") {
+    fail("RBL Booking compatibility entitlement is forbidden in production", "RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT");
+  }
   return Object.freeze({
-    assertRistoAirenAccess(context: SecurityContext): void { requireEntitlement(context, entitlementKey); }
+    assertBookingAccess(context: SecurityContext): void {
+      if (context.entitlements.includes(AIREN_BOOKING_ENTITLEMENT)) return;
+      if (allowLegacy && context.entitlements.includes(RBL_BOOKING_TEST_COMPATIBILITY_ENTITLEMENT)) return;
+      requireEntitlement(context, AIREN_BOOKING_ENTITLEMENT);
+    }
   });
 }
 
@@ -117,7 +131,7 @@ export async function createRistoBookingRuntime(input: RuntimeInput): Promise<Ri
     fail("RBL-01 Booking runtime cannot be enabled in production", "RISTOAIREN_BOOKING_ADAPTER_ENABLED");
   }
 
-  const requiredEntitlement = required(input.environment, "RISTOAIREN_BOOKING_REQUIRED_ENTITLEMENT");
+  const productAccess = createBookingProductAccessGuard(input.environment);
   const cursorRefRaw = required(input.environment, "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF");
   const cursorRef = parseSecretRef(cursorRefRaw, "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF");
   const publicKeyRegistry = new StaticServicePublicKeyRegistry(required(input.environment, "RISTOAIREN_BOOKING_SERVICE_PUBLIC_KEYS_JSON"));
@@ -125,7 +139,7 @@ export async function createRistoBookingRuntime(input: RuntimeInput): Promise<Ri
 
   const reads = cursorMaterial.use((key) => new PostgresRistoBookingReadRepository(input.pool, key));
   const unitOfWork = new PostgresRistoBookingUnitOfWork(input.pool);
-  const service = new BookingApplicationService(reads, unitOfWork, requiredEntitlementGuard(requiredEntitlement));
+  const service = new BookingApplicationService(reads, unitOfWork, productAccess);
 
   const dependencies: BookingApiDependencies = Object.freeze({
     authentication: input.authentication,
