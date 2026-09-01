@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createPostgresPool } from "../../packages/persistence-postgres/src/index.ts";
 import { PostgresRistoBookingReadRepository, PostgresRistoBookingUnitOfWork } from "../../packages/persistence-postgres/src/risto-booking-repository.ts";
-import { BookingApplicationService } from "../../packages/ristoairen/src/booking/index.ts";
+import { BookingApplicationService } from "../../packages/booking-core/src/index.ts";
 import { T20, cleanupT20BookingData, seedT20BookingTopology, securityContext } from "../helpers/t20-booking-fixtures.ts";
 
 const connectionString=process.env.DATABASE_URL;
@@ -11,7 +11,7 @@ const pool=createPostgresPool(connectionString);
 const service=new BookingApplicationService(
   new PostgresRistoBookingReadRepository(pool,"t20-cleanup-cursor-key-000000000000000000000001"),
   new PostgresRistoBookingUnitOfWork(pool),
-  {assertRistoAirenAccess:()=>undefined}
+  {assertBookingAccess:()=>undefined}
 );
 const context=()=>securityContext({actorIdentityId:T20.managerA,tenantId:T20.tenantA,locationId:T20.locationA1,role:"manager",permissions:["booking.read","booking.create","booking.update","booking.status.update"],correlationId:`t20-cleanup-${crypto.randomUUID()}`});
 
