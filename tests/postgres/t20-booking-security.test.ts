@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync, sign } from "node:crypto";
 import { createPostgresPool } from "../../packages/persistence-postgres/src/index.ts";
 import { PostgresRistoBookingReadRepository, PostgresRistoBookingUnitOfWork } from "../../packages/persistence-postgres/src/risto-booking-repository.ts";
-import { BookingApplicationService } from "../../packages/ristoairen/src/booking/index.ts";
+import { BookingApplicationService } from "../../packages/booking-core/src/index.ts";
 import { AppError } from "../../packages/shared-contracts/src/index.ts";
 import { EdDsaServiceAssertionVerifier, InMemoryBookingRateLimiter, dispatchRistoBookingApiRequest } from "../../apps/api/src/ristoairen-booking-api.ts";
 import { T20, cleanupT20BookingData, seedT20BookingTopology, securityContext } from "../helpers/t20-booking-fixtures.ts";
@@ -12,7 +12,7 @@ const connectionString=process.env.DATABASE_URL;
 if(!connectionString) throw new Error("DATABASE_URL is required");
 const pool=createPostgresPool(connectionString);
 const reads=new PostgresRistoBookingReadRepository(pool,"t20-security-cursor-key-00000000000000000000001");
-const domainService=new BookingApplicationService(reads,new PostgresRistoBookingUnitOfWork(pool),{assertRistoAirenAccess:()=>undefined});
+const domainService=new BookingApplicationService(reads,new PostgresRistoBookingUnitOfWork(pool),{assertBookingAccess:()=>undefined});
 let scopedBookingId="";
 
 const managerA=()=>securityContext({actorIdentityId:T20.managerA,tenantId:T20.tenantA,locationId:T20.locationA1,role:"manager",permissions:["booking.read","booking.create","booking.update","booking.status.update"],correlationId:`t20-security-${crypto.randomUUID()}`});
