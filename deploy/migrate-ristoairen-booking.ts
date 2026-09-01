@@ -33,6 +33,11 @@ const GOVERNED_BOOKING_MIGRATIONS: readonly GovernedMigration[] = [
     path: resolve("packages/persistence-postgres/src/migrations/20260901_001_airen_booking_product_neutral_idempotency.sql"),
     phase: "booking-product-access",
   },
+  {
+    migrationId: "20260901_002_airen_booking_product_neutral_idempotency_airenpay_compat.sql",
+    path: resolve("packages/persistence-postgres/src/migrations/20260901_002_airen_booking_product_neutral_idempotency_airenpay_compat.sql"),
+    phase: "booking-product-access-compatibility",
+  },
 ];
 
 function required(input: EnvironmentInput, key: string): string {

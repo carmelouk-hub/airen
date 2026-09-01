@@ -43,6 +43,7 @@ async function applyHoldMigration(): Promise<void> {
 
 async function applyAirenPayMigration(): Promise<void> {
   await applyMigration("../../packages/persistence-postgres/src/migrations/20260829_002_risto_airenpay.sql");
+  await applyMigration("../../packages/persistence-postgres/src/migrations/20260901_002_airen_booking_product_neutral_idempotency_airenpay_compat.sql");
 }
 
 async function cleanup(): Promise<void> {
