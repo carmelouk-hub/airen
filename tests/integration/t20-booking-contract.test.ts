@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { AppError, type SecurityContext } from "../../packages/shared-contracts/src/index.ts";
 import { BookingApplicationService, BOOKING_ALLOWED_TRANSITIONS, BOOKING_PERMISSIONS, bookingSemanticHash, validateBookingCreate, validateBookingQuery, validateBookingUpdate, validateStatusTransition } from "../../packages/ristoairen/src/booking/index.ts";
 import type { BookingMutationResultV1, BookingMutationTransaction, BookingPrivateProjectionV1, BookingUnitOfWork, IdempotencyClaim, IdempotencyScope } from "../../packages/ristoairen/src/booking/contracts.ts";
+import * as BookingCore from "../../packages/booking-core/src/index.ts";
+import * as RistoBookingCompatibility from "../../packages/ristoairen/src/booking/index.ts";
 
 const context = (permissions: readonly string[]): SecurityContext => Object.freeze({ correlationId:"t20-contract",actorIdentityId:"actor-a",platformRoles:[],platformPermissions:[],tenantId:"tenant-a",locationId:"location-a1",tenantRole:"manager",locationRole:"manager",permissions,entitlements:[] });
 const booking: BookingPrivateProjectionV1 = Object.freeze({ id:"booking-1",status:"REQUESTED",partySize:2,bookingDate:"2026-09-01",bookingTimeLocal:"20:00",startsAt:"2026-09-01T18:00:00.000Z",expectedDurationMinutes:120,source:"T20",customerNameSnapshot:"Synthetic Guest",createdAt:"2026-08-26T00:00:00.000Z",updatedAt:"2026-08-26T00:00:00.000Z",rowVersion:1 });
@@ -44,3 +47,42 @@ test("T20-C19 dedicated status transition requires booking.status.update",async(
 test("T20-C20 successful status transition emits status-only minimized outbox",async()=>{const{service:s,uow}=service();const r=await s.transitionStatus(context(["booking.status.update"]),booking.id,{requestedStatus:"CONFIRMED",rowVersion:1},"key-status");assert.equal(r.booking.status,"CONFIRMED");assert.equal(uow.tx.audits.length,1);assert.equal(uow.tx.outbox.length,1);assert.doesNotMatch(JSON.stringify(uow.tx.outbox),/phone|email|notes|special/i)});
 test("T20-C21 missing exact Booking is normalized to not-visible result",async()=>{const s=new BookingApplicationService({query:async()=>({items:[]}),findVisibleById:async()=>null},new FakeUow(),{assertRistoAirenAccess:()=>undefined});await assert.rejects(()=>s.get(context(["booking.read"]),"missing"),(e:any)=>e instanceof AppError&&e.code==="NOT_FOUND"&&e.message==="RESOURCE_NOT_FOUND_OR_NOT_VISIBLE")});
 test("T20-C22 product access guard is mandatory before read",async()=>{const s=new BookingApplicationService({query:async()=>({items:[]}),findVisibleById:async()=>null},new FakeUow(),{assertRistoAirenAccess:()=>{throw new AppError("ENTITLEMENT_REQUIRED","no product access")}});await assert.rejects(()=>s.query(context(["booking.read"]),{}),(e:any)=>e.code==="ENTITLEMENT_REQUIRED")});
+
+test("AB02-C01 AIRenOS booking-core is the canonical runtime export surface",()=>{
+  assert.equal(BookingCore.BookingApplicationService, BookingApplicationService);
+  assert.equal(BookingCore.BOOKING_PERMISSIONS, BOOKING_PERMISSIONS);
+  assert.equal(BookingCore.bookingSemanticHash, bookingSemanticHash);
+});
+
+test("AB02-C02 RISTOAIREN compatibility path delegates to the same runtime bindings",()=>{
+  assert.equal(RistoBookingCompatibility.BookingApplicationService, BookingCore.BookingApplicationService);
+  assert.equal(RistoBookingCompatibility.BookingHoldApplicationService, BookingCore.BookingHoldApplicationService);
+  assert.equal(RistoBookingCompatibility.BOOKING_ALLOWED_TRANSITIONS, BookingCore.BOOKING_ALLOWED_TRANSITIONS);
+  assert.equal(RistoBookingCompatibility.BOOKING_HOLD_ALLOWED_TRANSITIONS, BookingCore.BOOKING_HOLD_ALLOWED_TRANSITIONS);
+});
+
+test("AB02-C03 historical RISTOAIREN Booking files are compatibility re-exports only",async()=>{
+  const expected: Readonly<Record<string,string>> = Object.freeze({
+    "contracts.ts":"../../../booking-core/src/contracts.ts",
+    "policy.ts":"../../../booking-core/src/policy.ts",
+    "application-service.ts":"../../../booking-core/src/application-service.ts",
+    "hold-contracts.ts":"../../../booking-core/src/hold-contracts.ts",
+    "hold-policy.ts":"../../../booking-core/src/hold-policy.ts",
+    "hold-application-service.ts":"../../../booking-core/src/hold-application-service.ts",
+    "index.ts":"../../../booking-core/src/index.ts"
+  });
+  for (const [file,target] of Object.entries(expected)) {
+    const text=await readFile(new URL(`../../packages/ristoairen/src/booking/${file}`,import.meta.url),"utf8");
+    assert.equal(text.trim(),`export * from "${target}";`);
+  }
+});
+
+test("AB02-C04 extraction preserves temporary RISTOAIREN access and idempotency identifiers for AB-03",async()=>{
+  const contracts=await readFile(new URL("../../packages/booking-core/src/contracts.ts",import.meta.url),"utf8");
+  const application=await readFile(new URL("../../packages/booking-core/src/application-service.ts",import.meta.url),"utf8");
+  const holdContracts=await readFile(new URL("../../packages/booking-core/src/hold-contracts.ts",import.meta.url),"utf8");
+  const holdApplication=await readFile(new URL("../../packages/booking-core/src/hold-application-service.ts",import.meta.url),"utf8");
+  assert.match(contracts,/RistoProductAccessGuard/);
+  for (const token of ["RST-F-BKG-001","RST-F-BKG-002","RST-F-BKG-003"]) assert.match(application,new RegExp(token));
+  for (const token of ["RST-F-BKG-HOLD-001","RST-F-BKG-HOLD-002","RST-F-BKG-HOLD-003"]) assert.match(holdContracts+holdApplication,new RegExp(token));
+});
