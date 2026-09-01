@@ -609,3 +609,49 @@ Current read-only Base44 E2E final correlation proof = PENDING
 First implementation gate after E2E closure = BookingHold / Guarantee Engine
 
 Any change to these authority boundaries, state-machine semantics, payment-data custody, tenant isolation or provider-neutrality requires a new governed design revision.
+
+33. GOVERNANCE ADDENDUM — AIREN BOOKING AUTONOMOUS PRODUCT CAPABILITY
+
+Decision date: 2026-09-01
+Decision status: ACCEPTED / CANONICAL ARCHITECTURE / NOT RUNTIME-CERTIFIED
+Decision authority: authorized human decision recorded as ADR-016.
+
+Booking Core is an AIRenOS-owned domain capability and is commercially productized as AIRen Booking. AIRen Booking is independently commercializable and is not owned by, embedded as a private copy inside, or architecturally subordinated to RISTOAIREN.
+
+RISTOAIREN consumes AIRen Booking through AIRenOS entitlement resolution. A RISTOAIREN commercial package may include AIRen Booking, but the technical meaning is that the Tenant holds the AIRen Booking entitlement. This inclusion does not create or authorize a separate RISTOAIREN Booking Core.
+
+AIRenPay remains an independent, provider-neutral AIRenOS capability and optional add-on. AIRenPay may be connected to AIRen Booking, to RISTOAIREN and, under future separately governed scopes, to other AIRenOS products or verticals. AIRen Booking must remain operable without a mandatory AIRenPay dependency.
+
+Binding authority split:
+- AIRenOS owns Booking Core primitives, lifecycle authority, availability, hold, confirmation, cancellation, policy, audit integration, entitlement binding and product-level APIs.
+- RISTOAIREN owns hospitality-specific mappings, workflows and experience layers above Booking Core.
+- AIRenPay owns payment, guarantee and transaction orchestration boundaries and is invoked only when entitlement, configuration and policy authorize it.
+- AIRenOS Control Plane remains authority for plan, subscription, entitlement, permission, Tenant/Location scope and audit.
+- One Booking Core serves multiple entitled consumers; product-specific forks require a new governed decision.
+- Restaurant-specific concepts must not become universal mandatory Booking Core primitives.
+
+Authorized commercial forms:
+- AIRen Booking standalone.
+- AIRen Booking with optional AIRenPay.
+- RISTOAIREN package including AIRen Booking through entitlement.
+- RISTOAIREN with optional AIRenPay.
+- Future API, Enterprise or white-label offers only through separate governed authorization.
+
+Canonical Drive authorities:
+- ADR-016 in ADR-000 — AIRenOS Architecture Decision Register — Drive ID 1DcX-DC7ubmRIkz8kIHE5RhkfBtqExMGr1gyUcGpAqIk.
+- AIRenOS Platform Bible — Drive ID 1ZlppAFqaJvhWUxwHyUdMJIaREBPzSAsn9hy7kupX9DA.
+- AIREN BOOKING CHANNEL HUB + AIRENPAY — Canonical Design — Drive ID 1c4O5bsu00OyG-qw_cSnq84VD8DH68FaYzPqxhW5E67A.
+
+Compatibility and protected boundaries:
+This addendum refines and makes explicit the existing single-authority and provider-neutral Booking design. Earlier statements that RISTOAIREN is the first governed Booking implementation remain valid only as implementation sequence and first market focus. No certified history is rewritten or invalidated.
+
+This decision authorizes architecture and canonical documentation only. It does not authorize code changes, migrations, protected-branch movement, PR merge, Gate E opening, provider mutation, deployment, production activation, Corte delle Stelle cutover or AIRenPay activation.
+
+AIREN_BOOKING_PRODUCT = AUTONOMOUS_AIRENOS_CAPABILITY
+BOOKING_CORE_OWNER = AIRENOS
+RISTOAIREN_BOOKING_RELATION = ENTITLEMENT_CONSUMER
+AIRENPAY_RELATION = INDEPENDENT_OPTIONAL_ADD_ON
+MAIN = NOT_TOUCHED
+PR_4 = OPEN_DRAFT_UNMERGED
+CORTE_PRODUCTION = NOT_TOUCHED
+PRODUCTION_CHANGE = NONE
