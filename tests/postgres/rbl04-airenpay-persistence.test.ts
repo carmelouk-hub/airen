@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AppError } from "../../packages/shared-contracts/src/index.ts";
-import { BookingHoldApplicationService } from "../../packages/ristoairen/src/booking/index.ts";
+import { BookingHoldApplicationService } from "../../packages/booking-core/src/index.ts";
 import { createPostgresPool } from "../../packages/persistence-postgres/src/index.ts";
 import { PostgresRistoBookingHoldUnitOfWork } from "../../packages/persistence-postgres/src/risto-booking-hold-repository.ts";
 import { PostgresAirenPayPersistence } from "../../packages/persistence-postgres/src/risto-airenpay-repository.ts";
@@ -13,7 +13,7 @@ if (!connectionString) throw new Error("DATABASE_URL is required");
 const pool = createPostgresPool(connectionString);
 const holdService = new BookingHoldApplicationService(
   new PostgresRistoBookingHoldUnitOfWork(pool),
-  { assertRistoAirenAccess: () => undefined }
+  { assertBookingAccess: () => undefined }
 );
 const airenPay = new PostgresAirenPayPersistence(pool);
 
@@ -38,6 +38,7 @@ async function applyMigration(path: string): Promise<void> {
 
 async function applyHoldMigration(): Promise<void> {
   await applyMigration("../../packages/persistence-postgres/src/migrations/20260829_001_risto_booking_holds.sql");
+  await applyMigration("../../packages/persistence-postgres/src/migrations/20260901_001_airen_booking_product_neutral_idempotency.sql");
 }
 
 async function applyAirenPayMigration(): Promise<void> {
