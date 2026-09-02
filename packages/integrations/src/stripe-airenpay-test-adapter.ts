@@ -14,7 +14,7 @@ import {
   validateAirenPayNormalizedWebhookEvent,
   validateAirenPayWebhookRequest,
   validateTenantPaymentGatewayConnection
-} from "../../ristoairen/src/airenpay/index.ts";
+} from "../../airenpay/src/index.ts";
 
 export type StripeSetupIntentStatus =
   | "requires_payment_method"

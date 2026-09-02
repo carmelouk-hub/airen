@@ -14,7 +14,7 @@ import {
   validateAirenPayWebhookRequest,
   validateTenantPaymentGatewayConnection,
   type TenantPaymentGatewayConnectionProjectionV1
-} from "../../packages/ristoairen/src/airenpay/index.ts";
+} from "../../packages/airenpay/src/index.ts";
 
 function context(overrides: Partial<SecurityContext> = {}): SecurityContext {
   return Object.freeze({

@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { AppError, type SecretRef } from "../../packages/shared-contracts/src/index.ts";
-import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../packages/ristoairen/src/airenpay/index.ts";
+import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../packages/airenpay/src/index.ts";
 import type { SecretMaterial, SecretProvider } from "../../packages/integrations/src/index.ts";
 import {
   confirmStripeTestAuthorizationForProof,

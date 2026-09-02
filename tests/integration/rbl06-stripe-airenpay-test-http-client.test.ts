@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { AppError, type SecretRef } from "../../packages/shared-contracts/src/index.ts";
-import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../packages/ristoairen/src/airenpay/index.ts";
+import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../packages/airenpay/src/index.ts";
 import type { SecretMaterial, SecretProvider } from "../../packages/integrations/src/index.ts";
 import {
   StripeAirenPayTestHttpClientFactory,

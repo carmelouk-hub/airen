@@ -1,6 +1,6 @@
 import { AppError } from "../packages/shared-contracts/src/index.ts";
 import type { SecretProvider } from "../packages/integrations/src/index.ts";
-import type { TenantPaymentGatewayConnectionProjectionV1 } from "../packages/ristoairen/src/airenpay/index.ts";
+import type { TenantPaymentGatewayConnectionProjectionV1 } from "../packages/airenpay/src/index.ts";
 
 export type StripeAuthorizationProofFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
 

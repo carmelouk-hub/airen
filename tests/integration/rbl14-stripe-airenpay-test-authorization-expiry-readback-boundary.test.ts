@@ -5,7 +5,7 @@ import { AppError, type SecretRef } from "../../packages/shared-contracts/src/in
 import {
   assertAirenPayAuthorizationWindowCompatible,
   type TenantPaymentGatewayConnectionProjectionV1
-} from "../../packages/ristoairen/src/airenpay/index.ts";
+} from "../../packages/airenpay/src/index.ts";
 import type { SecretMaterial, SecretProvider } from "../../packages/integrations/src/index.ts";
 import { StripeAirenPayTestAdapter } from "../../packages/integrations/src/stripe-airenpay-test-adapter.ts";
 import {

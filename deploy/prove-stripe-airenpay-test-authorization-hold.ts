@@ -6,7 +6,7 @@ import { confirmStripeTestAuthorizationForProof } from "./stripe-airenpay-test-a
 import type {
   AirenPayGatewayOperationContextV1,
   TenantPaymentGatewayConnectionProjectionV1
-} from "../packages/ristoairen/src/airenpay/index.ts";
+} from "../packages/airenpay/src/index.ts";
 
 const ENABLE_FLAG = "AIRENPAY_STRIPE_TEST_AUTHORIZATION_HOLD_PROOF_ENABLED";
 const SECRET_ENV_KEY = "STRIPE_AIRENPAY_TEST_SECRET_KEY";

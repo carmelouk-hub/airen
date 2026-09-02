@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { AppError } from "../../shared-contracts/src/index.ts";
-import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../ristoairen/src/airenpay/index.ts";
+import type { TenantPaymentGatewayConnectionProjectionV1 } from "../../airenpay/src/index.ts";
 import type { SecretProvider } from "./index.ts";
 import type {
   StripeAirenPayTestClientFactory,

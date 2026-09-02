@@ -7,18 +7,18 @@ import type {
   AirenPayNormalizedWebhookEventV1,
   AirenPayOrchestrationProjectionV1,
   TenantPaymentGatewayConnectionProjectionV1
-} from "../../ristoairen/src/airenpay/contracts.ts";
+} from "../../airenpay/src/contracts.ts";
 import type {
   AirenPayCreateOrchestrationResultV1,
   AirenPayPersistencePort,
   AirenPayWebhookRecordResultV1
-} from "../../ristoairen/src/airenpay/persistence-contracts.ts";
+} from "../../airenpay/src/persistence-contracts.ts";
 import {
   assertGateCTestPaymentConnection,
   validateAirenPayGuaranteeRequest,
   validateAirenPayNormalizedWebhookEvent,
   validateTenantPaymentGatewayConnection
-} from "../../ristoairen/src/airenpay/policy.ts";
+} from "../../airenpay/src/policy.ts";
 
 function assertRoleIdentifier(role: string): string {
   if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier");

@@ -4,7 +4,7 @@ import { AppError } from "../../packages/shared-contracts/src/index.ts";
 import type {
   AirenPayGatewayOperationContextV1,
   TenantPaymentGatewayConnectionProjectionV1
-} from "../../packages/ristoairen/src/airenpay/index.ts";
+} from "../../packages/airenpay/src/index.ts";
 import {
   StripeAirenPayTestAdapter,
   type StripeAirenPayTestClientFactory,

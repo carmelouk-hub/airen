@@ -2,7 +2,7 @@ import { AppError } from "../packages/shared-contracts/src/index.ts";
 import {
   assertAirenPayAuthorizationWindowCompatible,
   type TenantPaymentGatewayConnectionProjectionV1
-} from "../packages/ristoairen/src/airenpay/index.ts";
+} from "../packages/airenpay/src/index.ts";
 import { EnvironmentSecretProvider } from "../packages/integrations/src/index.ts";
 import { StripeAirenPayTestAdapter } from "../packages/integrations/src/stripe-airenpay-test-adapter.ts";
 import { StripeAirenPayTestHttpClientFactory } from "../packages/integrations/src/stripe-airenpay-test-http-client.ts";
