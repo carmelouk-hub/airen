@@ -172,6 +172,7 @@ jobs:
       R3J_BASELINE_SHA: 36681602009bed93dd35d2d69fbc90a061e6eb7a
       R3J_CORRECTIVE_BASELINE_SHA: d8615ed0346eab73fae58c85f0d3342567ab8522
       R3J_SECOND_CORRECTIVE_BASELINE_SHA: 204a7ab043bad46a50e3aae249727df9c5a5b7c3
+      R3J_V41_SHA: 8a05c565177c69aa29965a966d25015bde093972
       R3J_REGRESSION_GATE: PASS
       R3J_PRODUCTION_SIDE_EFFECTS: FORBIDDEN
     steps:
@@ -223,7 +224,7 @@ jobs:
             "packages/persistence-postgres/src/index.ts" \
             "tests/deployment/provision_runtime_login.sql"
 
-          verify_exact_delta "$R3J_SECOND_CORRECTIVE_BASELINE_SHA" "$GITHUB_SHA" "R3-J second corrective census V4.1" \
+          verify_exact_delta "$R3J_SECOND_CORRECTIVE_BASELINE_SHA" "$R3J_V41_SHA" "R3-J second corrective census V4.1" \
             ".github/workflows/ci.yml" \
             "apps/api/src/security-context.ts" \
             "packages/persistence-postgres/src/index.ts" \
