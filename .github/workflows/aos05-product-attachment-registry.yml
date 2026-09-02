@@ -1,0 +1,33 @@
+name: aos05-product-attachment-registry
+on:
+  push:
+    branches:
+      - foundation/aos05-product-attachment-contract-registry-20260903
+  workflow_dispatch:
+
+jobs:
+  aos05-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Preserve foundation boundaries
+        run: npm run check:boundaries
+      - name: Preserve foundation contracts
+        run: npm run check:foundation-contracts
+      - name: Re-run AOS-01 Product Registry contract
+        run: node --experimental-strip-types --test tests/integration/aos01-product-registry-contract.test.ts
+      - name: Re-run AOS-02 Organization context contract
+        run: node --experimental-strip-types --test tests/integration/aos02-organization-context-contract.test.ts
+      - name: Re-run AOS-03 ProductAccess composition contract
+        run: node --experimental-strip-types --test tests/integration/aos03-product-access-contract.test.ts
+      - name: Execute AOS-05 Product Attachment contract
+        run: node --experimental-strip-types --test tests/integration/aos05-product-attachment-contract.test.ts
+      - name: Verify patch hygiene
+        run: git diff --check HEAD^ HEAD
