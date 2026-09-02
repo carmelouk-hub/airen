@@ -1,0 +1,29 @@
+name: aos01-product-registry-contract
+
+on:
+  push:
+    branches:
+      - "foundation/aos01-platform-product-registry-20260902"
+  pull_request:
+    paths:
+      - "packages/platform-core/src/product-registry.ts"
+      - "packages/platform-core/src/index.ts"
+      - "tests/integration/aos01-product-registry-contract.test.ts"
+      - ".github/workflows/aos01-product-registry.yml"
+
+jobs:
+  product-registry-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: AOS-01 Product Registry contract
+        run: node --experimental-strip-types --test tests/integration/aos01-product-registry-contract.test.ts
+      - name: Preserve Foundation boundaries
+        run: node scripts/check-boundaries.mjs
+      - name: Preserve Foundation contracts
+        run: node scripts/check-foundation-contracts.mjs
+      - name: Reject whitespace errors
+        run: git diff --check HEAD^ HEAD
