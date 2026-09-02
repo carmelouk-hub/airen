@@ -41,11 +41,27 @@ function referenceSecretProvider(environment: EnvironmentInput): SecretProvider 
   const config = loadFoundationRuntimeEnvironment(environment);
   if (config.secretManagerAdapter === "env") {
     const allowedKeys = [config.databaseUrlRef.key, config.authSessionKeyRef.key];
-    const bookingCursorRefRaw = environment.RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF?.trim();
+    const canonicalBookingCursorRefRaw = environment.AIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF?.trim();
+    const compatibilityBookingCursorRefRaw = environment.RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF?.trim();
+    if (canonicalBookingCursorRefRaw && compatibilityBookingCursorRefRaw && canonicalBookingCursorRefRaw !== compatibilityBookingCursorRefRaw) {
+      throw new AppError(
+        "RUNTIME_CONFIGURATION_INVALID",
+        "AIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF conflicts with compatibility alias RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF",
+        { field: "AIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF" }
+      );
+    }
+    const bookingCursorRefRaw = canonicalBookingCursorRefRaw ?? compatibilityBookingCursorRefRaw;
+    const bookingCursorRefField = canonicalBookingCursorRefRaw
+      ? "AIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF"
+      : "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF";
     if (bookingCursorRefRaw) {
-      const bookingCursorRef = parseSecretRef(bookingCursorRefRaw, "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF");
+      const bookingCursorRef = parseSecretRef(bookingCursorRefRaw, bookingCursorRefField);
       if (bookingCursorRef.provider !== config.secretManagerAdapter) {
-        throw new AppError("RUNTIME_CONFIGURATION_INVALID", "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF provider must match SECRET_MANAGER_ADAPTER", { field: "RISTOAIREN_BOOKING_CURSOR_HMAC_KEY_SECRET_REF" });
+        throw new AppError(
+          "RUNTIME_CONFIGURATION_INVALID",
+          `${bookingCursorRefField} provider must match SECRET_MANAGER_ADAPTER`,
+          { field: bookingCursorRefField }
+        );
       }
       allowedKeys.push(bookingCursorRef.key);
     }
