@@ -3,11 +3,14 @@ import { requirePermission } from "../../authorization/src/index.ts";
 import { BOOKING_PERMISSIONS } from "./policy.ts";
 import {
   BOOKING_GUARANTEE_MODES,
+  BOOKING_HOLD_GUARANTEE_OUTCOMES,
   BOOKING_HOLD_STATUSES,
   type BookingGuaranteeMode,
   type BookingGuaranteePolicyProjectionV1,
   type BookingHoldCancelInputV1,
   type BookingHoldCreateInputV1,
+  type BookingHoldGuaranteeBeginInputV1,
+  type BookingHoldGuaranteeResolutionInputV1,
   type BookingHoldPrivateProjectionV1,
   type BookingHoldStatus
 } from "./hold-contracts.ts";
@@ -62,6 +65,10 @@ export function requireBookingHoldCancel(context: SecurityContext): void {
   requirePermission(context, BOOKING_PERMISSIONS.update);
 }
 
+export function requireBookingHoldGuaranteeUpdate(context: SecurityContext): void {
+  requirePermission(context, BOOKING_PERMISSIONS.update);
+}
+
 export function requireBookingHoldConvert(context: SecurityContext): void {
   requirePermission(context, BOOKING_PERMISSIONS.create);
 }
@@ -87,6 +94,22 @@ export function validateBookingHoldCancel(input: BookingHoldCancelInputV1): Book
   boundedInteger(input.rowVersion, 1, Number.MAX_SAFE_INTEGER, "row_version");
   if (input.reason !== undefined && !input.reason.trim()) throw new AppError("VALIDATION_FAILED", "reason must not be blank");
   return input;
+}
+
+export function validateBookingHoldGuaranteeBegin(input: BookingHoldGuaranteeBeginInputV1): BookingHoldGuaranteeBeginInputV1 {
+  rejectClientScopeSpoof(input);
+  boundedInteger(input.rowVersion, 1, Number.MAX_SAFE_INTEGER, "row_version");
+  return Object.freeze({ ...input, guaranteeReference: nonEmpty(input.guaranteeReference, "guarantee_reference") });
+}
+
+export function validateBookingHoldGuaranteeResolution(input: BookingHoldGuaranteeResolutionInputV1): BookingHoldGuaranteeResolutionInputV1 {
+  rejectClientScopeSpoof(input);
+  boundedInteger(input.rowVersion, 1, Number.MAX_SAFE_INTEGER, "row_version");
+  if (!BOOKING_HOLD_GUARANTEE_OUTCOMES.includes(input.outcome)) throw new AppError("VALIDATION_FAILED", "Unknown BookingHold guarantee outcome");
+  const guaranteeReference = nonEmpty(input.guaranteeReference, "guarantee_reference");
+  if (input.outcome === "FAILED" && !input.failureReason?.trim()) throw new AppError("VALIDATION_FAILED", "failure_reason is required for failed guarantee");
+  if (input.failureReason !== undefined && !input.failureReason.trim()) throw new AppError("VALIDATION_FAILED", "failure_reason must not be blank");
+  return Object.freeze({ ...input, guaranteeReference, failureReason: input.failureReason?.trim() });
 }
 
 function policyMatches(policy: BookingGuaranteePolicyProjectionV1, input: BookingHoldCreateInputV1): boolean {
@@ -129,6 +152,10 @@ export function validateBookingHoldTransition(fromStatus: BookingHoldStatus, toS
   if (!BOOKING_HOLD_ALLOWED_TRANSITIONS[fromStatus].includes(toStatus)) {
     throw new AppError("CONFLICT", `BookingHold transition ${fromStatus} -> ${toStatus} is not allowed`);
   }
+}
+
+export function assertBookingHoldNotExpired(hold: BookingHoldPrivateProjectionV1, now = new Date()): void {
+  if (new Date(hold.expiresAt).getTime() <= now.getTime()) throw new AppError("CONFLICT", "Expired BookingHold cannot accept guarantee transitions");
 }
 
 export function assertBookingHoldConvertible(hold: BookingHoldPrivateProjectionV1, now = new Date()): void {
