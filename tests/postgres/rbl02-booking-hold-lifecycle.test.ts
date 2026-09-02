@@ -16,6 +16,9 @@ const service = new BookingHoldApplicationService(
   { assertBookingAccess: () => undefined }
 );
 const lifecycle = new PostgresRistoBookingHoldLifecycle(pool);
+const bookingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+const capacityStartsAt = `${bookingDate}T00:00:00Z`;
+const capacityEndsAt = `${bookingDate}T23:59:59Z`;
 
 const manager = () => securityContext({
   actorIdentityId: T20.managerA,
@@ -51,17 +54,17 @@ async function seedResource(resourceKey: string): Promise<void> {
   await pool.query(
     `INSERT INTO risto_booking_capacity_slots
       (tenant_id,location_id,resource_key,starts_at,ends_at,capacity_total,status,created_by_identity_id,updated_by_identity_id)
-     VALUES ($1,$2,$3,'2026-09-01T17:00:00Z','2026-09-01T21:00:00Z',4,'active',$4,$4)
+     VALUES ($1,$2,$3,$4::timestamptz,$5::timestamptz,4,'active',$6,$6)
      ON CONFLICT (tenant_id,location_id,resource_key,starts_at,ends_at)
      DO UPDATE SET capacity_total=4,status='active',updated_at=now()`,
-    [T20.tenantA,T20.locationA1,resourceKey,T20.managerA]
+    [T20.tenantA,T20.locationA1,resourceKey,capacityStartsAt,capacityEndsAt,T20.managerA]
   );
   await pool.query(
     `INSERT INTO risto_booking_guarantee_policies
       (tenant_id,location_id,source_channel,resource_key,min_party_size,max_party_size,effective_from,effective_until,
        guarantee_mode,hold_duration_seconds,priority,status,created_by_identity_id,updated_by_identity_id)
-     VALUES ($1,$2,'DIRECT_WEB',$3,1,100,'2026-08-01','2026-12-31','NONE',600,100,'active',$4,$4)`,
-    [T20.tenantA,T20.locationA1,resourceKey,T20.managerA]
+     VALUES ($1,$2,'DIRECT_WEB',$3,1,100,$4::date,$4::date,'NONE',600,100,'active',$5,$5)`,
+    [T20.tenantA,T20.locationA1,resourceKey,bookingDate,T20.managerA]
   );
 }
 
@@ -69,7 +72,7 @@ const createInput = (resourceKey: string, partySize = 4) => Object.freeze({
   sourceChannel: "DIRECT_WEB",
   resourceKey,
   partySize,
-  bookingDate: "2026-09-01",
+  bookingDate,
   bookingTimeLocal: "20:00",
   expectedDurationMinutes: 120,
   customerNameSnapshot: `Lifecycle ${resourceKey}`
