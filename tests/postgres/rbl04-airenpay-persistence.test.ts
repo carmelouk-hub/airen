@@ -20,6 +20,9 @@ const airenPay = new PostgresAirenPayPersistence(pool);
 const CONNECTION_A = "50000000-0000-4000-8000-000000000401";
 const CONNECTION_A2 = "50000000-0000-4000-8000-000000000402";
 const CONNECTION_B = "50000000-0000-4000-8000-000000000403";
+const bookingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+const capacityStartsAt = `${bookingDate}T00:00:00Z`;
+const capacityEndsAt = `${bookingDate}T23:59:59Z`;
 
 const manager = (tenantId = T20.tenantA, locationId = T20.locationA1, actorIdentityId = T20.managerA) =>
   securityContext({
@@ -60,17 +63,17 @@ async function seedHoldResource(): Promise<void> {
   await pool.query(
     `INSERT INTO risto_booking_capacity_slots
       (tenant_id,location_id,resource_key,starts_at,ends_at,capacity_total,status,created_by_identity_id,updated_by_identity_id)
-     VALUES ($1,$2,'AIRENPAY_DINNER','2026-09-01T17:00:00Z','2026-09-01T21:00:00Z',10,'active',$3,$3)
+     VALUES ($1,$2,'AIRENPAY_DINNER',$4::timestamptz,$5::timestamptz,10,'active',$3,$3)
      ON CONFLICT (tenant_id,location_id,resource_key,starts_at,ends_at)
      DO UPDATE SET capacity_total=10,status='active',updated_at=now()`,
-    [T20.tenantA,T20.locationA1,T20.managerA]
+    [T20.tenantA,T20.locationA1,T20.managerA,capacityStartsAt,capacityEndsAt]
   );
   await pool.query(
     `INSERT INTO risto_booking_guarantee_policies
       (tenant_id,location_id,source_channel,resource_key,min_party_size,max_party_size,effective_from,effective_until,
        guarantee_mode,hold_duration_seconds,amount_minor,currency,priority,status,created_by_identity_id,updated_by_identity_id)
-     VALUES ($1,$2,'DIRECT_WEB','AIRENPAY_DINNER',1,100,'2026-08-01','2026-12-31','DEPOSIT',600,2000,'EUR',900,'active',$3,$3)`,
-    [T20.tenantA,T20.locationA1,T20.managerA]
+     VALUES ($1,$2,'DIRECT_WEB','AIRENPAY_DINNER',1,100,$4::date,$4::date,'DEPOSIT',600,2000,'EUR',900,'active',$3,$3)`,
+    [T20.tenantA,T20.locationA1,T20.managerA,bookingDate]
   );
 }
 
@@ -94,7 +97,7 @@ const holdInput = Object.freeze({
   sourceChannel: "DIRECT_WEB",
   resourceKey: "AIRENPAY_DINNER",
   partySize: 2,
-  bookingDate: "2026-09-01",
+  bookingDate,
   bookingTimeLocal: "20:00",
   expectedDurationMinutes: 120,
   customerNameSnapshot: "AIRenPay Synthetic Guest"
