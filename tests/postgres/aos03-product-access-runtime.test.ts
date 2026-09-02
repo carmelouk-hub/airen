@@ -116,7 +116,7 @@ test("AOS-03 ProductAccess runtime composes Organization, R3-E Subscription and 
   await admin.query(
     `INSERT INTO authz.location_memberships(id,tenant_membership_id,tenant_id,location_id,role_key,status)
      VALUES ($1,$2,$3,$4,'aos03_location','active')
-     ON CONFLICT (tenant_membership_id,location_id) DO UPDATE SET role_key='aos03_location',status='active',updated_at=now()`,
+     ON CONFLICT (tenant_membership_id,location_id) DO UPDATE SET role_key='aos03_location',status='active'`,
     [LOCATION_MEMBERSHIP, actualTenantMembership, TENANT, LOCATION],
   );
   const actualLocationMembership = String((await admin.query(
