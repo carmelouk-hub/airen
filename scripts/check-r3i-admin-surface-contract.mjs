@@ -68,6 +68,9 @@ assert.ok(pkg.scripts["test:r3i-admin-ui-contract"],"R3-I UI contract test scrip
 assert.ok(ci.includes("check:r3i-admin-surface-contract")&&ci.includes("test:r3i-admin-api-contract")&&ci.includes("test:r3i-admin-ui-contract"),"R3-I application CI wiring missing");
 
 const migrations=(await readdir("db/migrations")).filter(x=>/^\d{4}_/.test(x)).sort();
-assert.equal(migrations.at(-1)?.startsWith("0029_"),true,`R3-I must introduce no migration; found tail ${migrations.at(-1)}`);
+const certifiedR3Migrations=migrations.filter(x=>Number(x.slice(0,4))<=29);
+assert.equal(certifiedR3Migrations.length,29,`Certified R3 baseline must remain exactly 0001-0029; found ${certifiedR3Migrations.length} files`);
+assert.equal(certifiedR3Migrations.at(-1),"0029_r3h_reconcile_superseded_owner_policies.sql","Certified R3 migration tail changed");
+assert.equal(certifiedR3Migrations.some(x=>/_r3i_/i.test(x)),false,"R3-I must introduce no migration");
 
 console.log("R3-I Admin surface guardrail PASS");

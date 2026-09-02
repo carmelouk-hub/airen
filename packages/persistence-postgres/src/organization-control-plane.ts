@@ -25,7 +25,11 @@ function translateOrganizationError(error: unknown): unknown {
 }
 
 class PostgresOrganizationControlPlaneTransaction implements OrganizationControlPlaneTransaction {
-  constructor(private readonly client: PoolClient) {}
+  private readonly client: PoolClient;
+
+  constructor(client: PoolClient) {
+    this.client = client;
+  }
 
   async provisionOrganization(input: { idempotencyKey: string; slug: string; name: string; legalName?: string }): Promise<OrganizationProvisioningResult> {
     const result = await this.client.query(
@@ -61,7 +65,13 @@ class PostgresOrganizationControlPlaneTransaction implements OrganizationControl
 }
 
 export class PostgresOrganizationControlPlaneUnitOfWork implements OrganizationControlPlaneUnitOfWork {
-  constructor(private readonly pool: Pool, private readonly assumeRole = "airen_control_plane") {}
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_control_plane") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
 
   async transaction<T>(fn: (tx: OrganizationControlPlaneTransaction) => Promise<T>, context: PlatformSecurityContext): Promise<T> {
     if (context.scopeKind !== "platform") throw new AppError("PERMISSION_DENIED", "PlatformSecurityContext is required for Organization control-plane mutations");
@@ -86,7 +96,13 @@ export class PostgresOrganizationControlPlaneUnitOfWork implements OrganizationC
 }
 
 export class PostgresOrganizationContextRepository implements OrganizationContextRepository {
-  constructor(private readonly pool: Pool, private readonly assumeRole = "airen_app") {}
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_app") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
 
   private async readWithRole<T>(identityId: UUID | null, fn: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
