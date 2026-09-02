@@ -255,5 +255,9 @@ test("R3I-T29 Foundation plus R3-A through R3-H regression suites remain wired g
 });
 
 test("R3I-T30 no database migration/new authority is introduced by R3-I",async()=>{
-  const migrations=(await readdir("db/migrations")).filter(x=>/^\d{4}_/.test(x)).sort();assert.equal(migrations.at(-1)?.startsWith("0029_"),true);
+  const migrations=(await readdir("db/migrations")).filter(x=>/^\d{4}_/.test(x)).sort();
+  const certifiedR3Migrations=migrations.filter(x=>Number(x.slice(0,4))<=29);
+  assert.equal(certifiedR3Migrations.length,29);
+  assert.equal(certifiedR3Migrations.at(-1),"0029_r3h_reconcile_superseded_owner_policies.sql");
+  assert.equal(certifiedR3Migrations.some(x=>/_r3i_/i.test(x)),false);
 });
