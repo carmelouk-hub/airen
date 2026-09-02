@@ -59,7 +59,10 @@ export class BookingHoldGuaranteeApplicationService {
     requireBookingHoldGuaranteeUpdate(context);
     await this.productAccess.assertBookingAccess(context);
     const validated = validateBookingHoldGuaranteeBegin(input);
-    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.guaranteeBegin, idempotencyKey, { holdId, ...validated });
+    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.guaranteeBegin, idempotencyKey, {
+      holdId,
+      guaranteeReference: validated.guaranteeReference
+    });
 
     return this.uow.transaction(context, async (tx) => {
       const claim = await tx.claimHoldIdempotency(scope);
@@ -129,7 +132,12 @@ export class BookingHoldGuaranteeApplicationService {
     requireBookingHoldGuaranteeUpdate(context);
     await this.productAccess.assertBookingAccess(context);
     const validated = validateBookingHoldGuaranteeResolution(input);
-    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.guaranteeResolve, idempotencyKey, { holdId, ...validated });
+    const scope = idempotencyScope(context, BOOKING_HOLD_FUNCTION_IDS.guaranteeResolve, idempotencyKey, {
+      holdId,
+      guaranteeReference: validated.guaranteeReference,
+      outcome: validated.outcome,
+      failureReason: validated.failureReason
+    });
 
     return this.uow.transaction(context, async (tx) => {
       const claim = await tx.claimHoldIdempotency(scope);
