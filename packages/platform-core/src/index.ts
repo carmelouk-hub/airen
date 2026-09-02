@@ -4,6 +4,7 @@ import { requireEntitlement } from "../../entitlements/src/index.ts";
 import { successAudit, type TransactionContext, type UnitOfWork } from "../../audit-events/src/index.ts";
 export { loadFoundationRuntimeEnvironment, parseSecretRef, runtimeEnvironmentDiagnostics, type FoundationRuntimeEnvironment } from "./runtime-environment.ts";
 export * from "./product-registry.ts";
+export * from "./organization-control-plane.ts";
 export async function executeGovernedMutation<T, TTx extends TransactionContext = TransactionContext>(input: { context: SecurityContext; permissionKey: string; entitlementKey?: string; resourceScope: ResourceScope; actionKey: string; resource?: { type: string; id: string }; resourceFromResult?: (result: T) => { type: string; id: string }; unitOfWork: UnitOfWork<TTx>; mutate: (tx: TTx, context: SecurityContext) => Promise<T>; event?: (result: T) => DomainEvent }): Promise<T> {
   requirePermission(input.context, input.permissionKey, input.resourceScope);
   if (input.entitlementKey) requireEntitlement(input.context, input.entitlementKey);

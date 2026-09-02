@@ -1,0 +1,60 @@
+name: aos02-organization-control-plane
+on:
+  push:
+    branches:
+      - foundation/aos02-tenant-organization-domain-control-plane-20260902
+  workflow_dispatch:
+
+jobs:
+  aos02-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Preserve foundation boundaries
+        run: npm run check:boundaries
+      - name: Preserve foundation contracts
+        run: npm run check:foundation-contracts
+      - name: Re-run AOS-01 Product Registry contract
+        run: node --experimental-strip-types --test tests/integration/aos01-product-registry-contract.test.ts
+      - name: Execute AOS-02 Organization context contract
+        run: node --experimental-strip-types --test tests/integration/aos02-organization-context-contract.test.ts
+      - name: Verify patch hygiene
+        run: git diff --check HEAD^ HEAD
+
+  aos02-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_aos02_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_aos02_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_aos02_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node PostgreSQL adapter dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply certified R3 baseline migrations and regression runtime tests
+        run: bash scripts/run-postgres-runtime-tests.sh
+      - name: Apply isolated AOS-02 Organization migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0030_aos02_organization_control_plane.sql
+      - name: Execute AOS-02 Organization PostgreSQL runtime proof
+        run: node --experimental-strip-types --test tests/postgres/aos02-organization-control-plane.test.ts
