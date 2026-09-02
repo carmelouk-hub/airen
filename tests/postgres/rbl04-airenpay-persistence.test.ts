@@ -2,20 +2,22 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { AppError } from "../../packages/shared-contracts/src/index.ts";
-import { BookingHoldApplicationService } from "../../packages/booking-core/src/index.ts";
+import { BookingHoldApplicationService, BookingHoldGuaranteeApplicationService } from "../../packages/booking-core/src/index.ts";
 import { createPostgresPool } from "../../packages/persistence-postgres/src/index.ts";
 import { PostgresRistoBookingHoldUnitOfWork } from "../../packages/persistence-postgres/src/risto-booking-hold-repository.ts";
 import { PostgresAirenPayPersistence } from "../../packages/persistence-postgres/src/risto-airenpay-repository.ts";
+import { AirenBookingAirenPayBridge } from "../../apps/api/src/airen-booking-airenpay-bridge.ts";
 import { T20, cleanupT20BookingData, seedT20BookingTopology, securityContext } from "../helpers/t20-booking-fixtures.ts";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
 const pool = createPostgresPool(connectionString);
-const holdService = new BookingHoldApplicationService(
-  new PostgresRistoBookingHoldUnitOfWork(pool),
-  { assertBookingAccess: () => undefined }
-);
+const holdUow = new PostgresRistoBookingHoldUnitOfWork(pool);
+const bookingAccess = { assertBookingAccess: () => undefined };
+const holdService = new BookingHoldApplicationService(holdUow, bookingAccess);
+const guaranteeService = new BookingHoldGuaranteeApplicationService(holdUow, bookingAccess);
 const airenPay = new PostgresAirenPayPersistence(pool);
+const bookingAirenPayBridge = new AirenBookingAirenPayBridge(airenPay, holdUow, guaranteeService);
 
 const CONNECTION_A = "50000000-0000-4000-8000-000000000401";
 const CONNECTION_A2 = "50000000-0000-4000-8000-000000000402";
@@ -47,6 +49,10 @@ async function applyHoldMigration(): Promise<void> {
 async function applyAirenPayMigration(): Promise<void> {
   await applyMigration("../../packages/persistence-postgres/src/migrations/20260829_002_risto_airenpay.sql");
   await applyMigration("../../packages/persistence-postgres/src/migrations/20260901_002_airen_booking_product_neutral_idempotency_airenpay_compat.sql");
+}
+
+async function applyGateEMigration(): Promise<void> {
+  await applyMigration("../../packages/persistence-postgres/src/migrations/20260902_001_airen_booking_gate_e_guarantee_idempotency.sql");
 }
 
 async function cleanup(): Promise<void> {
@@ -106,6 +112,8 @@ const holdInput = Object.freeze({
 let holdId = "";
 let orchestrationId = "";
 let connectionA: Awaited<ReturnType<typeof airenPay.listGatewayConnections>>[number];
+let gateEHoldId = "";
+let gateEOrchestrationId = "";
 
 async function createFreshDepositHold(key: string) {
   return holdService.create(manager(), holdInput, key);
@@ -115,6 +123,7 @@ test.before(async () => {
   await seedT20BookingTopology(pool);
   await applyHoldMigration();
   await applyAirenPayMigration();
+  await applyGateEMigration();
   await cleanup();
   await seedT20BookingTopology(pool);
   await seedHoldResource();
@@ -126,8 +135,11 @@ test.after(async () => {
   await pool.end();
 });
 
-test("RBL04-P01 AIRenPay migration is idempotently re-applicable", async () => {
-  await assert.doesNotReject(() => applyAirenPayMigration());
+test("RBL04-P01 AIRenPay migrations remain re-applicable under the Gate E finalizer", async () => {
+  await assert.doesNotReject(async () => {
+    await applyAirenPayMigration();
+    await applyGateEMigration();
+  });
 });
 
 test("RBL04-P02 RLS exposes tenant fallback and hides other-location/tenant connections", async () => {
@@ -316,4 +328,96 @@ test("RBL04-P14 persisted webhook evidence is normalized-only and contains no gu
   for (const forbidden of ["customer_name","phone","email","card_number","cvv","cvc","secret","password"]) {
     assert.equal(serialized.includes(forbidden), false);
   }
+});
+
+test("GATEE-P15 AIRen Booking binds the AIRenPay orchestration and persists guarantee_ref atomically", async () => {
+  const createdHold = await createFreshDepositHold("gate-e-hold-bind");
+  const createdPay = await airenPay.createOrchestration(
+    manager(),
+    { bookingHoldId: createdHold.hold.id, guaranteeMode: "DEPOSIT", financialTerms: { amountMinor: 2000, currency: "EUR" } },
+    connectionA,
+    "gate-e-pay-bind"
+  );
+  const bound = await bookingAirenPayBridge.bindOrchestration(manager(), createdPay.orchestration.id);
+  assert.equal(bound.replayed, false);
+  assert.equal(bound.hold.status, "GUARANTEE_PENDING");
+  assert.equal(bound.hold.guaranteeRef, createdPay.orchestration.id);
+  const persisted = await pool.query(`SELECT status,guarantee_ref FROM risto_booking_holds WHERE id=$1`, [createdHold.hold.id]);
+  assert.deepEqual(persisted.rows[0], { status: "GUARANTEE_PENDING", guarantee_ref: createdPay.orchestration.id });
+  gateEHoldId = createdHold.hold.id;
+  gateEOrchestrationId = createdPay.orchestration.id;
+});
+
+test("GATEE-P16 persisted AIRenPay webhook evidence resolves the bound BookingHold exactly once", async () => {
+  await pool.query(
+    `UPDATE risto_airenpay_orchestrations
+        SET provider_transaction_reference='pi_gate_e_success',orchestration_status='PROVIDER_PENDING',updated_at=now(),row_version=row_version+1
+      WHERE id=$1`,
+    [gateEOrchestrationId]
+  );
+  const event = {
+    providerEventId: "evt_gate_e_success",
+    providerReference: "pi_gate_e_success",
+    eventType: "PAYMENT_SUCCEEDED" as const,
+    status: "GUARANTEE_SATISFIED" as const,
+    occurredAt: "2026-09-02T13:30:00.000Z",
+    amount: { amountMinor: 2000, currency: "EUR" },
+    providerMetadata: { livemode: false }
+  };
+  const first = await bookingAirenPayBridge.recordWebhookAndResolve(manager(), CONNECTION_A, event);
+  assert.equal(first.webhook.replayed, false);
+  assert.equal(first.resolution, "SATISFIED");
+  assert.equal(first.hold?.replayed, false);
+  assert.equal(first.hold?.hold.status, "GUARANTEED");
+  assert.equal(first.hold?.hold.guaranteeRef, gateEOrchestrationId);
+
+  const replay = await bookingAirenPayBridge.recordWebhookAndResolve(manager(), CONNECTION_A, event);
+  assert.equal(replay.webhook.replayed, true);
+  assert.equal(replay.resolution, "SATISFIED");
+  assert.equal(replay.hold?.replayed, true);
+  assert.equal(replay.hold?.hold.status, "GUARANTEED");
+
+  const persisted = await pool.query(`SELECT status,guarantee_ref FROM risto_booking_holds WHERE id=$1`, [gateEHoldId]);
+  assert.deepEqual(persisted.rows[0], { status: "GUARANTEED", guarantee_ref: gateEOrchestrationId });
+  const audit = await pool.query(
+    `SELECT count(*)::int AS c FROM audit.audit_events WHERE resource_id=$1 AND action_key='BOOKING_HOLD_GUARANTEED'`,
+    [gateEHoldId]
+  );
+  assert.equal(audit.rows[0].c, 1);
+});
+
+test("GATEE-P17 failed AIRenPay evidence terminates the bound BookingHold without conversion", async () => {
+  const createdHold = await createFreshDepositHold("gate-e-hold-failed");
+  const createdPay = await airenPay.createOrchestration(
+    manager(),
+    { bookingHoldId: createdHold.hold.id, guaranteeMode: "DEPOSIT", financialTerms: { amountMinor: 2000, currency: "EUR" } },
+    connectionA,
+    "gate-e-pay-failed"
+  );
+  const bound = await bookingAirenPayBridge.bindOrchestration(manager(), createdPay.orchestration.id);
+  assert.equal(bound.hold.status, "GUARANTEE_PENDING");
+  await pool.query(
+    `UPDATE risto_airenpay_orchestrations
+        SET provider_transaction_reference='pi_gate_e_failed',orchestration_status='PROVIDER_PENDING',updated_at=now(),row_version=row_version+1
+      WHERE id=$1`,
+    [createdPay.orchestration.id]
+  );
+  const resolved = await bookingAirenPayBridge.recordWebhookAndResolve(manager(), CONNECTION_A, {
+    providerEventId: "evt_gate_e_failed",
+    providerReference: "pi_gate_e_failed",
+    eventType: "FAILED",
+    status: "FAILED",
+    occurredAt: "2026-09-02T13:31:00.000Z",
+    providerMetadata: { livemode: false }
+  });
+  assert.equal(resolved.resolution, "FAILED");
+  assert.equal(resolved.hold?.hold.status, "FAILED");
+  assert.equal(resolved.hold?.hold.guaranteeRef, createdPay.orchestration.id);
+  const persisted = await pool.query(`SELECT status,guarantee_ref,failure_reason,conversion_booking_id FROM risto_booking_holds WHERE id=$1`, [createdHold.hold.id]);
+  assert.deepEqual(persisted.rows[0], {
+    status: "FAILED",
+    guarantee_ref: createdPay.orchestration.id,
+    failure_reason: "AIRENPAY_FAILED",
+    conversion_booking_id: null
+  });
 });

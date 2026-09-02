@@ -76,7 +76,15 @@ export class BookingHoldGuaranteeApplicationService {
       }
       assertBookingHoldNotExpired(current);
       validateBookingHoldTransition(current.status, "GUARANTEE_PENDING");
-      const hold = await tx.transitionHoldStatus(holdId, current.status, "GUARANTEE_PENDING", validated.rowVersion, undefined, context);
+      const hold = await tx.transitionHoldStatus(
+        holdId,
+        current.status,
+        "GUARANTEE_PENDING",
+        validated.rowVersion,
+        undefined,
+        context,
+        validated.guaranteeReference
+      );
       const result = Object.freeze({ hold, replayed: false });
 
       await tx.appendHoldAudit({
@@ -145,7 +153,8 @@ export class BookingHoldGuaranteeApplicationService {
         targetStatus,
         validated.rowVersion,
         validated.outcome === "FAILED" ? validated.failureReason : undefined,
-        context
+        context,
+        validated.guaranteeReference
       );
       const result = Object.freeze({ hold, replayed: false });
       const guaranteed = validated.outcome === "SATISFIED";

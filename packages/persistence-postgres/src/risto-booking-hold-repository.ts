@@ -204,20 +204,31 @@ class PostgresRistoBookingHoldTransaction implements BookingHoldMutationTransact
     return mapHold(inserted.rows[0]);
   }
 
-  async transitionHoldStatus(holdId: UUID, fromStatus: BookingHoldStatus, toStatus: BookingHoldStatus, rowVersion: number, reason: string | undefined, context: SecurityContext): Promise<BookingHoldPrivateProjectionV1> {
+  async transitionHoldStatus(
+    holdId: UUID,
+    fromStatus: BookingHoldStatus,
+    toStatus: BookingHoldStatus,
+    rowVersion: number,
+    reason: string | undefined,
+    context: SecurityContext,
+    guaranteeReference?: string
+  ): Promise<BookingHoldPrivateProjectionV1> {
     const updated = await this.client.query(
       `UPDATE risto_booking_holds
-          SET status=$3,cancellation_reason=CASE WHEN $3='CANCELLED' THEN $5 ELSE cancellation_reason END,
+          SET status=$3,
+              guarantee_ref=CASE WHEN $7::text IS NULL THEN guarantee_ref ELSE COALESCE(guarantee_ref,$7::text) END,
+              cancellation_reason=CASE WHEN $3='CANCELLED' THEN $5 ELSE cancellation_reason END,
               cancelled_at=CASE WHEN $3='CANCELLED' THEN now() ELSE cancelled_at END,
               expired_at=CASE WHEN $3='EXPIRED' THEN now() ELSE expired_at END,
               converted_at=CASE WHEN $3='CONVERTED' THEN now() ELSE converted_at END,
               failure_reason=CASE WHEN $3='FAILED' THEN $5 ELSE failure_reason END,
               updated_by_identity_id=$6,updated_at=now(),row_version=row_version+1
         WHERE id=$1 AND status=$2 AND row_version=$4
+          AND ($7::text IS NULL OR guarantee_ref IS NULL OR guarantee_ref=$7::text)
         RETURNING id,status,source_channel,source_external_reference,resource_key,party_size,capacity_claim,booking_date,booking_time_local,starts_at,expected_duration_minutes,expires_at,guarantee_policy_id,guarantee_mode,guarantee_ref,conversion_booking_id,customer_name_snapshot,phone_snapshot,email_snapshot,notes,special_requests,created_at,updated_at,row_version`,
-      [holdId, fromStatus, toStatus, rowVersion, reason ?? null, context.actorIdentityId]
+      [holdId, fromStatus, toStatus, rowVersion, reason ?? null, context.actorIdentityId, guaranteeReference ?? null]
     );
-    if (updated.rowCount !== 1) throw new AppError("CONFLICT", "BookingHold optimistic concurrency conflict");
+    if (updated.rowCount !== 1) throw new AppError("CONFLICT", "BookingHold optimistic concurrency or guarantee reference conflict");
     return mapHold(updated.rows[0]);
   }
 

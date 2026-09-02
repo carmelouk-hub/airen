@@ -1,5 +1,5 @@
 -- Gate E — Direct Booking E2E guarantee transition idempotency namespace.
--- Additive only: preserves every historical RISTOAIREN and AIRen Booking identifier.
+-- Additive only: preserves every historical RISTOAIREN, AIRen Booking and AIRenPay identifier.
 BEGIN;
 
 ALTER TABLE foundation_idempotency_keys
@@ -21,7 +21,8 @@ ALTER TABLE foundation_idempotency_keys
     'RST-F-BKG-003',
     'RST-F-BKG-HOLD-001',
     'RST-F-BKG-HOLD-002',
-    'RST-F-BKG-HOLD-003'
+    'RST-F-BKG-HOLD-003',
+    'RST-F-PAY-001'
   ));
 
 COMMIT;

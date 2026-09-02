@@ -183,7 +183,8 @@ export interface BookingHoldMutationTransaction {
     toStatus: BookingHoldStatus,
     rowVersion: number,
     reason: string | undefined,
-    context: SecurityContext
+    context: SecurityContext,
+    guaranteeReference?: string
   ): Promise<BookingHoldPrivateProjectionV1>;
   appendHoldAudit(event: BookingHoldAuditEvent): Promise<void>;
   appendHoldOutbox(event: BookingHoldOutboxEvent): Promise<void>;
