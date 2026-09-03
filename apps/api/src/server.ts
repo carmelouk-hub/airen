@@ -23,6 +23,7 @@ import { PostgresCapabilityControlPlaneStore } from "../../../packages/persisten
 import { PostgresPlatformAuditQueryStore } from "../../../packages/persistence-postgres/src/audit-query-control-plane.ts";
 import { PostgresOrganizationContextRepository } from "../../../packages/persistence-postgres/src/organization-control-plane.ts";
 import { PostgresProductAccessStore } from "../../../packages/persistence-postgres/src/product-access.ts";
+import { PostgresRistoairenExperienceHandoffStore } from "../../../packages/persistence-postgres/src/ristoairen-experience-handoff.ts";
 import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import { dispatchAdminApiRequest, isAdminApiRequest, type AdminApiDependencies } from "./admin-api.ts";
@@ -135,6 +136,28 @@ async function readBookingJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
+async function readRistoairenAttachmentJsonBody(request: IncomingMessage): Promise<unknown> {
+  if (request.method === "GET" || request.method === "HEAD") return undefined;
+  const contentType = header(request, "content-type");
+  if (contentType && !contentType.toLowerCase().startsWith("application/json")) {
+    throw new AppError("VALIDATION_FAILED", "RISTOAIREN attachment content-type must be application/json");
+  }
+  const chunks: Buffer[] = [];
+  let bytes = 0;
+  for await (const chunk of request) {
+    const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    bytes += data.length;
+    if (bytes > 16 * 1024) throw new AppError("VALIDATION_FAILED", "RISTOAIREN attachment request body exceeds 16 KiB");
+    chunks.push(data);
+  }
+  if (!chunks.length) return {};
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch {
+    throw new AppError("VALIDATION_FAILED", "RISTOAIREN attachment request body is not valid JSON");
+  }
+}
+
 function adminHeaders(request: IncomingMessage): Readonly<Record<string, string | undefined>> {
   return Object.freeze({
     authorization: header(request, "authorization"),
@@ -229,6 +252,7 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     organizations: new PostgresOrganizationContextRepository(pool),
     productSubscriptions: new PostgresProductAccessStore(pool),
     effectiveEntitlements: entitlementStore,
+    handoffs: new PostgresRistoairenExperienceHandoffStore(pool),
     trustedRequestScopes: foundationReads,
   });
 
@@ -314,6 +338,18 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
       }
 
       if (isRistoairenProductAttachmentApiRequest(request.url)) {
+        let body: unknown;
+        try {
+          body = await readRistoairenAttachmentJsonBody(request);
+        } catch (error) {
+          const classification = classifyError(error);
+          json(response, classification.code === "VALIDATION_FAILED" ? 400 : 500, {
+            error: classification.code,
+            message: classification.code === "VALIDATION_FAILED" ? "Invalid RISTOAIREN attachment request body" : "RISTOAIREN attachment request failed",
+            correlationId: context.correlationId
+          });
+          return;
+        }
         const result = await dispatchRistoairenProductAttachmentApiRequest({
           method: request.method ?? "GET",
           url: request.url ?? "",
@@ -322,6 +358,7 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
             host: header(request, "host"),
             "x-correlation-id": context.correlationId,
           }),
+          body,
         }, ristoairenAttachmentDeps);
         json(response, result.status, result.body, result.headers);
         const outcome = result.status < 400 ? "success" : result.status >= 500 ? "failed" : "denied";

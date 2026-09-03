@@ -31,6 +31,8 @@ jobs:
         run: node --experimental-strip-types --test tests/integration/ra01-ristoairen-product-attachment-contract.test.ts
       - name: Execute RA-01 Foundation HTTP attachment contract
         run: node --experimental-strip-types --test tests/integration/ra01-ristoairen-product-attachment-http.test.ts
+      - name: Execute RA-01 Foundation-owned Experience handoff contract
+        run: node --experimental-strip-types --test tests/integration/ra01-ristoairen-experience-handoff.test.ts
       - name: Verify patch hygiene
         run: git diff --check HEAD^ HEAD
 
@@ -75,5 +77,18 @@ jobs:
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.permission_registry WHERE permission_key='ristoairen.access'")" == "1" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.role_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.membership_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]
+      - name: Apply RA-01 Foundation-owned Experience handoff migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0033_ra01_ristoairen_experience_handoff.sql
+      - name: Prove hash-only handoff persistence and capability boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regclass('platform.ristoairen_experience_handoffs') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM information_schema.columns WHERE table_schema='platform' AND table_name='ristoairen_experience_handoffs' AND column_name IN ('launch_code','code','token','access_token','session_token')")" == "0" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN has_table_privilege('airen_app','platform.ristoairen_experience_handoffs','SELECT') THEN 1 ELSE 0 END")" == "0" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regprocedure('security.issue_ristoairen_experience_handoff(text,uuid,uuid,timestamp with time zone)') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regprocedure('security.consume_ristoairen_experience_handoff(text,text)') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
       - name: Prove RA-01 Ed25519 session to PostgreSQL ProductAccess HTTP runtime
         run: node --experimental-strip-types --test tests/postgres/ra01-ristoairen-product-attachment-http-runtime.test.ts
+      - name: Prove RA-01 one-time Experience handoff PostgreSQL runtime
+        run: node --experimental-strip-types --test tests/postgres/ra01-ristoairen-experience-handoff-runtime.test.ts
