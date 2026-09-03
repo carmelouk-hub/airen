@@ -1,0 +1,75 @@
+name: ra01-ristoairen-product-attachment
+on:
+  push:
+    branches:
+      - foundation/ra01-ristoairen-product-attachment-20260903
+  workflow_dispatch:
+
+jobs:
+  ra01-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Preserve foundation boundaries
+        run: npm run check:boundaries
+      - name: Preserve foundation contracts
+        run: npm run check:foundation-contracts
+      - name: Re-run AOS-01 Product Registry contract
+        run: node --experimental-strip-types --test tests/integration/aos01-product-registry-contract.test.ts
+      - name: Re-run AOS-03 ProductAccess composition contract
+        run: node --experimental-strip-types --test tests/integration/aos03-product-access-contract.test.ts
+      - name: Re-run AOS-05 immutable Product Attachment registry contract
+        run: node --experimental-strip-types --test tests/integration/aos05-product-attachment-contract.test.ts
+      - name: Execute RA-01 RISTOAIREN Product Attachment contract
+        run: node --experimental-strip-types --test tests/integration/ra01-ristoairen-product-attachment-contract.test.ts
+      - name: Verify patch hygiene
+        run: git diff --check HEAD^ HEAD
+
+  ra01-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_ra01_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_ra01_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_ra01_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked Node PostgreSQL adapter dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply certified R3 baseline migrations and regression runtime tests
+        run: bash scripts/run-postgres-runtime-tests.sh
+      - name: Apply AOS-02 Organization dependency
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0030_aos02_organization_control_plane.sql
+      - name: Apply AOS-03 ProductAccess dependency
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0031_aos03_product_subscription_access_runtime.sql
+      - name: Apply isolated RA-01 RISTOAIREN permission migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0032_ra01_ristoairen_product_attachment.sql
+      - name: Prove least-privilege RISTOAIREN permission registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.permission_registry WHERE permission_key='ristoairen.access'")" == "1" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.role_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.membership_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]

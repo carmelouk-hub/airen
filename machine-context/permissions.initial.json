@@ -2,7 +2,7 @@
   "version":"0.1",
   "status":"INITIAL_REGISTRY_NOT_COMPLETE",
   "examples":[
-    "booking.read","booking.create","order.create","order.submit.production","payment.record","refund.request","refund.approve","cash.close","inventory.adjust","purchase_order.approve","stella.execute.approved_action"
+    "ristoairen.access","booking.read","booking.create","order.create","order.submit.production","payment.record","refund.request","refund.approve","cash.close","inventory.adjust","purchase_order.approve","stella.execute.approved_action"
   ],
   "rules":[
     "Every critical capability has a permission key",

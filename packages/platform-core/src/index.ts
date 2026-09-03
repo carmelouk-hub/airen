@@ -7,6 +7,7 @@ export * from "./product-registry.ts";
 export * from "./organization-control-plane.ts";
 export * from "./product-access.ts";
 export * from "./product-attachments.ts";
+export * from "./ristoairen-product-attachment.ts";
 export async function executeGovernedMutation<T, TTx extends TransactionContext = TransactionContext>(input: { context: SecurityContext; permissionKey: string; entitlementKey?: string; resourceScope: ResourceScope; actionKey: string; resource?: { type: string; id: string }; resourceFromResult?: (result: T) => { type: string; id: string }; unitOfWork: UnitOfWork<TTx>; mutate: (tx: TTx, context: SecurityContext) => Promise<T>; event?: (result: T) => DomainEvent }): Promise<T> {
   requirePermission(input.context, input.permissionKey, input.resourceScope);
   if (input.entitlementKey) requireEntitlement(input.context, input.entitlementKey);
