@@ -1,0 +1,75 @@
+databases:
+  - name: airenos-ra01-staging-db
+    plan: free
+    region: frankfurt
+    databaseName: airenos_ra01_staging
+    user: airenos_ra01_migration
+    ipAllowList: []
+
+services:
+  - type: web
+    name: airenos-ra01-foundation-staging
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    branch: foundation/ra01-ristoairen-product-attachment-20260903
+    dockerfilePath: ./deploy/Dockerfile.ra01
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    preDeployCommand: node --experimental-strip-types deploy/migrate-ra01-foundation.ts
+    envVars:
+      - key: NODE_ENV
+        value: test
+      - key: APP_BASE_DOMAIN
+        value: ra01-staging.invalid
+      - key: AUTH_ADAPTER
+        value: ed25519-signed-session
+      - key: AUTH_PROVIDER_KEY
+        value: airenos-ra01-staging
+      - key: AUTH_AUDIENCE
+        value: airenos-foundation
+      - key: AUTH_SESSION_PUBLIC_KEYS_JSON
+        sync: false
+      - key: SECRET_MANAGER_ADAPTER
+        value: env
+      - key: RA01_AUTH_SESSION_KEY
+        generateValue: true
+      - key: AUTH_SESSION_KEY_SECRET_REF
+        value: secret://env/RA01_AUTH_SESSION_KEY
+      - key: RA01_MIGRATION_DATABASE_URL
+        fromDatabase:
+          name: airenos-ra01-staging-db
+          property: connectionString
+      - key: MIGRATION_SECRET_MANAGER_ADAPTER
+        value: env
+      - key: MIGRATION_DATABASE_URL_SECRET_REF
+        value: secret://env/RA01_MIGRATION_DATABASE_URL
+      - key: AIREN_RUNTIME_ROLE_PROVISIONING_MODE
+        value: bootstrap
+      - key: RA01_RUNTIME_DB_HOST
+        fromDatabase:
+          name: airenos-ra01-staging-db
+          property: host
+      - key: RA01_RUNTIME_DB_PORT
+        fromDatabase:
+          name: airenos-ra01-staging-db
+          property: port
+      - key: RA01_RUNTIME_DB_NAME
+        fromDatabase:
+          name: airenos-ra01-staging-db
+          property: database
+      - key: RA01_RUNTIME_DB_USER
+        value: airen_ra01_runtime
+      - key: RA01_RUNTIME_DB_SEED
+        generateValue: true
+      - key: DATABASE_URL_SECRET_REF
+        value: secret://env/RA01_RUNTIME_DATABASE_URL
+      - key: AIREN_BOOKING_ADAPTER_ENABLED
+        value: "false"
+      - key: AIREN_BOOKING_PROJECTION_ENABLED
+        value: "false"
+      - key: AIREN_BOOKING_MUTATION_ENABLED
+        value: "false"
+      - key: HOST
+        value: 0.0.0.0
