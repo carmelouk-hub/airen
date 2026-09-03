@@ -24,19 +24,21 @@ services:
       - key: APP_BASE_DOMAIN
         value: ra01-staging.invalid
       - key: AUTH_ADAPTER
-        value: ed25519-signed-session
+        value: airenos-session-ed25519
       - key: AUTH_PROVIDER_KEY
-        value: airenos-ra01-staging
+        value: airenos-session-authority
+      - key: AIRENOS_SESSION_ISSUER
+        value: https://session.airenos.com
       - key: AUTH_AUDIENCE
         value: airenos-foundation
       - key: AUTH_SESSION_PUBLIC_KEYS_JSON
         sync: false
       - key: SECRET_MANAGER_ADAPTER
         value: env
-      - key: RA01_AUTH_SESSION_KEY
+      - key: RA01_RUNTIME_BOOTSTRAP_KEY
         generateValue: true
       - key: AUTH_SESSION_KEY_SECRET_REF
-        value: secret://env/RA01_AUTH_SESSION_KEY
+        value: secret://env/RA01_RUNTIME_BOOTSTRAP_KEY
       - key: RA01_MIGRATION_DATABASE_URL
         fromDatabase:
           name: airenos-ra01-staging-db

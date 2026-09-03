@@ -1,6 +1,6 @@
 import { AppError } from "../packages/shared-contracts/src/index.ts";
 import { classifyError } from "../packages/observability/src/index.ts";
-import { startFoundationHttpServer } from "../apps/api/src/server.ts";
+import { startRa01FoundationHttpServer } from "../apps/api/src/ra01-staging-server.ts";
 import { loadRa01RuntimeDatabaseConfig, materializeRa01RuntimeDatabaseUrl } from "./ra01-runtime-database-principal.ts";
 
 async function main(): Promise<void> {
@@ -13,7 +13,7 @@ async function main(): Promise<void> {
   process.env.RA01_RUNTIME_DATABASE_URL = runtimeDatabaseUrl;
   process.stdout.write(`${JSON.stringify({ event: "ra01.foundation.runtime_database.materialized", principal: runtimeConfig.user })}\n`);
 
-  const service = await startFoundationHttpServer(process.env);
+  const service = await startRa01FoundationHttpServer(process.env);
   const shutdown = (signal: string) => {
     void service.stop(signal).then(() => { process.exitCode = 0; });
   };

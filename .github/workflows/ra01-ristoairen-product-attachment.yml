@@ -90,6 +90,17 @@ jobs:
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN has_table_privilege('airen_app','platform.ristoairen_experience_handoffs','SELECT') THEN 1 ELSE 0 END")" == "0" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regprocedure('security.issue_ristoairen_experience_handoff(text,uuid,uuid,timestamp with time zone)') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regprocedure('security.consume_ristoairen_experience_handoff(text,text)') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
+      - name: Apply certified AIRenOS F1 session lifecycle migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0035_airenos_session_lifecycle.sql
+      - name: Prove AIRenOS session lifecycle capability boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN to_regclass('identity.airenos_sessions') IS NOT NULL THEN 1 ELSE 0 END")" == "1" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN has_table_privilege('airen_app','identity.airenos_sessions','SELECT') THEN 1 ELSE 0 END")" == "0" ]]
+          [[ "$(psql "$DATABASE_URL" -Atqc "SELECT CASE WHEN has_function_privilege('airen_auth','security.resolve_active_airenos_session(uuid,uuid)','EXECUTE') THEN 1 ELSE 0 END")" == "1" ]]
+      - name: Prove RA-01 canonical AIRenOS F0/F1 Session Authority composition
+        run: node --experimental-strip-types --test tests/postgres/ra01-airenos-session-authority-composition-runtime.test.ts
       - name: Prove RA-01 Ed25519 session to PostgreSQL ProductAccess HTTP runtime
         run: node --experimental-strip-types --test tests/postgres/ra01-ristoairen-product-attachment-http-runtime.test.ts
       - name: Prove RA-01 one-time Experience handoff PostgreSQL runtime

@@ -17,8 +17,9 @@ test("RA-01 Render staging blueprint is isolated, fail-closed and non-production
   assert.match(blueprint, /healthCheckPath: \/health\/ready/);
   assert.match(blueprint, /autoDeployTrigger: checksPass/);
   assert.match(blueprint, /preDeployCommand: node --experimental-strip-types deploy\/migrate-ra01-foundation\.ts/);
-  assert.match(blueprint, /key: AUTH_ADAPTER\s+value: ed25519-signed-session/);
-  assert.match(blueprint, /key: AUTH_PROVIDER_KEY\s+value: airenos-ra01-staging/);
+  assert.match(blueprint, /key: AUTH_ADAPTER\s+value: airenos-session-ed25519/);
+  assert.match(blueprint, /key: AUTH_PROVIDER_KEY\s+value: airenos-session-authority/);
+  assert.match(blueprint, /key: AIRENOS_SESSION_ISSUER\s+value: https:\/\/session\.airenos\.com/);
   assert.match(blueprint, /key: AUTH_SESSION_PUBLIC_KEYS_JSON\s+sync: false/);
   assert.match(blueprint, /key: APP_BASE_DOMAIN\s+value: ra01-staging\.invalid/);
   assert.match(blueprint, /key: DATABASE_URL_SECRET_REF\s+value: secret:\/\/env\/RA01_RUNTIME_DATABASE_URL/);
@@ -29,20 +30,34 @@ test("RA-01 Render staging blueprint is isolated, fail-closed and non-production
   assert.match(blueprint, /ipAllowList: \[\]/);
   assert.doesNotMatch(blueprint, /base44-rbl01c2|ristoairen-booking-rbl01c2|STRIPE_|AIRenPay|airenpay/i);
   assert.doesNotMatch(blueprint, /NODE_ENV\s*\n\s*value: production/);
+  assert.doesNotMatch(blueprint, /AIRENOS_SESSION_PRIVATE_KEY|SESSION_SIGNING_PRIVATE|PRIVATE_SIGNING_KEY/);
 });
 
-test("RA-01 deploy entrypoints exclude legacy Booking migration and worker startup", async () => {
+test("RA-01 staging entrypoint uses the canonical AIRenOS F0/F1 authentication composition only", async () => {
   const migration = await read("deploy/migrate-ra01-foundation.ts");
   const runtime = await read("deploy/ra01-runtime-entry.ts");
+  const stagingServer = await read("apps/api/src/ra01-staging-server.ts");
   const dockerfile = await read("deploy/Dockerfile.ra01");
+  const lifecycleMigration = await read("db/migrations/0035_airenos_session_lifecycle.sql");
 
   assert.match(migration, /migrateFoundationDatabase/);
   assert.match(migration, /provisionRa01RuntimeDatabasePrincipal/);
   assert.doesNotMatch(migration, /migrate-ristoairen-booking|seed-rbl01d|airenpay/i);
 
   assert.match(runtime, /RA01_RUNTIME_DATABASE_URL/);
-  assert.match(runtime, /startFoundationHttpServer/);
-  assert.doesNotMatch(runtime, /createRistoBookingHoldRuntime|expiryWorker|RBL01C2/);
+  assert.match(runtime, /startRa01FoundationHttpServer/);
+  assert.doesNotMatch(runtime, /startFoundationHttpServer|createRistoBookingHoldRuntime|expiryWorker|RBL01C2/);
+
+  assert.match(stagingServer, /AirenOSSessionAuthenticationAdapter/);
+  assert.match(stagingServer, /Ed25519AirenOSSessionVerifier/);
+  assert.match(stagingServer, /RevocationAwareAirenOSSessionVerifier/);
+  assert.match(stagingServer, /PostgresAirenOSSessionLifecycleStore/);
+  assert.match(stagingServer, /airenos-session-ed25519/);
+  assert.doesNotMatch(stagingServer, /ProviderNeutralAuthenticationAdapter|createRistoBookingRuntime|dispatchAdminApiRequest/);
+
+  assert.match(lifecycleMigration, /CREATE TABLE identity\.airenos_sessions/);
+  assert.match(lifecycleMigration, /GRANT EXECUTE ON FUNCTION security\.resolve_active_airenos_session/);
+  assert.doesNotMatch(lifecycleMigration, /access_token|refresh_token|private_key/i);
 
   assert.match(dockerfile, /deploy\/ra01-runtime-entry\.ts/);
   assert.doesNotMatch(dockerfile, /deploy\/runtime-entry\.ts/);
