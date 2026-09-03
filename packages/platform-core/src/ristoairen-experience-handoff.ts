@@ -9,7 +9,7 @@ export const RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT = Object.freeze({
   gateId: "RA-01" as const,
   authority: "AIRenOS" as const,
   transport: "one_time_launch_code" as const,
-  handoffState: "wired_pending_runtime_proof" as const,
+  handoffState: "wired_runtime_proven" as const,
   launchCodeStorage: "sha256_only" as const,
   launchCodeSingleUse: true as const,
   launchCodeTtlSeconds: RISTOAIREN_HANDOFF_TTL_SECONDS,

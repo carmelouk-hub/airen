@@ -156,7 +156,7 @@ function request(path: string, body?: unknown, authorization = "Bearer real-aire
 }
 
 test("RA-01 Experience handoff contract is one-time, hash-only and non-authoritative", () => {
-  assert.equal(RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT.handoffState, "wired_pending_runtime_proof");
+  assert.equal(RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT.handoffState, "wired_runtime_proven");
   assert.equal(RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT.launchCodeStorage, "sha256_only");
   assert.equal(RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT.launchCodeSingleUse, true);
   assert.equal(RISTOAIREN_EXPERIENCE_HANDOFF_CONTRACT.launchCodeTtlSeconds, 60);
