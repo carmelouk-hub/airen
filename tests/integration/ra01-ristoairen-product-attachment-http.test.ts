@@ -152,7 +152,7 @@ test("RA-01 HTTP returns only a safe AIRenOS-authorized projection and releases 
   assert.equal(result.body.entitlementKey, "vertical.ristoairen");
   assert.equal(result.body.permissionKey, RISTOAIREN_ATTACHMENT_PERMISSION);
   assert.equal(result.body.productionEnabled, false);
-  assert.equal((result.body.entrypoint as Record<string, unknown>).state, "wired_pending_runtime_proof");
+  assert.equal((result.body.entrypoint as Record<string, unknown>).state, "wired_runtime_proven");
   assert.equal((result.body.experience as Record<string, unknown>).attachmentState, "not_attached");
   assert.equal((result.body.experience as Record<string, unknown>).businessAuthority, false);
   assert.equal((result.body.session as Record<string, unknown>).authority, "AIRenOS");
