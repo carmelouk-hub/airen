@@ -75,3 +75,5 @@ jobs:
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.permission_registry WHERE permission_key='ristoairen.access'")" == "1" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.role_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]
           [[ "$(psql "$DATABASE_URL" -Atqc "SELECT count(*) FROM authz.membership_permission_grants WHERE permission_key='ristoairen.access'")" == "0" ]]
+      - name: Prove RA-01 Ed25519 session to PostgreSQL ProductAccess HTTP runtime
+        run: node --experimental-strip-types --test tests/postgres/ra01-ristoairen-product-attachment-http-runtime.test.ts
