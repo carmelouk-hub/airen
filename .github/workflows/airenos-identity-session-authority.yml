@@ -23,6 +23,7 @@ jobs:
       - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-provisioning-contract.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-ovh-milan-live-preflight-contract.test.ts
       - run: node --experimental-strip-types --test tests/integration/airenos-identity-staging-security-promotion-contract.test.ts
+      - run: node --experimental-strip-types --test tests/integration/airenos-session-signing-key-lifecycle-contract.test.ts
 
   isa-f2-keycloak-image-contract:
     runs-on: ubuntu-latest
