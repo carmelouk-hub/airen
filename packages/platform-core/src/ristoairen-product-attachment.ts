@@ -22,7 +22,7 @@ export type RistoairenProductAttachmentGate = Readonly<{
   registeredRuntimeAttachmentState: "not_attached";
   foundationEntrypointMethod: "GET";
   foundationEntrypointPath: typeof RISTOAIREN_ATTACHMENT_ENTRYPOINT;
-  foundationEntrypointState: "contracted_not_wired";
+  foundationEntrypointState: "wired_pending_runtime_proof";
   experienceAttachmentState: "not_attached";
   experienceTarget: "replaceable_client";
   dependencyProductCodes: readonly string[];
@@ -63,7 +63,7 @@ export const RISTOAIREN_PRODUCT_ATTACHMENT_GATE: RistoairenProductAttachmentGate
   registeredRuntimeAttachmentState: "not_attached",
   foundationEntrypointMethod: "GET",
   foundationEntrypointPath: RISTOAIREN_ATTACHMENT_ENTRYPOINT,
-  foundationEntrypointState: "contracted_not_wired",
+  foundationEntrypointState: "wired_pending_runtime_proof",
   experienceAttachmentState: "not_attached",
   experienceTarget: "replaceable_client",
   dependencyProductCodes: Object.freeze(product.dependencies.map((dependency) => dependency.productCode)),

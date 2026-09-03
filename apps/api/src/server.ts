@@ -21,11 +21,18 @@ import { PostgresBillingControlPlaneStore } from "../../../packages/persistence-
 import { PostgresEntitlementControlPlaneStore } from "../../../packages/persistence-postgres/src/entitlement-control-plane.ts";
 import { PostgresCapabilityControlPlaneStore } from "../../../packages/persistence-postgres/src/capability-control-plane.ts";
 import { PostgresPlatformAuditQueryStore } from "../../../packages/persistence-postgres/src/audit-query-control-plane.ts";
+import { PostgresOrganizationContextRepository } from "../../../packages/persistence-postgres/src/organization-control-plane.ts";
+import { PostgresProductAccessStore } from "../../../packages/persistence-postgres/src/product-access.ts";
 import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import { dispatchAdminApiRequest, isAdminApiRequest, type AdminApiDependencies } from "./admin-api.ts";
 import { isRistoBookingApiRequest } from "./ristoairen-booking-api.ts";
 import { createRistoBookingRuntime } from "./ristoairen-booking-runtime.ts";
+import {
+  dispatchRistoairenProductAttachmentApiRequest,
+  isRistoairenProductAttachmentApiRequest,
+  type RistoairenProductAttachmentApiDependencies,
+} from "./ristoairen-product-attachment-api.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 
@@ -196,6 +203,7 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
   );
   const tenantRepository = new PostgresTenantRepositoryAdapter(foundationReads);
   const locationRepository = new PostgresLocationRepositoryAdapter(foundationReads);
+  const entitlementStore = new PostgresEntitlementControlPlaneStore(pool);
   const bookingRuntime = await createRistoBookingRuntime({
     environment,
     pool,
@@ -205,6 +213,23 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     locationRepository,
     secretProvider,
     appBaseDomain: runtime.config.appBaseDomain
+  });
+
+  const ristoairenAttachmentDeps: RistoairenProductAttachmentApiDependencies = Object.freeze({
+    authentication,
+    roles: foundationReads,
+    appBaseDomain: runtime.config.appBaseDomain,
+    tenantContext: Object.freeze({
+      tenants: tenantRepository,
+      locations: locationRepository,
+      domains: foundationReads,
+      memberships: foundationReads,
+      entitlements: foundationReads,
+    }),
+    organizations: new PostgresOrganizationContextRepository(pool),
+    productSubscriptions: new PostgresProductAccessStore(pool),
+    effectiveEntitlements: entitlementStore,
+    trustedRequestScopes: foundationReads,
   });
 
   const adminDeps: AdminApiDependencies = Object.freeze({
@@ -217,7 +242,7 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     domains: new PostgresTenantDomainControlPlaneStore(pool),
     platformRoles: new PostgresPlatformRoleAdminStore(pool),
     billing: new PostgresBillingControlPlaneStore(pool),
-    entitlements: new PostgresEntitlementControlPlaneStore(pool),
+    entitlements: entitlementStore,
     capabilities: new PostgresCapabilityControlPlaneStore(pool),
     audit: new PostgresPlatformAuditQueryStore(pool),
     tenantContext: Object.freeze({
@@ -285,6 +310,28 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
         const outcome = readiness.status === "READY" ? "success" : "degraded";
         await runtime.observability.metrics.request("health.ready", outcome, Date.now() - started);
         await runtime.observability.logger.emit(readiness.status === "READY" ? "info" : "warn", "http.health_ready", context, { operation: "health.ready", outcome, durationMs: Date.now() - started, attributes: { readiness: readiness.status } });
+        return;
+      }
+
+      if (isRistoairenProductAttachmentApiRequest(request.url)) {
+        const result = await dispatchRistoairenProductAttachmentApiRequest({
+          method: request.method ?? "GET",
+          url: request.url ?? "",
+          headers: Object.freeze({
+            authorization: header(request, "authorization"),
+            host: header(request, "host"),
+            "x-correlation-id": context.correlationId,
+          }),
+        }, ristoairenAttachmentDeps);
+        json(response, result.status, result.body, result.headers);
+        const outcome = result.status < 400 ? "success" : result.status >= 500 ? "failed" : "denied";
+        await runtime.observability.metrics.request("ristoairen.product_attachment.api", outcome, Date.now() - started);
+        await runtime.observability.logger.emit(result.status >= 500 ? "error" : result.status >= 400 ? "warn" : "info", "http.ristoairen_product_attachment_api", context, {
+          operation: "ristoairen.product_attachment.api",
+          outcome,
+          durationMs: Date.now() - started,
+          attributes: { method: request.method, statusCode: result.status }
+        });
         return;
       }
 

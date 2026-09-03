@@ -113,7 +113,7 @@ test("RA-01 opens a RISTOAIREN-specific gate without rewriting AOS-05 certified 
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.entitlementKey, "vertical.ristoairen");
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.permissionKey, RISTOAIREN_ATTACHMENT_PERMISSION);
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.foundationEntrypointPath, RISTOAIREN_ATTACHMENT_ENTRYPOINT);
-  assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.foundationEntrypointState, "contracted_not_wired");
+  assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.foundationEntrypointState, "wired_pending_runtime_proof");
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.experienceAttachmentState, "not_attached");
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.experienceBusinessAuthority, false);
   assert.equal(RISTOAIREN_PRODUCT_ATTACHMENT_GATE.base44MayAuthorizeProduct, false);
