@@ -1,0 +1,57 @@
+{
+  "gate": "ISA_F2_3_RENDER_STAGING_RUNTIME",
+  "status": "STATIC_RENDER_STAGING_RUNTIME_IMPLEMENTED_LIVE_DEPLOY_NOT_EXECUTED",
+  "date": "2026-09-04",
+  "parent_checkpoint": "d8346b151fb4cc3f6c5e91fee04c271e8d7eff76",
+  "provider_authority": {
+    "canonical_identity_infrastructure_target": "OVHCLOUD_PUBLIC_CLOUD_MILAN",
+    "render_role": "TEMPORARY_NON_PRODUCTION_EXECUTION_PROOF_HOST",
+    "provider_neutral_session_authority_preserved": true,
+    "render_becomes_identity_authority": false,
+    "render_replaces_ovh_canonical_target": false
+  },
+  "runtime_contract": {
+    "service_name": "airenos-session-authority-f23-staging",
+    "render_region": "frankfurt",
+    "render_plan": "starter",
+    "container_file": "deploy/Dockerfile.session-authority",
+    "health_ready": "/health/ready",
+    "oidc_flow": "AUTHORIZATION_CODE_PKCE_S256",
+    "airenos_session_signing": "ED25519_EDDSA_AT_JWT",
+    "maximum_session_ttl_seconds": 300,
+    "database_binding": "EXTERNAL_SECRET_REF_REQUIRED",
+    "creates_postgres_in_blueprint": false,
+    "persistent_signing_disk_mount": "/var/data/airenos-session",
+    "private_key_path_is_outside_worktree": true,
+    "private_key_stdout_or_stderr_emission_forbidden": true,
+    "public_keyring_endpoint": "/v1/session/public-keyring",
+    "session_exchange_endpoint": "/v1/session/exchange",
+    "exact_browser_origin_required_for_exchange": true,
+    "forwarded_https_required_for_exchange": true
+  },
+  "protected_boundaries": {
+    "existing_render_booking_resources_mutated": false,
+    "ra01_branch_mutated": false,
+    "booking_branch_mutated": false,
+    "airenpay_branch_mutated": false,
+    "kairos_branch_mutated": false,
+    "r3_branch_mutated": false,
+    "main_mutated": false,
+    "base44_mutated": false,
+    "pr4_merge_authorized": false,
+    "production_enabled": false
+  },
+  "live_evidence": {
+    "render_service_created": false,
+    "billable_resource_creation_executed": false,
+    "staging_private_key_created": false,
+    "staging_public_keyring_created": false,
+    "keycloak_staging_deployed": false,
+    "real_oidc_authorization_code_exchange_proven": false,
+    "real_airenos_session_issued": false,
+    "foundation_public_keyring_bound": false,
+    "real_session_verified_by_ra01": false,
+    "production": false
+  },
+  "next_gate": "CI_PASS_THEN_PROVIDER_COST_AND_TOPOLOGY_REVIEW_BEFORE_ANY_RENDER_APPLY"
+}
