@@ -1,0 +1,63 @@
+name: AIRenOS Identity F2.5 Render readiness
+
+on:
+  push:
+    branches:
+      - foundation/airenos-identity-f25-render-first-staging-authorization-20260904
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  f25-static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify F2.5C secret-safe Render contract
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-f25-render-secret-binding-contract.test.ts
+
+  f25-dedicated-postgres-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airenos_identity_f25_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airenos_identity_f25_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_identity_f25_test
+      RUNTIME_DATABASE_URL: postgresql://airenos_identity_runtime_test:runtime_test@127.0.0.1:5432/airenos_identity_f25_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked runtime dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Bootstrap dedicated Identity boundary
+        run: psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/identity/0001_identity_session_authority_boundary.sql
+      - name: Create CI-only least-privilege runtime fixture
+        run: >-
+          psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "CREATE ROLE airenos_identity_runtime_test LOGIN PASSWORD 'runtime_test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+      - name: Bind runtime fixture through governed psql contract
+        run: >-
+          psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
+          -v runtime_role=airenos_identity_runtime_test
+          -f db/identity/0002_bind_runtime_principal.sql
+      - name: Prove least-privilege Identity runtime behavior
+        run: node --experimental-strip-types --test tests/postgres/airenos-identity-f25-runtime-boundary.test.ts

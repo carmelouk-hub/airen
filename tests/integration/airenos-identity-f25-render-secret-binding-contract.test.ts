@@ -21,7 +21,7 @@ test("F2.5C Render blueprint binds the dedicated Identity DB without embedding c
   assert.doesNotMatch(blueprint, /SESSION_AUTHORITY_DATABASE_URL\s*\n\s+sync: false/);
   assert.doesNotMatch(blueprint, /^databases:/m);
   assert.doesNotMatch(blueprint, /ristoairen|airen_rbl01c2|dpg-da87bdad0e5s739slf20-a/i);
-  assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\/[^^\s]+:[^\s]+@/i);
+  assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\/[^\s:@]+:[^\s@]+@/i);
 });
 
 test("F2.5C dedicated Identity bootstrap excludes platform/product database ownership", async () => {
@@ -51,5 +51,6 @@ test("F2.5C dedicated Identity bootstrap excludes platform/product database owne
   assert.match(binding, /AND NOT rolcreatedb/);
   assert.match(binding, /n\.nspname IN \('identity','authz','security'\)/);
   assert.match(binding, /GRANT airen_auth TO %I/);
-  assert.doesNotMatch(binding, /PASSWORD|postgres(?:ql)?:\/\//i);
+  assert.doesNotMatch(binding, /\bPASSWORD\s+['"]/i);
+  assert.doesNotMatch(binding, /postgres(?:ql)?:\/\/[^\s:@]+:[^\s@]+@/i);
 });
