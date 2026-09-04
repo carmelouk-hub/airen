@@ -1,0 +1,56 @@
+# AIRenOS Identity F2.5C — Render secret-safe readiness blueprint.
+# DO NOT SYNC until db/identity/0001 and 0002 have both passed against the
+# dedicated Identity PostgreSQL and the Render-managed default credential is
+# the verified least-privilege runtime principal.
+services:
+  - type: web
+    name: airenos-session-authority-f25-staging
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    branch: foundation/airenos-identity-f25-render-first-staging-authorization-20260904
+    dockerfilePath: ./deploy/Dockerfile.session-authority
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: off
+    disk:
+      name: airenos-session-authority-signing
+      mountPath: /var/data/airenos-session
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: HOST
+        value: 0.0.0.0
+      - key: AIRENOS_SESSION_ISSUER
+        sync: false
+      - key: AIRENOS_SESSION_AUDIENCE
+        value: airenos-foundation
+      - key: AIRENOS_SESSION_KEY_ID
+        value: isa-f25-render-k1
+      - key: AIRENOS_SESSION_PRIVATE_KEY_PATH
+        value: /var/data/airenos-session/session-signing-private.pem
+      - key: AIRENOS_SESSION_PUBLIC_KEYRING_PATH
+        value: /var/data/airenos-session/session-signing-public.json
+      - key: AIRENOS_SESSION_BOOTSTRAP_IF_MISSING
+        value: "true"
+      - key: AIRENOS_SESSION_REQUIRE_FORWARDED_HTTPS
+        value: "true"
+      - key: AIRENOS_SESSION_ALLOWED_ORIGIN
+        sync: false
+      - key: AIRENOS_UPSTREAM_PROVIDER_KEY
+        value: keycloak-staging
+      - key: AIRENOS_UPSTREAM_OIDC_ISSUER
+        sync: false
+      - key: AIRENOS_UPSTREAM_OIDC_CLIENT_ID
+        value: airenos-session-authority-staging
+      - key: AIRENOS_UPSTREAM_OIDC_REDIRECT_URI
+        sync: false
+      - key: SECRET_MANAGER_ADAPTER
+        value: env
+      - key: SESSION_AUTHORITY_DATABASE_URL_SECRET_REF
+        value: secret://render/fromDatabase/airenos-identity-f25-staging-db/connectionString
+      - key: SESSION_AUTHORITY_DATABASE_URL
+        fromDatabase:
+          name: airenos-identity-f25-staging-db
+          property: connectionString
