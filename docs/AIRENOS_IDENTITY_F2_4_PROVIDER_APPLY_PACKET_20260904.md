@@ -32,7 +32,7 @@ No provider convenience may collapse these boundaries.
 
 ## 4. Secret and signing-key boundary
 
-Secrets MUST remain outside Git source, Google Drive governance documents, Base44 source, chat transcripts, CI logs, Terraform state where avoidable, and any user-visible evidence capture.
+Secrets MUST remain outside Git source, Google Drive governance documents, Base44 source, chat transcripts, CI logs, any unprotected Terraform state, and any user-visible evidence capture. If infrastructure state contains provider-generated sensitive material, that state must remain inside an explicitly protected provider/state boundary and must never be copied into governance evidence.
 
 The Session Authority private Ed25519 signing key:
 
@@ -44,6 +44,8 @@ The Session Authority private Ed25519 signing key:
 - must remain exclusive to Session Authority.
 
 Foundation receives only public verification material, represented by the governed public JWK keyring (for example through `AUTH_SESSION_PUBLIC_KEYS_JSON`). Foundation must never receive the Session Authority private signing key.
+
+The same boundary applies to database passwords, Keycloak client secrets, provider access tokens, API secrets, and equivalent credentials.
 
 ## 5. Keycloak boundary
 
@@ -63,6 +65,7 @@ A future staging apply must fail closed unless the applicable provider evidence 
 - required compute flavor / quota readiness;
 - PostgreSQL 17 capability;
 - expected database plan and flavor capability;
+- schema/migration execution readiness and a least-privilege Identity runtime-role plan;
 - least-privilege provider credential path bound through an approved secret channel;
 - no ambiguity between legacy and OAuth2 authentication paths.
 
@@ -70,25 +73,30 @@ The existing OVH preflight remains read-only/data-source-only and does not itsel
 
 ## 7. Ordered non-production apply sequence
 
-If and only if a later gate explicitly authorizes a real staging apply, the intended order is:
+If and only if a later gate explicitly authorizes a real staging apply, the following governance preflight must pass before provider mutation begins:
 
-1. fresh RULE-DOC-21 reconciliation across GitHub and Google Drive;
-2. verify all protected product/platform boundaries and PR #4;
-3. verify provider project/region/quota/capability evidence;
-4. verify cost-impact surface before creating billable resources;
-5. establish dedicated Identity persistence and required runtime dependencies without reusing Booking state;
-6. establish Session Authority staging runtime;
-7. bind secrets only through the approved provider/secret boundary;
-8. create the first real staging Ed25519 private key only inside that boundary;
-9. read back the public JWK without disclosing private material;
-10. bind only the public keyring to Foundation;
-11. prove Session Authority health and session issuance using real staging evidence;
-12. prove Foundation verification against the public keyring;
-13. execute real AIRenOS session -> RA-01 ProductAccess / handoff / E2E only after Identity evidence is valid;
-14. govern Experience attachment separately;
-15. perform remote read-back and cross-source reconciliation after every governed write.
+- fresh RULE-DOC-21 reconciliation across GitHub and Google Drive;
+- verification of all protected product/platform boundaries and PR #4;
+- provider project, region, quota, and capability evidence;
+- cost-impact review for every billable resource to be created.
 
-A failure or mismatch at any step stops the sequence. Partial evidence does not promote a later gate.
+Only after that preflight passes, the provider provisioning and proof order is fixed as follows:
+
+1. create a dedicated Identity PostgreSQL boundary;
+2. apply the governed Identity schema/migrations and establish the least-privilege runtime role;
+3. deploy/configure dedicated Keycloak staging;
+4. create/configure the staging OIDC client for Authorization Code + PKCE S256;
+5. deploy the F2.3 Session Authority runtime on the approved temporary Render non-production proof host, without reusing Booking state;
+6. bootstrap the first real staging Ed25519 private signing key only inside the approved provider/secret boundary;
+7. perform direct public JWK read-back without disclosing private material;
+8. bind only the public JWK keyring to Foundation;
+9. perform an independent thumbprint/read-back comparison across the Session Authority public JWK and the Foundation verification material;
+10. prove a real OIDC Authorization Code + PKCE S256 flow against staging Keycloak;
+11. prove issuance and verification of a real AIRenOS Session;
+12. execute the RA-01 ProductAccess / effective entitlement / handoff E2E only after the real AIRenOS Session proof is valid;
+13. govern and attach the Experience Layer separately only after the authority path is proven.
+
+A failure or mismatch at any step stops the sequence. Partial evidence does not promote a later gate. Remote read-back and cross-source reconciliation remain mandatory after every governed write.
 
 ## 8. Rollback and containment
 
@@ -99,7 +107,8 @@ Any future apply plan must have a rollback/containment path before execution. At
 - secrets must remain revocable without rewriting Git history;
 - signing-key rotation must remain overlap-first under the F2.1 lifecycle contract;
 - rollback must not require weakening R3-I, RA-01, RISTOAIREN, Booking, Pay, Kairos, or AIRenOS platform boundaries;
-- resource teardown must be explicit and separately evidenced where it can destroy state.
+- resource teardown must be explicit and separately evidenced where it can destroy state;
+- no rollback or teardown may delete, mutate, repurpose, or attach Identity authority to the existing RISTOAIREN / AIRen Booking Render services or databases.
 
 No destructive action is authorized by F2.4.
 
