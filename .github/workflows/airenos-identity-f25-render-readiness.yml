@@ -3,7 +3,7 @@ name: AIRenOS Identity F2.5 Render readiness
 on:
   push:
     branches:
-      - foundation/airenos-identity-f25d-render-managed-role-compatibility-20260905
+      - foundation/airenos-identity-f25e-effective-runtime-authority-20260905
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify F2.5D secret-safe Render contract
+      - name: Verify F2.5E secret-safe Render contract
         run: node --experimental-strip-types --test tests/integration/airenos-identity-f25-render-secret-binding-contract.test.ts
 
   f25-dedicated-postgres-runtime:
@@ -39,6 +39,7 @@ jobs:
     env:
       SUPER_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_identity_f25_test
       ADMIN_DATABASE_URL: postgresql://airenos_render_bootstrap_test:bootstrap_test@127.0.0.1:5432/airenos_identity_f25_test
+      MANAGED_RUNTIME_DATABASE_URL: postgresql://airenos_render_managed_runtime_test:managed_runtime_test@127.0.0.1:5432/airenos_identity_f25_test
       RUNTIME_DATABASE_URL: postgresql://airenos_identity_runtime_test:runtime_test@127.0.0.1:5432/airenos_identity_f25_test
     steps:
       - uses: actions/checkout@v4
@@ -64,14 +65,42 @@ jobs:
           FROM pg_roles WHERE rolname = 'airenos_render_bootstrap_test'")" = "t"
       - name: Bootstrap dedicated Identity boundary as Render-like principal
         run: psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/identity/0001_identity_session_authority_boundary.sql
-      - name: Create CI-only least-privilege runtime fixture through bootstrap principal
+      - name: Reproduce Render-managed runtime effective-owner authority
+        run: |
+          psql "$SUPER_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE airenos_render_owner_test
+            NOLOGIN NOSUPERUSER CREATEDB CREATEROLE NOINHERIT NOBYPASSRLS;
+          GRANT CREATE ON DATABASE airenos_identity_f25_test TO airenos_render_owner_test;
+          CREATE ROLE airenos_render_managed_runtime_test
+            LOGIN PASSWORD 'managed_runtime_test'
+            NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOBYPASSRLS;
+          GRANT airenos_render_owner_test TO airenos_render_managed_runtime_test
+            WITH ADMIN FALSE, INHERIT TRUE, SET TRUE;
+          GRANT pg_read_all_stats, pg_signal_backend TO airenos_render_managed_runtime_test
+            WITH ADMIN FALSE, INHERIT TRUE, SET TRUE;
+          ALTER ROLE airenos_render_managed_runtime_test SET role TO airenos_render_owner_test;
+          SQL
+      - name: Demonstrate F2.5D binding false-positive against managed credential
         run: >-
           psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
-          -c "CREATE ROLE airenos_identity_runtime_test LOGIN PASSWORD 'runtime_test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
-      - name: Bind runtime fixture through governed psql contract
+          -v runtime_role=airenos_render_managed_runtime_test
+          -f db/identity/0002_bind_runtime_principal.sql
+      - name: Prove managed credential authenticates as runtime but executes as owner
+        run: |
+          test "$(psql "$MANAGED_RUNTIME_DATABASE_URL" -Atc "SELECT session_user")" = "airenos_render_managed_runtime_test"
+          test "$(psql "$MANAGED_RUNTIME_DATABASE_URL" -Atc "SELECT current_user")" = "airenos_render_owner_test"
+          test "$(psql "$MANAGED_RUNTIME_DATABASE_URL" -Atc "SELECT current_setting('role')")" = "airenos_render_owner_test"
+          test "$(psql "$MANAGED_RUNTIME_DATABASE_URL" -Atc "SELECT has_database_privilege(current_user, current_database(), 'CREATE')")" = "t"
+      - name: Create unmanaged least-privilege runtime fixture
+        run: >-
+          psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "CREATE ROLE airenos_identity_runtime_test LOGIN PASSWORD 'runtime_test'
+          NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"
+      - name: Bind and certify F2.5E effective runtime authority
         run: >-
           psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
           -v runtime_role=airenos_identity_runtime_test
-          -f db/identity/0002_bind_runtime_principal.sql
-      - name: Prove least-privilege Identity runtime behavior
+          -v provider_owner_role=airenos_render_owner_test
+          -f db/identity/0003_bind_effective_runtime_authority.sql
+      - name: Prove F2.5E least-privilege Identity runtime behavior
         run: node --experimental-strip-types --test tests/postgres/airenos-identity-f25-runtime-boundary.test.ts
