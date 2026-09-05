@@ -1,4 +1,5 @@
--- AIRenOS Identity F2.5C — dedicated Identity Session Authority database boundary
+-- AIRenOS Identity F2.5D — dedicated Identity Session Authority database boundary
+-- Render-managed bootstrap compatibility correction over F2.5C.
 -- Provider-neutral, secret-free schema/bootstrap contract.
 -- This file intentionally excludes Tenant, Location, Billing, Audit, Events and product schemas.
 -- It is executed only by the dedicated Identity database bootstrap owner.
@@ -17,7 +18,36 @@ BEGIN
 END
 $$;
 
-ALTER ROLE airen_auth NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;
+-- Managed PostgreSQL providers may correctly deny changing SUPERUSER/BYPASSRLS
+-- attributes even when setting them to their safe false value. Validate the
+-- resulting group role fail-closed instead of attempting a privileged mutation.
+DO $$
+DECLARE
+  v_airen_auth record;
+BEGIN
+  SELECT
+    rolcanlogin,
+    rolsuper,
+    rolcreatedb,
+    rolcreaterole,
+    rolinherit,
+    rolbypassrls,
+    rolreplication
+  INTO STRICT v_airen_auth
+  FROM pg_roles
+  WHERE rolname = 'airen_auth';
+
+  IF v_airen_auth.rolcanlogin
+     OR v_airen_auth.rolsuper
+     OR v_airen_auth.rolcreatedb
+     OR v_airen_auth.rolcreaterole
+     OR v_airen_auth.rolinherit
+     OR v_airen_auth.rolbypassrls
+     OR v_airen_auth.rolreplication THEN
+    RAISE EXCEPTION 'airen_auth role attributes are unsafe';
+  END IF;
+END
+$$;
 
 REVOKE ALL ON SCHEMA identity FROM PUBLIC;
 REVOKE ALL ON SCHEMA authz FROM PUBLIC;
@@ -273,7 +303,7 @@ CREATE TABLE IF NOT EXISTS security.identity_schema_migrations (
 REVOKE ALL ON security.identity_schema_migrations FROM PUBLIC;
 REVOKE ALL ON security.identity_schema_migrations FROM airen_auth;
 INSERT INTO security.identity_schema_migrations(version)
-VALUES ('F2.5C-0001')
+VALUES ('F2.5D-0001')
 ON CONFLICT (version) DO NOTHING;
 
 COMMIT;

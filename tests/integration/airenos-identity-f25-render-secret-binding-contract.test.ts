@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const BRANCH = "foundation/airenos-identity-f25-render-first-staging-authorization-20260904";
+const BRANCH = "foundation/airenos-identity-f25d-render-managed-role-compatibility-20260905";
 const IDENTITY_DB = "airenos-identity-f25-staging-db";
 
-test("F2.5C Render blueprint binds the dedicated Identity DB without embedding credentials", async () => {
+test("F2.5D Render blueprint binds the dedicated Identity DB without embedding credentials", async () => {
   const blueprint = await readFile("render.identity.f25.yaml", "utf8");
 
   assert.match(blueprint, new RegExp(`branch: ${BRANCH.replaceAll("/", "\\/")}`));
@@ -24,7 +24,7 @@ test("F2.5C Render blueprint binds the dedicated Identity DB without embedding c
   assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\/[^\s:@]+:[^\s@]+@/i);
 });
 
-test("F2.5C dedicated Identity bootstrap excludes platform/product database ownership", async () => {
+test("F2.5D dedicated Identity bootstrap is Render-managed-role compatible and fail-closed", async () => {
   const bootstrap = await readFile("db/identity/0001_identity_session_authority_boundary.sql", "utf8");
   const binding = await readFile("db/identity/0002_bind_runtime_principal.sql", "utf8");
 
@@ -40,7 +40,16 @@ test("F2.5C dedicated Identity bootstrap excludes platform/product database owne
   assert.doesNotMatch(bootstrap, /tenant_memberships|tenant_entitlements|tenant_domains|platform\.tenants|platform\.locations/);
 
   assert.match(bootstrap, /CREATE ROLE airen_auth NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS/);
-  assert.match(bootstrap, /ALTER ROLE airen_auth NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS/);
+  assert.doesNotMatch(bootstrap, /ALTER ROLE airen_auth/);
+  assert.match(bootstrap, /rolcanlogin/);
+  assert.match(bootstrap, /rolsuper/);
+  assert.match(bootstrap, /rolbypassrls/);
+  assert.match(bootstrap, /rolcreaterole/);
+  assert.match(bootstrap, /rolcreatedb/);
+  assert.match(bootstrap, /rolinherit/);
+  assert.match(bootstrap, /rolreplication/);
+  assert.match(bootstrap, /RAISE EXCEPTION 'airen_auth role attributes are unsafe'/);
+  assert.match(bootstrap, /VALUES \('F2\.5D-0001'\)/);
   assert.match(bootstrap, /REVOKE ALL ON ALL TABLES IN SCHEMA identity FROM airen_auth/);
   assert.match(bootstrap, /GRANT EXECUTE ON FUNCTION security\.resolve_authentication_identity/);
   assert.match(bootstrap, /GRANT EXECUTE ON FUNCTION security\.register_airenos_session/);

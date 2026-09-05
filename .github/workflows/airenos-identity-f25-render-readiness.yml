@@ -3,7 +3,7 @@ name: AIRenOS Identity F2.5 Render readiness
 on:
   push:
     branches:
-      - foundation/airenos-identity-f25-render-first-staging-authorization-20260904
+      - foundation/airenos-identity-f25d-render-managed-role-compatibility-20260905
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify F2.5C secret-safe Render contract
+      - name: Verify F2.5D secret-safe Render contract
         run: node --experimental-strip-types --test tests/integration/airenos-identity-f25-render-secret-binding-contract.test.ts
 
   f25-dedicated-postgres-runtime:
@@ -37,7 +37,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      ADMIN_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_identity_f25_test
+      SUPER_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_identity_f25_test
+      ADMIN_DATABASE_URL: postgresql://airenos_render_bootstrap_test:bootstrap_test@127.0.0.1:5432/airenos_identity_f25_test
       RUNTIME_DATABASE_URL: postgresql://airenos_identity_runtime_test:runtime_test@127.0.0.1:5432/airenos_identity_f25_test
     steps:
       - uses: actions/checkout@v4
@@ -48,9 +49,22 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Bootstrap dedicated Identity boundary
+      - name: Create Render-like non-superuser bootstrap fixture
+        run: |
+          psql "$SUPER_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE airenos_render_bootstrap_test
+            LOGIN PASSWORD 'bootstrap_test'
+            NOSUPERUSER NOCREATEDB CREATEROLE NOINHERIT NOBYPASSRLS;
+          GRANT CREATE ON DATABASE airenos_identity_f25_test TO airenos_render_bootstrap_test;
+          SQL
+      - name: Prove bootstrap fixture is non-superuser with only required role authority
+        run: >-
+          test "$(psql "$SUPER_DATABASE_URL" -Atc
+          "SELECT (NOT rolsuper AND rolcreaterole AND NOT rolbypassrls AND NOT rolcreatedb)
+          FROM pg_roles WHERE rolname = 'airenos_render_bootstrap_test'")" = "t"
+      - name: Bootstrap dedicated Identity boundary as Render-like principal
         run: psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -f db/identity/0001_identity_session_authority_boundary.sql
-      - name: Create CI-only least-privilege runtime fixture
+      - name: Create CI-only least-privilege runtime fixture through bootstrap principal
         run: >-
           psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1
           -c "CREATE ROLE airenos_identity_runtime_test LOGIN PASSWORD 'runtime_test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS;"

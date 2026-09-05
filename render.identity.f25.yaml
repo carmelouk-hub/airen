@@ -1,4 +1,4 @@
-# AIRenOS Identity F2.5C — Render secret-safe readiness blueprint.
+# AIRenOS Identity F2.5D — Render secret-safe readiness blueprint.
 # DO NOT SYNC until db/identity/0001 and 0002 have both passed against the
 # dedicated Identity PostgreSQL and the Render-managed default credential is
 # the verified least-privilege runtime principal.
@@ -8,7 +8,7 @@ services:
     runtime: docker
     plan: starter
     region: frankfurt
-    branch: foundation/airenos-identity-f25-render-first-staging-authorization-20260904
+    branch: foundation/airenos-identity-f25d-render-managed-role-compatibility-20260905
     dockerfilePath: ./deploy/Dockerfile.session-authority
     dockerContext: .
     healthCheckPath: /health/ready
