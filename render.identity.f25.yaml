@@ -1,14 +1,15 @@
-# AIRenOS Identity F2.5D — Render secret-safe readiness blueprint.
-# DO NOT SYNC until db/identity/0001 and 0002 have both passed against the
-# dedicated Identity PostgreSQL and the Render-managed default credential is
-# the verified least-privilege runtime principal.
+# AIRenOS Identity F2.5E — effective-runtime-authority readiness blueprint.
+# DO NOT SYNC until db/identity/0001 and 0003 have both passed against the
+# dedicated Identity PostgreSQL and an unmanaged least-privilege runtime login
+# has been independently proven. Render-managed DB credentials are administrative
+# rotation credentials and MUST NOT populate the application runtime URL.
 services:
   - type: web
     name: airenos-session-authority-f25-staging
     runtime: docker
     plan: starter
     region: frankfurt
-    branch: foundation/airenos-identity-f25d-render-managed-role-compatibility-20260905
+    branch: foundation/airenos-identity-f25e-effective-runtime-authority-20260905
     dockerfilePath: ./deploy/Dockerfile.session-authority
     dockerContext: .
     healthCheckPath: /health/ready
@@ -49,8 +50,6 @@ services:
       - key: SECRET_MANAGER_ADAPTER
         value: env
       - key: SESSION_AUTHORITY_DATABASE_URL_SECRET_REF
-        value: secret://render/fromDatabase/airenos-identity-f25-staging-db/connectionString
+        value: secret://env/SESSION_AUTHORITY_DATABASE_URL
       - key: SESSION_AUTHORITY_DATABASE_URL
-        fromDatabase:
-          name: airenos-identity-f25-staging-db
-          property: connectionString
+        sync: false
