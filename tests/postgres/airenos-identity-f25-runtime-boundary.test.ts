@@ -8,7 +8,7 @@ const adminUrl = process.env.ADMIN_DATABASE_URL;
 const runtimeUrl = process.env.RUNTIME_DATABASE_URL;
 
 if (!adminUrl || !runtimeUrl) {
-  throw new Error("ADMIN_DATABASE_URL and RUNTIME_DATABASE_URL are required for F2.5C runtime proof");
+  throw new Error("ADMIN_DATABASE_URL and RUNTIME_DATABASE_URL are required for F2.5E runtime proof");
 }
 
 const admin = new Pool({ connectionString: adminUrl });
@@ -18,34 +18,76 @@ test.after(async () => {
   await Promise.all([admin.end(), runtime.end()]);
 });
 
-test("F2.5C runtime principal is least-privilege and can use only the airen_auth function boundary", async () => {
+test("F2.5E new runtime connection has no effective or inherited provider-owner authority", async () => {
   const role = await runtime.query(`
     SELECT
+      session_user,
       current_user,
+      current_setting('role') AS effective_role_setting,
       r.rolsuper,
       r.rolbypassrls,
       r.rolcreaterole,
       r.rolcreatedb,
       r.rolcanlogin,
-      pg_has_role(current_user, 'airen_auth', 'member') AS airen_auth_member
+      r.rolinherit,
+      r.rolreplication,
+      pg_has_role(session_user, 'airen_auth', 'member') AS airen_auth_member,
+      has_database_privilege(session_user, current_database(), 'CREATE') AS database_create,
+      has_schema_privilege(session_user, 'identity', 'CREATE') AS identity_create,
+      has_schema_privilege(session_user, 'authz', 'CREATE') AS authz_create,
+      has_schema_privilege(session_user, 'security', 'CREATE') AS security_create
     FROM pg_roles r
-    WHERE r.rolname = current_user
+    WHERE r.rolname = session_user
   `);
 
   assert.equal(role.rowCount, 1);
+  assert.equal(role.rows[0].session_user, "airenos_identity_runtime_test");
+  assert.equal(role.rows[0].current_user, "airenos_identity_runtime_test");
+  assert.equal(role.rows[0].effective_role_setting, "none");
   assert.equal(role.rows[0].rolsuper, false);
   assert.equal(role.rows[0].rolbypassrls, false);
   assert.equal(role.rows[0].rolcreaterole, false);
   assert.equal(role.rows[0].rolcreatedb, false);
   assert.equal(role.rows[0].rolcanlogin, true);
+  assert.equal(role.rows[0].rolinherit, false);
+  assert.equal(role.rows[0].rolreplication, false);
   assert.equal(role.rows[0].airen_auth_member, true);
+  assert.equal(role.rows[0].database_create, false);
+  assert.equal(role.rows[0].identity_create, false);
+  assert.equal(role.rows[0].authz_create, false);
+  assert.equal(role.rows[0].security_create, false);
+
+  const memberships = await runtime.query(`
+    SELECT granted_role.rolname, m.admin_option, m.inherit_option, m.set_option
+    FROM pg_auth_members m
+    JOIN pg_roles member_role ON member_role.oid = m.member
+    JOIN pg_roles granted_role ON granted_role.oid = m.roleid
+    WHERE member_role.rolname = session_user
+    ORDER BY granted_role.rolname
+  `);
+  assert.deepEqual(memberships.rows, [{
+    rolname: "airen_auth",
+    admin_option: false,
+    inherit_option: false,
+    set_option: true,
+  }]);
+
+  const roleOverrides = await runtime.query(`
+    SELECT count(*)::int AS override_count
+    FROM pg_db_role_setting s
+    JOIN pg_roles r ON r.oid = s.setrole
+    CROSS JOIN LATERAL unnest(s.setconfig) AS config(value)
+    WHERE r.rolname = session_user
+      AND config.value LIKE 'role=%'
+  `);
+  assert.equal(roleOverrides.rows[0].override_count, 0);
 
   const ownership = await runtime.query(`
     SELECT count(*)::int AS owned_count
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     JOIN pg_roles r ON r.oid = c.relowner
-    WHERE r.rolname = current_user
+    WHERE r.rolname = session_user
       AND n.nspname IN ('identity','authz','security')
   `);
   assert.equal(ownership.rows[0].owned_count, 0);
@@ -62,7 +104,7 @@ test("F2.5C runtime principal is least-privilege and can use only the airen_auth
   try {
     await admin.query(
       "INSERT INTO identity.identities(id, display_name, primary_email, status) VALUES ($1, $2, $3, 'active')",
-      [identityId, "F2.5C CI Identity", `f25-${identityId}@example.invalid`],
+      [identityId, "F2.5E CI Identity", `f25e-${identityId}@example.invalid`],
     );
     await admin.query(
       "INSERT INTO identity.provider_subject_links(identity_id, provider_key, provider_subject) VALUES ($1, 'keycloak-staging', $2)",
@@ -77,6 +119,10 @@ test("F2.5C runtime principal is least-privilege and can use only the airen_auth
     try {
       await client.query("BEGIN");
       await client.query("SET LOCAL ROLE airen_auth");
+
+      const effective = await client.query("SELECT session_user, current_user");
+      assert.equal(effective.rows[0].session_user, "airenos_identity_runtime_test");
+      assert.equal(effective.rows[0].current_user, "airen_auth");
 
       const resolved = await client.query(
         "SELECT * FROM security.resolve_authentication_identity($1, $2)",
@@ -102,7 +148,7 @@ test("F2.5C runtime principal is least-privilege and can use only the airen_auth
 
       const revoked = await client.query(
         "SELECT security.revoke_airenos_session($1, $2, $3) AS revoked",
-        [sessionId, identityId, "F2.5C CI revocation proof"],
+        [sessionId, identityId, "F2.5E CI revocation proof"],
       );
       assert.equal(revoked.rows[0].revoked, true);
 
