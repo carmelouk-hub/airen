@@ -1,1 +1,48 @@
-fatal: path 'render.identity.keycloak.f26.yaml' exists on disk, but not in 'cebd107f5d1af73a4376c2e416d66c02f7df97ad'
+# AIRenOS Identity F2.6 — governed Keycloak staging service for Render.
+# STAGING ONLY. Apply only after the dedicated logical Keycloak database and
+# its isolated runtime credential have passed provider-side read-back.
+services:
+  - type: web
+    name: airenos-keycloak-f26-staging
+    runtime: docker
+    plan: standard
+    region: frankfurt
+    repo: https://github.com/carmelouk-hub/airen
+    branch: foundation/airenos-identity-f26-keycloak-render-staging-20260906
+    dockerfilePath: ./deploy/keycloak/Containerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: off
+    envVars:
+      - key: KC_DB
+        value: postgres
+      - key: KC_DB_URL
+        sync: false
+      - key: KC_DB_USERNAME
+        sync: false
+      - key: KC_DB_PASSWORD
+        sync: false
+      - key: KC_BOOTSTRAP_ADMIN_USERNAME
+        sync: false
+      - key: KC_BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: KC_HOSTNAME
+        value: https://airenos-keycloak-f26-staging.onrender.com
+      - key: KC_HTTP_ENABLED
+        value: "true"
+      - key: KC_HTTP_PORT
+        value: "10000"
+      - key: KC_PROXY_HEADERS
+        value: xforwarded
+      - key: KC_HTTP_MANAGEMENT_HEALTH_ENABLED
+        value: "false"
+      - key: KC_SERVER_ASYNC_BOOTSTRAP
+        value: "false"
+      - key: KC_DB_POOL_INITIAL_SIZE
+        value: "1"
+      - key: KC_DB_POOL_MIN_SIZE
+        value: "1"
+      - key: KC_DB_POOL_MAX_SIZE
+        value: "10"
+      - key: KC_LOG_LEVEL
+        value: info
