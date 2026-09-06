@@ -73,3 +73,29 @@ test("F2.6 database provisioner is idempotent, secretless and least privilege", 
   assert.doesNotMatch(sql, /postgres(?:ql)?:\/\//i);
   assert.doesNotMatch(sql, /PASSWORD\s+'[^']+'/i);
 });
+
+test("F2.6 live database verifier is read-only, secretless and fail-closed", async () => {
+  const sql = await readFile("deploy/keycloak/verify-render-logical-database.sql", "utf8");
+
+  assert.match(sql, /airenos_keycloak_runtime_f26/);
+  assert.match(sql, /airenos_keycloak_f26_staging/);
+  assert.match(sql, /rolcanlogin/);
+  assert.match(sql, /NOT rolsuper/);
+  assert.match(sql, /NOT rolinherit/);
+  assert.match(sql, /NOT rolcreatedb/);
+  assert.match(sql, /NOT rolcreaterole/);
+  assert.match(sql, /NOT rolreplication/);
+  assert.match(sql, /NOT rolbypassrls/);
+  assert.match(sql, /pg_catalog\.pg_auth_members/);
+  assert.match(sql, /pg_catalog\.pg_db_role_setting/);
+  assert.match(sql, /c\.relowner = r\.oid/);
+  assert.match(sql, /p\.proowner = r\.oid/);
+  assert.match(sql, /n\.nspowner = r\.oid/);
+  assert.match(sql, /pg_catalog\.pg_get_userbyid\(datdba\) = :'keycloak_runtime_role'/);
+  assert.match(sql, /\\quit 3/);
+  assert.match(sql, /\\quit 9/);
+  assert.match(sql, /F2\.6 PASS: runtime role and Keycloak logical database live read-back verified/);
+  assert.doesNotMatch(sql, /^\s*(?:CREATE|ALTER|DROP|GRANT|REVOKE|INSERT|UPDATE|DELETE|TRUNCATE)\b/im);
+  assert.doesNotMatch(sql, /postgres(?:ql)?:\/\//i);
+  assert.doesNotMatch(sql, /PASSWORD\s+'[^']+'/i);
+});
