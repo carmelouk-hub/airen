@@ -24,6 +24,7 @@ test("F2.6 Render Keycloak staging contract is production-mode and cost bounded"
 
 test("F2.6 secrets are external and Render health reaches the Keycloak main listener", async () => {
   const blueprint = await readFile("render.identity.keycloak.f26.yaml", "utf8");
+  const containerfile = await readFile("deploy/keycloak/Containerfile", "utf8");
 
   for (const key of [
     "KC_DB_URL",
@@ -39,6 +40,8 @@ test("F2.6 secrets are external and Render health reaches the Keycloak main list
   assert.match(blueprint, /- key: KC_HTTP_PORT\n\s+value: "10000"/);
   assert.match(blueprint, /- key: KC_PROXY_HEADERS\n\s+value: xforwarded/);
   assert.match(blueprint, /- key: KC_HTTP_MANAGEMENT_HEALTH_ENABLED\n\s+value: "false"/);
+  const mainHealthBuildOptionMatches = containerfile.match(/KC_HTTP_MANAGEMENT_HEALTH_ENABLED=false/g) ?? [];
+  assert.equal(mainHealthBuildOptionMatches.length, 2);
   assert.match(blueprint, /- key: KC_SERVER_ASYNC_BOOTSTRAP\n\s+value: "false"/);
   assert.doesNotMatch(blueprint, /password:\/\//i);
   assert.doesNotMatch(blueprint, /postgres(?:ql)?:\/\/[^\s]+:[^\s]+@/i);
