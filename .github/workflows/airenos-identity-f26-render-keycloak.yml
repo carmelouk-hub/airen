@@ -86,7 +86,7 @@ jobs:
           \if :runtime_identity_ok
           \else
             \echo 'F2.6 FAIL: runtime effective identity mismatch'
-            \quit 10
+            DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime effective identity mismatch'; END $f26$;
           \endif
           CREATE TABLE f26_ci_keycloak_schema_smoke (id bigint PRIMARY KEY);
           DROP TABLE f26_ci_keycloak_schema_smoke;
