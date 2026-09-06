@@ -1,0 +1,34 @@
+name: AIRenOS Identity F2.6 Render Keycloak
+
+on:
+  push:
+    branches:
+      - foundation/airenos-identity-f26-keycloak-render-staging-20260906
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  f26-render-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify F2.6 Render Keycloak contract
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-f26-render-keycloak-contract.test.ts
+      - name: Re-run canonical Keycloak authority contract
+        run: node --experimental-strip-types --test tests/integration/airenos-keycloak-infrastructure-contract.test.ts
+
+  f26-keycloak-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build governed Keycloak image
+        run: docker build -f deploy/keycloak/Containerfile -t airenos-keycloak-f26:${GITHUB_SHA} .
+      - name: Verify immutable Keycloak version label
+        run: test "$(docker image inspect airenos-keycloak-f26:${GITHUB_SHA} --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')" = "26.7.2"
+      - name: Verify Keycloak executable version
+        run: docker run --rm airenos-keycloak-f26:${GITHUB_SHA} --version
