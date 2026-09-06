@@ -3,7 +3,9 @@
 \if :{?keycloak_runtime_password}
 \else
   \echo 'missing required in-memory keycloak_runtime_password'
-  \quit 3
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'missing required in-memory keycloak_runtime_password';
+  END $f26$;
 \endif
 
 \set keycloak_runtime_role 'airenos_keycloak_runtime_f26'
@@ -34,7 +36,9 @@ WHERE rolname = :'keycloak_runtime_role' \gset
 
 \if :keycloak_runtime_role_unsafe
   \echo 'existing Keycloak runtime role violates the least-privilege boundary'
-  \quit 4
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'existing Keycloak runtime role violates the least-privilege boundary';
+  END $f26$;
 \endif
 
 SELECT format(
@@ -43,25 +47,38 @@ SELECT format(
   :'keycloak_runtime_password'
 ) \gexec
 
-SELECT count(*) = 0 AS provider_admin_runtime_membership_absent
-FROM pg_catalog.pg_auth_members am
-JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
-JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
-WHERE granted_role.rolname = :'keycloak_runtime_role'
-  AND member_role.rolname = current_user
+-- PostgreSQL 17 grants the creator of a role administrative membership in
+-- that role, but SET may remain false. Preserve that administrative control
+-- as non-inheriting/non-SET baseline authority; elevate only SET temporarily
+-- for CREATE DATABASE ... OWNER and always restore SET false afterward.
+SELECT format(
+  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET FALSE',
+  :'keycloak_runtime_role',
+  current_user
+) \gexec
+
+SELECT COALESCE((
+  SELECT am.admin_option
+     AND NOT am.inherit_option
+     AND NOT am.set_option
+  FROM pg_catalog.pg_auth_members am
+  JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+  JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+  WHERE granted_role.rolname = :'keycloak_runtime_role'
+    AND member_role.rolname = current_user
+), false) AS provider_admin_runtime_control_safe
 \gset
 
-\if :provider_admin_runtime_membership_absent
+\if :provider_admin_runtime_control_safe
 \else
-  \echo 'provider admin already has unexpected Keycloak runtime membership'
-  \quit 5
+  \echo 'provider admin Keycloak runtime control boundary is unsafe'
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'provider admin Keycloak runtime control boundary is unsafe';
+  END $f26$;
 \endif
 
--- PostgreSQL 17 requires the database creator to be able to SET ROLE to the
--- requested owner. Grant only SET temporarily, never INHERIT or ADMIN, and
--- guarantee cleanup even when CREATE DATABASE itself fails.
 SELECT format(
-  'GRANT %I TO %I WITH ADMIN FALSE, INHERIT FALSE, SET TRUE',
+  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET TRUE',
   :'keycloak_runtime_role',
   current_user
 ) \gexec
@@ -79,30 +96,38 @@ WHERE NOT EXISTS (
 \set ON_ERROR_STOP on
 
 SELECT format(
-  'REVOKE %I FROM %I',
+  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET FALSE',
   :'keycloak_runtime_role',
   current_user
 ) \gexec
 
-SELECT count(*) = 0 AS provider_admin_runtime_membership_removed
-FROM pg_catalog.pg_auth_members am
-JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
-JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
-WHERE granted_role.rolname = :'keycloak_runtime_role'
-  AND member_role.rolname = current_user
+SELECT COALESCE((
+  SELECT am.admin_option
+     AND NOT am.inherit_option
+     AND NOT am.set_option
+  FROM pg_catalog.pg_auth_members am
+  JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+  JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+  WHERE granted_role.rolname = :'keycloak_runtime_role'
+    AND member_role.rolname = current_user
+), false) AS provider_admin_runtime_control_restored
 \gset
 
-\if :provider_admin_runtime_membership_removed
+\if :provider_admin_runtime_control_restored
 \else
-  \echo 'temporary Keycloak runtime SET membership cleanup failed'
-  \quit 6
+  \echo 'temporary Keycloak runtime SET authority cleanup failed'
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'temporary Keycloak runtime SET authority cleanup failed';
+  END $f26$;
 \endif
 
 SELECT :'keycloak_database_create_sqlstate' = '00000' AS keycloak_database_create_ok \gset
 \if :keycloak_database_create_ok
 \else
-  \echo 'Keycloak logical database creation failed after temporary membership cleanup'
-  \quit 7
+  \echo 'Keycloak logical database creation failed after temporary SET cleanup'
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'Keycloak logical database creation failed after temporary SET cleanup';
+  END $f26$;
 \endif
 
 SELECT
