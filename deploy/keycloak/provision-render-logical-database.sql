@@ -43,6 +43,30 @@ SELECT format(
   :'keycloak_runtime_password'
 ) \gexec
 
+SELECT count(*) = 0 AS provider_admin_runtime_membership_absent
+FROM pg_catalog.pg_auth_members am
+JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+WHERE granted_role.rolname = :'keycloak_runtime_role'
+  AND member_role.rolname = current_user
+\gset
+
+\if :provider_admin_runtime_membership_absent
+\else
+  \echo 'provider admin already has unexpected Keycloak runtime membership'
+  \quit 5
+\endif
+
+-- PostgreSQL 17 requires the database creator to be able to SET ROLE to the
+-- requested owner. Grant only SET temporarily, never INHERIT or ADMIN, and
+-- guarantee cleanup even when CREATE DATABASE itself fails.
+SELECT format(
+  'GRANT %I TO %I WITH ADMIN FALSE, INHERIT FALSE, SET TRUE',
+  :'keycloak_runtime_role',
+  current_user
+) \gexec
+
+\set ON_ERROR_STOP off
 SELECT format(
   'CREATE DATABASE %I OWNER %I',
   :'keycloak_database',
@@ -51,6 +75,35 @@ SELECT format(
 WHERE NOT EXISTS (
   SELECT 1 FROM pg_catalog.pg_database WHERE datname = :'keycloak_database'
 ) \gexec
+\set keycloak_database_create_sqlstate :SQLSTATE
+\set ON_ERROR_STOP on
+
+SELECT format(
+  'REVOKE %I FROM %I',
+  :'keycloak_runtime_role',
+  current_user
+) \gexec
+
+SELECT count(*) = 0 AS provider_admin_runtime_membership_removed
+FROM pg_catalog.pg_auth_members am
+JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+WHERE granted_role.rolname = :'keycloak_runtime_role'
+  AND member_role.rolname = current_user
+\gset
+
+\if :provider_admin_runtime_membership_removed
+\else
+  \echo 'temporary Keycloak runtime SET membership cleanup failed'
+  \quit 6
+\endif
+
+SELECT :'keycloak_database_create_sqlstate' = '00000' AS keycloak_database_create_ok \gset
+\if :keycloak_database_create_ok
+\else
+  \echo 'Keycloak logical database creation failed after temporary membership cleanup'
+  \quit 7
+\endif
 
 SELECT
   rolname,
