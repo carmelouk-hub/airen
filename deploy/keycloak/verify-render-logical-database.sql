@@ -63,43 +63,43 @@ SELECT
 \if :f26_runtime_role_exists
 \else
   \echo 'F2.6 FAIL: runtime role is missing'
-  \quit 3
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime role is missing'; END $f26$;
 \endif
 
 \if :f26_runtime_role_safe
 \else
   \echo 'F2.6 FAIL: runtime role attributes are unsafe'
-  \quit 4
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime role attributes are unsafe'; END $f26$;
 \endif
 
 \if :f26_runtime_has_no_memberships
 \else
   \echo 'F2.6 FAIL: runtime role has unexpected memberships'
-  \quit 5
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime role has unexpected memberships'; END $f26$;
 \endif
 
 \if :f26_runtime_has_no_startup_role_override
 \else
   \echo 'F2.6 FAIL: runtime role has a startup role override'
-  \quit 6
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime role has a startup role override'; END $f26$;
 \endif
 
 \if :f26_runtime_owns_no_identity_objects
 \else
   \echo 'F2.6 FAIL: runtime role owns objects in the AIRenOS Identity database'
-  \quit 7
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: runtime role owns objects in the AIRenOS Identity database'; END $f26$;
 \endif
 
 \if :f26_keycloak_database_exists
 \else
   \echo 'F2.6 FAIL: Keycloak logical database is missing'
-  \quit 8
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: Keycloak logical database is missing'; END $f26$;
 \endif
 
 \if :f26_keycloak_database_owned_and_connectable
 \else
   \echo 'F2.6 FAIL: Keycloak logical database owner/connectability mismatch'
-  \quit 9
+  DO $f26$ BEGIN RAISE EXCEPTION 'F2.6 FAIL: Keycloak logical database owner/connectability mismatch'; END $f26$;
 \endif
 
 SELECT
