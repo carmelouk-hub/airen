@@ -58,7 +58,7 @@ test("F2.6 keeps Keycloak outside AIRenOS business and session authority", async
   assert.equal(realm.database_boundary.airenos_database_shared, false);
 });
 
-test("F2.6 database provisioner is idempotent, secretless and least privilege", async () => {
+test("F2.6 database provisioner is idempotent, secretless, least privilege and cleanup-safe", async () => {
   const sql = await readFile("deploy/keycloak/provision-render-logical-database.sql", "utf8");
 
   assert.match(sql, /airenos_keycloak_runtime_f26/);
@@ -68,8 +68,13 @@ test("F2.6 database provisioner is idempotent, secretless and least privilege", 
   assert.match(sql, /ALTER ROLE %I WITH LOGIN NOINHERIT PASSWORD %L/);
   assert.doesNotMatch(sql, /ALTER ROLE %I[^\n]+NOSUPERUSER/);
   assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_roles/);
+  assert.match(sql, /GRANT %I TO %I WITH INHERIT FALSE, SET TRUE GRANTED BY %I/);
+  assert.match(sql, /REVOKE %I FROM %I GRANTED BY %I/);
+  assert.match(sql, /provider_admin_bootstrap_control_restored/);
   assert.match(sql, /CREATE DATABASE %I OWNER %I/);
   assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_database/);
+  assert.match(sql, /RAISE EXCEPTION 'Keycloak logical database creation failed after temporary SET cleanup'/);
+  assert.doesNotMatch(sql, /\\quit(?:\s+\d+)?/);
   assert.doesNotMatch(sql, /postgres(?:ql)?:\/\//i);
   assert.doesNotMatch(sql, /PASSWORD\s+'[^']+'/i);
 });
@@ -92,10 +97,18 @@ test("F2.6 live database verifier is read-only, secretless and fail-closed", asy
   assert.match(sql, /p\.proowner = r\.oid/);
   assert.match(sql, /n\.nspowner = r\.oid/);
   assert.match(sql, /pg_catalog\.pg_get_userbyid\(datdba\) = :'keycloak_runtime_role'/);
-  assert.match(sql, /\\quit 3/);
-  assert.match(sql, /\\quit 9/);
+  assert.match(sql, /RAISE EXCEPTION 'F2\.6 FAIL:/);
+  assert.doesNotMatch(sql, /\\quit(?:\s+\d+)?/);
   assert.match(sql, /F2\.6 PASS: runtime role and Keycloak logical database live read-back verified/);
   assert.doesNotMatch(sql, /^\s*(?:CREATE|ALTER|DROP|GRANT|REVOKE|INSERT|UPDATE|DELETE|TRUNCATE)\b/im);
   assert.doesNotMatch(sql, /postgres(?:ql)?:\/\//i);
   assert.doesNotMatch(sql, /PASSWORD\s+'[^']+'/i);
+});
+
+test("F2.6 CI runtime identity gate fails closed through PostgreSQL", async () => {
+  const workflow = await readFile(".github/workflows/airenos-identity-f26-render-keycloak.yml", "utf8");
+
+  assert.match(workflow, /runtime_identity_ok/);
+  assert.match(workflow, /RAISE EXCEPTION 'F2\.6 FAIL: runtime effective identity mismatch'/);
+  assert.doesNotMatch(workflow, /\\quit\s+10/);
 });
