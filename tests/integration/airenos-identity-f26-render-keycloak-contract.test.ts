@@ -64,6 +64,9 @@ test("F2.6 database provisioner is idempotent, secretless and least privilege", 
   assert.match(sql, /airenos_keycloak_runtime_f26/);
   assert.match(sql, /airenos_keycloak_f26_staging/);
   assert.match(sql, /CREATE ROLE %I LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L/);
+  assert.match(sql, /keycloak_runtime_role_unsafe/);
+  assert.match(sql, /ALTER ROLE %I WITH LOGIN NOINHERIT PASSWORD %L/);
+  assert.doesNotMatch(sql, /ALTER ROLE %I[^\n]+NOSUPERUSER/);
   assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_roles/);
   assert.match(sql, /CREATE DATABASE %I OWNER %I/);
   assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_database/);

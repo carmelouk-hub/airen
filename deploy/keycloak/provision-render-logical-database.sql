@@ -18,8 +18,27 @@ WHERE NOT EXISTS (
   SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = :'keycloak_runtime_role'
 ) \gexec
 
+SELECT CASE
+  WHEN rolcanlogin
+    AND NOT rolsuper
+    AND NOT rolinherit
+    AND NOT rolcreatedb
+    AND NOT rolcreaterole
+    AND NOT rolreplication
+    AND NOT rolbypassrls
+  THEN 'false'
+  ELSE 'true'
+END AS keycloak_runtime_role_unsafe
+FROM pg_catalog.pg_roles
+WHERE rolname = :'keycloak_runtime_role' \gset
+
+\if :keycloak_runtime_role_unsafe
+  \echo 'existing Keycloak runtime role violates the least-privilege boundary'
+  \quit 4
+\endif
+
 SELECT format(
-  'ALTER ROLE %I WITH LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L',
+  'ALTER ROLE %I WITH LOGIN NOINHERIT PASSWORD %L',
   :'keycloak_runtime_role',
   :'keycloak_runtime_password'
 ) \gexec
