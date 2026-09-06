@@ -47,41 +47,82 @@ SELECT format(
   :'keycloak_runtime_password'
 ) \gexec
 
--- PostgreSQL 17 grants the creator of a role administrative membership in
--- that role, but SET may remain false. Preserve that administrative control
--- as non-inheriting/non-SET baseline authority; elevate only SET temporarily
--- for CREATE DATABASE ... OWNER and always restore SET false afterward.
+-- PostgreSQL 17 automatically grants a non-superuser CREATEROLE creator
+-- ADMIN TRUE, INHERIT FALSE, SET FALSE on a role it creates. That bootstrap-
+-- granted row cannot be modified by the creator. If a prior interrupted run
+-- left our own temporary self-grant behind, remove only that grant first.
 SELECT format(
-  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET FALSE',
+  'REVOKE %I FROM %I GRANTED BY %I',
   :'keycloak_runtime_role',
+  current_user,
   current_user
-) \gexec
-
-SELECT COALESCE((
-  SELECT am.admin_option
-     AND NOT am.inherit_option
-     AND NOT am.set_option
+)
+WHERE EXISTS (
+  SELECT 1
   FROM pg_catalog.pg_auth_members am
   JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
   JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+  JOIN pg_catalog.pg_roles grantor_role ON grantor_role.oid = am.grantor
   WHERE granted_role.rolname = :'keycloak_runtime_role'
     AND member_role.rolname = current_user
-), false) AS provider_admin_runtime_control_safe
+    AND grantor_role.rolname = current_user
+) \gexec
+
+SELECT (
+  count(*) = 1
+  AND bool_and(am.admin_option)
+  AND bool_and(NOT am.inherit_option)
+  AND bool_and(NOT am.set_option)
+  AND bool_and(grantor_role.rolname <> member_role.rolname)
+)::text AS provider_admin_bootstrap_control_safe
+FROM pg_catalog.pg_auth_members am
+JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+JOIN pg_catalog.pg_roles grantor_role ON grantor_role.oid = am.grantor
+WHERE granted_role.rolname = :'keycloak_runtime_role'
+  AND member_role.rolname = current_user
 \gset
 
-\if :provider_admin_runtime_control_safe
+\if :provider_admin_bootstrap_control_safe
 \else
-  \echo 'provider admin Keycloak runtime control boundary is unsafe'
+  \echo 'provider admin bootstrap Keycloak runtime control boundary is unsafe'
   DO $f26$ BEGIN
-    RAISE EXCEPTION 'provider admin Keycloak runtime control boundary is unsafe';
+    RAISE EXCEPTION 'provider admin bootstrap Keycloak runtime control boundary is unsafe';
   END $f26$;
 \endif
 
+-- CREATE DATABASE ... OWNER requires SET ROLE ability to the target owner.
+-- Add a second, self-granted membership with SET TRUE only for that command;
+-- never inherit runtime privileges and never duplicate ADMIN authority.
 SELECT format(
-  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET TRUE',
+  'GRANT %I TO %I WITH INHERIT FALSE, SET TRUE GRANTED BY %I',
   :'keycloak_runtime_role',
+  current_user,
   current_user
 ) \gexec
+
+SELECT (
+  count(*) = 1
+  AND bool_and(NOT am.admin_option)
+  AND bool_and(NOT am.inherit_option)
+  AND bool_and(am.set_option)
+)::text AS provider_admin_temporary_set_safe
+FROM pg_catalog.pg_auth_members am
+JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+JOIN pg_catalog.pg_roles grantor_role ON grantor_role.oid = am.grantor
+WHERE granted_role.rolname = :'keycloak_runtime_role'
+  AND member_role.rolname = current_user
+  AND grantor_role.rolname = current_user
+\gset
+
+\if :provider_admin_temporary_set_safe
+\else
+  \echo 'temporary Keycloak runtime SET grant is unsafe'
+  DO $f26$ BEGIN
+    RAISE EXCEPTION 'temporary Keycloak runtime SET grant is unsafe';
+  END $f26$;
+\endif
 
 \set ON_ERROR_STOP off
 SELECT format(
@@ -95,25 +136,30 @@ WHERE NOT EXISTS (
 \set keycloak_database_create_sqlstate :SQLSTATE
 \set ON_ERROR_STOP on
 
+-- Cleanup is grantor-scoped so the immutable bootstrap ADMIN row remains.
 SELECT format(
-  'GRANT %I TO %I WITH ADMIN TRUE, INHERIT FALSE, SET FALSE',
+  'REVOKE %I FROM %I GRANTED BY %I',
   :'keycloak_runtime_role',
+  current_user,
   current_user
 ) \gexec
 
-SELECT COALESCE((
-  SELECT am.admin_option
-     AND NOT am.inherit_option
-     AND NOT am.set_option
-  FROM pg_catalog.pg_auth_members am
-  JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
-  JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
-  WHERE granted_role.rolname = :'keycloak_runtime_role'
-    AND member_role.rolname = current_user
-), false) AS provider_admin_runtime_control_restored
+SELECT (
+  count(*) = 1
+  AND bool_and(am.admin_option)
+  AND bool_and(NOT am.inherit_option)
+  AND bool_and(NOT am.set_option)
+  AND bool_and(grantor_role.rolname <> member_role.rolname)
+)::text AS provider_admin_bootstrap_control_restored
+FROM pg_catalog.pg_auth_members am
+JOIN pg_catalog.pg_roles granted_role ON granted_role.oid = am.roleid
+JOIN pg_catalog.pg_roles member_role ON member_role.oid = am.member
+JOIN pg_catalog.pg_roles grantor_role ON grantor_role.oid = am.grantor
+WHERE granted_role.rolname = :'keycloak_runtime_role'
+  AND member_role.rolname = current_user
 \gset
 
-\if :provider_admin_runtime_control_restored
+\if :provider_admin_bootstrap_control_restored
 \else
   \echo 'temporary Keycloak runtime SET authority cleanup failed'
   DO $f26$ BEGIN
