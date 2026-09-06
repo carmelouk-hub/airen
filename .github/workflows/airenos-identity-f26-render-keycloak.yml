@@ -22,6 +22,77 @@ jobs:
       - name: Re-run canonical Keycloak authority contract
         run: node --experimental-strip-types --test tests/integration/airenos-keycloak-infrastructure-contract.test.ts
 
+  f26-postgres-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: f26-ci-root-${{ github.run_id }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Create Render-like non-superuser provider admin fixture
+        env:
+          PGPASSWORD: f26-ci-root-${{ github.run_id }}
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE airenos_provider_admin_fixture_f26
+            LOGIN CREATEDB CREATEROLE NOSUPERUSER NOINHERIT NOREPLICATION NOBYPASSRLS
+            PASSWORD 'f26-ci-provider-${{ github.run_id }}';
+          SQL
+      - name: Provision Keycloak logical database through provider-like admin
+        env:
+          PGPASSWORD: f26-ci-provider-${{ github.run_id }}
+          F26_RUNTIME_PASSWORD: f26-ci-runtime-${{ github.run_id }}-1
+        run: |
+          psql -h 127.0.0.1 -U airenos_provider_admin_fixture_f26 -d postgres \
+            -v keycloak_runtime_password="$F26_RUNTIME_PASSWORD" \
+            -f deploy/keycloak/provision-render-logical-database.sql
+      - name: Re-run provisioner idempotently with password rotation
+        env:
+          PGPASSWORD: f26-ci-provider-${{ github.run_id }}
+          F26_RUNTIME_PASSWORD: f26-ci-runtime-${{ github.run_id }}-2
+        run: |
+          psql -h 127.0.0.1 -U airenos_provider_admin_fixture_f26 -d postgres \
+            -v keycloak_runtime_password="$F26_RUNTIME_PASSWORD" \
+            -f deploy/keycloak/provision-render-logical-database.sql
+      - name: Verify least-privilege role and logical database
+        env:
+          PGPASSWORD: f26-ci-provider-${{ github.run_id }}
+        run: |
+          psql -h 127.0.0.1 -U airenos_provider_admin_fixture_f26 -d postgres \
+            -f deploy/keycloak/verify-render-logical-database.sql
+      - name: Prove runtime authenticates as itself and owns only its Keycloak database surface
+        env:
+          PGPASSWORD: f26-ci-runtime-${{ github.run_id }}-2
+        run: |
+          psql -h 127.0.0.1 -U airenos_keycloak_runtime_f26 -d airenos_keycloak_f26_staging -v ON_ERROR_STOP=1 <<'SQL'
+          SELECT (
+            session_user = 'airenos_keycloak_runtime_f26'
+            AND current_user = 'airenos_keycloak_runtime_f26'
+            AND COALESCE(current_setting('role', true), 'none') = 'none'
+          )::text AS runtime_identity_ok \gset
+          \if :runtime_identity_ok
+          \else
+            \echo 'F2.6 FAIL: runtime effective identity mismatch'
+            \quit 10
+          \endif
+          CREATE TABLE f26_ci_keycloak_schema_smoke (id bigint PRIMARY KEY);
+          DROP TABLE f26_ci_keycloak_schema_smoke;
+          \echo 'F2.6 PASS: provider-like PostgreSQL runtime proof verified'
+          SQL
+
   f26-keycloak-image:
     runs-on: ubuntu-latest
     steps:
