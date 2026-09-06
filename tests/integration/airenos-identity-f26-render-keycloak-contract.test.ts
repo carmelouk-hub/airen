@@ -57,3 +57,16 @@ test("F2.6 keeps Keycloak outside AIRenOS business and session authority", async
   assert.equal(realm.database_boundary.keycloak_database, "DEDICATED_POSTGRESQL");
   assert.equal(realm.database_boundary.airenos_database_shared, false);
 });
+
+test("F2.6 database provisioner is idempotent, secretless and least privilege", async () => {
+  const sql = await readFile("deploy/keycloak/provision-render-logical-database.sql", "utf8");
+
+  assert.match(sql, /airenos_keycloak_runtime_f26/);
+  assert.match(sql, /airenos_keycloak_f26_staging/);
+  assert.match(sql, /CREATE ROLE %I LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L/);
+  assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_roles/);
+  assert.match(sql, /CREATE DATABASE %I OWNER %I/);
+  assert.match(sql, /WHERE NOT EXISTS[\s\S]+pg_catalog\.pg_database/);
+  assert.doesNotMatch(sql, /postgres(?:ql)?:\/\//i);
+  assert.doesNotMatch(sql, /PASSWORD\s+'[^']+'/i);
+});
