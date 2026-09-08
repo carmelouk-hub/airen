@@ -1,9 +1,9 @@
 {
   "schema": "airenos.platform-state-registry.v0.1",
   "registry_id": "AOS-PSR-001",
-  "snapshot_version": 1,
-  "observed_at": "2026-09-08T16:01:00+02:00",
-  "status": "INITIAL_GOVERNED_SNAPSHOT",
+  "snapshot_version": 2,
+  "observed_at": "2026-09-08T17:23:38+02:00",
+  "status": "GOVERNED_REFRESH_SNAPSHOT",
   "scope": "AIRENOS_PLATFORM_CONTROL_SURFACE",
   "completeness": "BOUNDED_EXPLICIT_NOT_FULL_PROJECT_CENSUS",
   "purpose": "Provide one machine-readable current governed-state index for AIRenOS without replacing human authorities, provenance registers, product manifests, gate evidence or runtime authority.",
@@ -20,6 +20,24 @@
     "no_mutual_revision_chasing": true,
     "basis_revision_semantics": "Recorded source revisions are input-basis observations, not promises that the source will never advance after registry registration."
   },
+  "previous_registered_snapshot": {
+    "snapshot_version": 1,
+    "commit": "2dfe06f7cdccc8e7ab38e4accb7a252e21a2d687",
+    "blob": "c644ea171f8e9df5471ee209403b02ac3029447b",
+    "sha256": "6aa8741183e8d703752c6ba6e4c8d12a54cfb17c05c4e7a177fbe068b672874d",
+    "status": "INITIAL_GOVERNED_SNAPSHOT"
+  },
+  "refresh_protocol_binding": {
+    "protocol_id": "AOS-PSR-RR-001",
+    "version": "0.1.1",
+    "repository": "carmelouk-hub/airen",
+    "path": "machine-context/airenos-platform-state-registry-refresh-rebind-protocol.v0.1.1.json",
+    "branch": "governance/platform-state-registry-refresh-rebind-20260908",
+    "commit": "253a3469e6131e3baed3905d1d8a39f7d8cc4439",
+    "blob": "e4279d69a10d9c5c1292c12e3f3ae50bdefaac0c",
+    "role": "DERIVATION_AND_REBIND_CONTROL_PROTOCOL",
+    "is_human_authority": false
+  },
   "canonical_sources": {
     "platform_bible": {
       "source": "GOOGLE_DRIVE",
@@ -30,7 +48,7 @@
     "canonical_handoff": {
       "source": "GOOGLE_DRIVE",
       "id": "1cLTVhQDg9Zkv9ZklwU7PGbTBYsOLAg5x4_1aA2yVZNA",
-      "basis_revision": "59",
+      "basis_revision": "63",
       "role": "CURRENT_CHAT_RESUME_AND_GOVERNED_STATE_BASIS"
     },
     "rule_doc_20": {
@@ -151,10 +169,40 @@
       "preview_http_smoke": "PASS",
       "visual_runtime_acceptance": "NOT_INDEPENDENTLY_VERIFIED"
     },
+    "platform_state_registry_refresh_rebind_protocol": {
+      "coordinate": "AOS.PSR.RR.001",
+      "state": "IMPLEMENTED_GOVERNED_NOT_SELF_EXECUTING",
+      "version": "0.1.1",
+      "lifecycle_hardening": "IMPLEMENTED_GOVERNED_PASS",
+      "registry_refresh_executed_before_this_snapshot": false,
+      "registry_rebind_executed_before_this_snapshot": false
+    },
     "production": {
       "coordinate": "AOS.PRODUCTION",
       "state": "NO_CHANGE_NOT_AUTHORIZED"
     }
+  },
+  "refresh_classification": {
+    "transaction_id": "AOS-PSR-REFRESH-20260908-152338Z",
+    "previous_snapshot_version": 1,
+    "current_snapshot_version": 2,
+    "change_classes": [
+      "PROVENANCE_ONLY",
+      "STATE_TRANSITION"
+    ],
+    "provenance_only_changes": [
+      "snapshot_version 1 -> 2",
+      "status INITIAL_GOVERNED_SNAPSHOT -> GOVERNED_REFRESH_SNAPSHOT",
+      "observed_at advanced",
+      "canonical_handoff basis_revision 59 -> 63",
+      "refresh protocol binding recorded at v0.1.1"
+    ],
+    "state_transitions": [
+      "AOS.PSR.RR.001 added from canonical Handoff authority; protocol remains non-self-executing and cannot open gates"
+    ],
+    "boundary_movements": [],
+    "authority_model_changes": [],
+    "unsupported_changes": []
   },
   "consumer_contract": {
     "display_current_state_only_when_verified_against_sources": true,
@@ -176,6 +224,8 @@
     "This registry does not certify Release 0.",
     "This registry does not authorize K5.",
     "This registry does not authorize production, merge, Session Authority, bearer activation, Stripe LIVE, provider mutation or decommission.",
-    "This registry does not replace DOC-000, PROV-000, the Platform Bible, the canonical Handoff, gate-specific human authorities or runtime evidence."
+    "This registry does not replace DOC-000, PROV-000, the Platform Bible, the canonical Handoff, gate-specific human authorities or runtime evidence.",
+    "This refreshed snapshot does not assert canonical Handoff registration inside its immutable bytes; registration state is external evidence established only after R8 and R9 PASS.",
+    "This refresh does not execute an AOS-NOVA consumer rebind."
   ]
 }
