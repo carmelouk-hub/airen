@@ -1,0 +1,261 @@
+{
+  "schema": "airenos.platform-state-registry-refresh-rebind-protocol.v0.1.1",
+  "protocol_id": "AOS-PSR-RR-001",
+  "version": "0.1.1",
+  "status": "GOVERNED_PROTOCOL_IMPLEMENTED_NOT_SELF_EXECUTING",
+  "scope": "AIRENOS_PLATFORM_STATE_REGISTRY_REFRESH_AND_PRESENTATION_CONSUMER_REBIND",
+  "compatibility": "BACKWARD_COMPATIBLE_LIFECYCLE_HARDENING",
+  "supersedes": {
+    "schema": "airenos.platform-state-registry-refresh-rebind-protocol.v0.1",
+    "path": "machine-context/airenos-platform-state-registry-refresh-rebind-protocol.v0.1.json",
+    "commit": "80580b2b1d0078ed842a2f66233d4ea5d05bd1fa",
+    "blob": "98015f32aefeeece4486e68105ecfdb0889cc9e8",
+    "preserved_immutable": true
+  },
+  "purpose": "Preserve the v0.1 fail-closed refresh/rebind protocol while removing lifecycle ambiguity in the Registry status field for snapshot_version greater than one, without executing a refresh, rebind, gate transition, merge, provider mutation or production action.",
+  "seed_registry": {
+    "registry_id": "AOS-PSR-001",
+    "schema": "airenos.platform-state-registry.v0.1",
+    "repository": "carmelouk-hub/airen",
+    "path": "machine-context/airenos-platform-state-registry.v0.1.json",
+    "commit": "2dfe06f7cdccc8e7ab38e4accb7a252e21a2d687",
+    "blob": "c644ea171f8e9df5471ee209403b02ac3029447b",
+    "sha256": "6aa8741183e8d703752c6ba6e4c8d12a54cfb17c05c4e7a177fbe068b672874d",
+    "snapshot_version": 1,
+    "status": "INITIAL_GOVERNED_SNAPSHOT"
+  },
+  "authority_model": {
+    "protocol_role": "DERIVATION_AND_REBIND_CONTROL_PROTOCOL",
+    "is_human_authority": false,
+    "may_certify_gate": false,
+    "may_open_gate": false,
+    "may_authorize_production": false,
+    "may_issue_session_authority": false,
+    "may_issue_airenos_bearer": false,
+    "may_enable_stripe_live": false,
+    "may_authorize_k5": false,
+    "may_merge_protected_pr": false,
+    "may_override_source_authority": false,
+    "may_infer_missing_state": false,
+    "may_rewrite_certified_history": false,
+    "conflict_policy": "FAIL_CLOSED_SOURCE_AUTHORITY_WINS",
+    "unknown_policy": "UNKNOWN_NOT_INFERRED",
+    "history_policy": "APPEND_ONLY_REGISTRATION_AND_GIT_HISTORY_PRESERVED",
+    "basis_revision_policy": "SOURCE_REVISIONS_ARE_INPUT_BASIS_OBSERVATIONS_NOT_MUTUAL_REVISION_TARGETS"
+  },
+  "snapshot_lifecycle_contract": {
+    "status_field_semantics": "SNAPSHOT_ORIGIN_CLASSIFICATION_NOT_REGISTRATION_ASSERTION",
+    "initial_snapshot": {
+      "snapshot_version": 1,
+      "required_status": "INITIAL_GOVERNED_SNAPSHOT",
+      "status_may_be_used_for_later_versions": false
+    },
+    "refreshed_snapshot": {
+      "minimum_snapshot_version": 2,
+      "required_status": "GOVERNED_REFRESH_SNAPSHOT",
+      "status_asserts_handoff_registration": false,
+      "status_asserts_gate_certification": false,
+      "status_asserts_live_authority": false
+    },
+    "transaction_registration_states": {
+      "before_r8": "CANDIDATE_UNREGISTERED",
+      "after_r8_and_r9_pass": "REGISTRY_REFRESH_REGISTERED",
+      "storage": "EXTERNAL_TRANSACTION_AND_CANONICAL_HANDOFF_EVIDENCE",
+      "must_not_be_encoded_as_false_prepublish_registration_claim_inside_snapshot_bytes": true
+    },
+    "immutability_rule": "THE_COMMITTED_SNAPSHOT_BYTES_MUST_NOT_BE_REWRITTEN_AFTER_HANDOFF_REGISTRATION_MERELY_TO_CHANGE_REGISTRATION_VOCABULARY",
+    "reason": "R6 commits snapshot bytes before R8 registration. Registration is therefore external evidence, while the internal status classifies whether the snapshot is the initial seed or a governed refresh generation."
+  },
+  "transaction_model": {
+    "transaction_id_format": "AOS-PSR-REFRESH-YYYYMMDD-HHMMSSZ",
+    "atomicity": "LOGICAL_GOVERNED_TRANSACTION",
+    "retry_policy": "RESTART_FROM_FRESH_RECONCILIATION",
+    "partial_write_policy": "DO_NOT_PROMOTE_PARTIAL_RESULT",
+    "concurrent_change_policy": "ABORT_AND_RESTART",
+    "candidate_branch_policy": "ISOLATED_GOVERNANCE_BRANCH_FROM_LAST_REGISTERED_REGISTRY_COMMIT",
+    "candidate_branch_is_authority": false,
+    "registered_commit_is_immutable_snapshot": true,
+    "branch_name_is_not_authority": true
+  },
+  "refresh_preconditions": [
+    "READ_CURRENT_CANONICAL_HANDOFF_AND_VERIFY_CURRENT_REVISION",
+    "READ_CURRENT_PLATFORM_BIBLE_AND_VERIFY_CURRENT_REVISION",
+    "READ_LAST_REGISTERED_PLATFORM_STATE_REGISTRY_COMMIT_BYTES",
+    "VERIFY_LAST_REGISTERED_REGISTRY_BLOB_AND_SHA256",
+    "FRESH_GITHUB_AND_GOOGLE_DRIVE_DUAL_SOURCE_RECONCILIATION",
+    "VERIFY_ALL_PROTECTED_BOUNDARIES_RELEVANT_TO_REGISTRY_SCOPE",
+    "VERIFY_PR4_OPEN_DRAFT_UNMERGED",
+    "FAIL_CLOSED_ON_SOURCE_UNAVAILABLE_MISMATCH_OR_INCOMPLETE_EVIDENCE"
+  ],
+  "refresh_pipeline": [
+    {
+      "stage": "R0_PRECHECK",
+      "writes_allowed": false,
+      "action": "Perform fresh RULE-DOC-21 reconciliation before candidate generation."
+    },
+    {
+      "stage": "R1_OBSERVE",
+      "writes_allowed": false,
+      "action": "Collect only explicit current facts from canonical human authorities and verified protected GitHub boundaries.",
+      "rules": [
+        "DO_NOT_DERIVE_GATE_PASS_FROM_CI_ALONE",
+        "DO_NOT_TREAT_BASE44_AS_AUTHORITY",
+        "DO_NOT_TREAT_REGISTRY_PREVIOUS_VALUES_AS_SOURCE_AUTHORITY",
+        "DO_NOT_FILL_ABSENT_STATE_WITH_PRIOR_VALUE_UNLESS_SOURCE_EXPLICITLY_PRESERVES_IT"
+      ]
+    },
+    {
+      "stage": "R2_CANDIDATE",
+      "writes_allowed": true,
+      "write_class": "ISOLATED_CANDIDATE_ONLY",
+      "action": "Generate a complete candidate Registry from the last registered snapshot plus current explicit authority observations.",
+      "rules": [
+        "INCREMENT_SNAPSHOT_VERSION_EXACTLY_BY_ONE",
+        "SET_NEW_OBSERVED_AT_TIMESTAMP",
+        "UPDATE_BASIS_REVISIONS_TO_REVISIONS_ACTUALLY_READ",
+        "IF_SNAPSHOT_VERSION_EQUALS_1_STATUS_MUST_EQUAL_INITIAL_GOVERNED_SNAPSHOT",
+        "IF_SNAPSHOT_VERSION_IS_2_OR_GREATER_STATUS_MUST_EQUAL_GOVERNED_REFRESH_SNAPSHOT",
+        "DO_NOT_ENCODE_PREMATURE_REGISTERED_CLAIM_IN_SNAPSHOT_STATUS",
+        "PRESERVE_AUTHORITY_MODEL_DENY_FLAGS",
+        "PRESERVE_UNKNOWN_NOT_INFERRED_POLICY",
+        "PRESERVE_PROTECTED_BOUNDARY_IDENTIFIERS",
+        "PRESERVE_HISTORICAL_FAILURES_AND_CLOSED_CERTIFIED_HISTORY"
+      ]
+    },
+    {
+      "stage": "R3_STRUCTURAL_VALIDATE",
+      "writes_allowed": false,
+      "required_checks": [
+        "REGISTRY_ID_UNCHANGED",
+        "SCHEMA_COMPATIBLE",
+        "SNAPSHOT_VERSION_PREVIOUS_PLUS_ONE",
+        "SNAPSHOT_STATUS_MATCHES_VERSION_LIFECYCLE",
+        "INITIAL_STATUS_ONLY_VERSION_ONE",
+        "REFRESH_STATUS_REQUIRED_VERSION_TWO_PLUS",
+        "SNAPSHOT_STATUS_DOES_NOT_ASSERT_HANDOFF_REGISTRATION",
+        "MAY_CERTIFY_GATE_FALSE",
+        "MAY_OPEN_GATE_FALSE",
+        "MAY_AUTHORIZE_PRODUCTION_FALSE",
+        "MAY_OVERRIDE_SOURCE_AUTHORITY_FALSE",
+        "CONFLICT_POLICY_FAIL_CLOSED",
+        "UNKNOWN_POLICY_UNKNOWN_NOT_INFERRED"
+      ]
+    },
+    {
+      "stage": "R4_SEMANTIC_DIFF",
+      "writes_allowed": false,
+      "change_classes": {
+        "PROVENANCE_ONLY": "Basis revision, observation timestamp, evidence pointer, lifecycle timestamp or equivalent provenance movement with no governed-state semantic change.",
+        "BOUNDARY_MOVEMENT": "Protected branch head, PR state or equivalent boundary movement requiring direct source evidence and authorization context.",
+        "STATE_TRANSITION": "Governed state changed and explicit designated human authority already supports it.",
+        "AUTHORITY_MODEL_CHANGE": "Forbidden inside ordinary refresh; requires separate governance authorization.",
+        "UNKNOWN_OR_UNSUPPORTED": "Fail closed; candidate cannot be registered."
+      },
+      "lifecycle_classification_rule": "INITIAL_GOVERNED_SNAPSHOT_TO_GOVERNED_REFRESH_SNAPSHOT_WHEN_VERSION_1_TO_2_IS_EXPECTED_LIFECYCLE_METADATA_AND_DOES_NOT_BY_ITSELF_CONSTITUTE_A_PRODUCT_OR_RUNTIME_GATE_TRANSITION"
+    },
+    {
+      "stage": "R5_PREPUBLISH_RECONCILE",
+      "writes_allowed": false,
+      "rules": [
+        "ALL_INPUT_SOURCE_REVISIONS_AND_REFS_MUST_STILL_MATCH_CANDIDATE_BASIS",
+        "ANY_CONCURRENT_SOURCE_ADVANCE_ABORTS_TRANSACTION",
+        "PR4_MUST_STILL_BE_OPEN_DRAFT_UNMERGED"
+      ]
+    },
+    {
+      "stage": "R6_PUBLISH_SNAPSHOT",
+      "writes_allowed": true,
+      "action": "Commit the validated complete candidate on an isolated governance branch.",
+      "rules": [
+        "SNAPSHOT_VERSION_2_PLUS_INTERNAL_STATUS_REMAINS_GOVERNED_REFRESH_SNAPSHOT",
+        "COMMIT_IS_CANDIDATE_UNREGISTERED_UNTIL_R8_AND_R9",
+        "DO_NOT_REWRITE_SNAPSHOT_BYTES_AFTER_REGISTRATION_TO_CHANGE_INTERNAL_STATUS",
+        "NO_PROTECTED_BRANCH_MUTATION",
+        "NO_PRODUCTION_ACTION",
+        "RECORD_COMMIT_BLOB_SHA256"
+      ]
+    },
+    {
+      "stage": "R7_REMOTE_READBACK",
+      "writes_allowed": false,
+      "action": "Verify committed bytes, commit, blob and SHA-256 exactly match the candidate."
+    },
+    {
+      "stage": "R8_REGISTER_SNAPSHOT",
+      "writes_allowed": true,
+      "action": "Append snapshot commit/blob/hash/version and classification to the canonical Handoff using revision-locked write control.",
+      "rules": [
+        "APPEND_ONLY",
+        "REGISTRATION_STATE_IS_EXTERNAL_TO_SNAPSHOT_STATUS",
+        "DO_NOT_REWRITE_PRIOR_REGISTRY_REGISTRATIONS",
+        "REGISTRATION_DOES_NOT_CERTIFY_ANY_NEW_GATE_BY_ITSELF",
+        "SOURCE_BASIS_REVISIONS_REMAIN_INPUT_PROVENANCE"
+      ]
+    },
+    {
+      "stage": "R9_POSTREGISTER_RECONCILE",
+      "writes_allowed": false,
+      "success_state": "REGISTRY_REFRESH_REGISTERED",
+      "action": "Remote read-back Handoff registration and perform final fresh cross-source reconciliation."
+    }
+  ],
+  "state_transition_rule": {
+    "promotion_requires_explicit_source_authority": true,
+    "evidence_alone_is_insufficient": true,
+    "lifecycle_status_change_is_not_gate_promotion": true
+  },
+  "rebind_contract": {
+    "precondition": "EXACT_NEW_REGISTRY_SNAPSHOT_IS_REMOTE_READBACK_MATCH_AND_REGISTERED_IN_CANONICAL_HANDOFF_AND_POSTREGISTER_RECONCILIATION_PASS",
+    "source_selection": "EXACT_REGISTERED_COMMIT_ONLY",
+    "source_bytes_must_match_registered_sha256": true,
+    "consumer_copy_must_match_source_bytes": true,
+    "consumer_may_fetch_live_authority_directly": false,
+    "consumer_may_auto_refresh": false,
+    "consumer_may_self_promote_state": false,
+    "consumer_may_write_registry": false,
+    "consumer_may_become_authority": false,
+    "is_live_always_false": true
+  },
+  "staleness_policy": {
+    "consumer_snapshot_is_not_live": true,
+    "default_max_age_hours": 24,
+    "expired_classification": "STALE_SNAPSHOT",
+    "invalid_classification": "UNKNOWN_NOT_VERIFIED",
+    "staleness_does_not_trigger_automatic_rebind": true,
+    "staleness_does_not_change_canonical_governed_state": true
+  },
+  "abort_conditions": [
+    "CANONICAL_SOURCE_UNAVAILABLE",
+    "DRIVE_REVISION_CHANGED_DURING_TRANSACTION",
+    "PROTECTED_GITHUB_REF_CHANGED_DURING_TRANSACTION",
+    "PR4_NOT_OPEN_DRAFT_UNMERGED",
+    "REGISTRY_DIGEST_MISMATCH",
+    "UNSUPPORTED_STATE_TRANSITION",
+    "AUTHORITY_MODEL_DRIFT",
+    "CANDIDATE_SCHEMA_INVALID",
+    "SNAPSHOT_LIFECYCLE_STATUS_INVALID",
+    "PREMATURE_REGISTERED_ASSERTION_IN_SNAPSHOT_STATUS",
+    "CONSUMER_COPY_NOT_BYTE_IDENTICAL",
+    "CONSUMER_FAIL_CLOSED_TEST_FAILURE",
+    "ANY_ATTEMPT_TO_OPEN_GATE_OR_AUTHORIZE_PRODUCTION_FROM_PROTOCOL_OUTPUT"
+  ],
+  "explicit_non_effects": [
+    "NO_REGISTRY_REFRESH_EXECUTED_BY_THIS_PATCH",
+    "NO_REGISTRY_REBIND_EXECUTED_BY_THIS_PATCH",
+    "NO_PRODUCTION_CUTOVER",
+    "NO_MERGE_AUTHORIZATION",
+    "NO_SESSION_AUTHORITY_ACTIVATION",
+    "NO_AIRENOS_BEARER_ISSUANCE",
+    "NO_STRIPE_LIVE_ENABLEMENT",
+    "NO_K5_AUTHORIZATION",
+    "NO_PROVIDER_DEPLOYMENT",
+    "NO_BASE44_DECOMMISSION",
+    "NO_REWRITE_OF_CERTIFIED_HISTORY"
+  ],
+  "completion_states": {
+    "protocol_patch_implemented": "AOS_PSR_RR_001_V0_1_1_LIFECYCLE_HARDENING_IMPLEMENTED",
+    "future_registry_refresh_success": "REGISTRY_REFRESH_REGISTERED",
+    "future_consumer_rebind_success": "CONSUMER_REBIND_REGISTERED",
+    "blocked": "FAIL_CLOSED_BLOCKED"
+  }
+}
