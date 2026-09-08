@@ -1,0 +1,181 @@
+{
+  "schema": "airenos.platform-state-registry.v0.1",
+  "registry_id": "AOS-PSR-001",
+  "snapshot_version": 1,
+  "observed_at": "2026-09-08T16:01:00+02:00",
+  "status": "INITIAL_GOVERNED_SNAPSHOT",
+  "scope": "AIRENOS_PLATFORM_CONTROL_SURFACE",
+  "completeness": "BOUNDED_EXPLICIT_NOT_FULL_PROJECT_CENSUS",
+  "purpose": "Provide one machine-readable current governed-state index for AIRenOS without replacing human authorities, provenance registers, product manifests, gate evidence or runtime authority.",
+  "authority_model": {
+    "registry_role": "DERIVED_GOVERNED_INDEX",
+    "is_human_authority": false,
+    "may_certify_gate": false,
+    "may_open_gate": false,
+    "may_authorize_production": false,
+    "may_override_source_authority": false,
+    "conflict_policy": "FAIL_CLOSED_SOURCE_AUTHORITY_WINS",
+    "unknown_policy": "UNKNOWN_NOT_INFERRED",
+    "historical_failure_preservation": true,
+    "no_mutual_revision_chasing": true,
+    "basis_revision_semantics": "Recorded source revisions are input-basis observations, not promises that the source will never advance after registry registration."
+  },
+  "canonical_sources": {
+    "platform_bible": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1ZlppAFqaJvhWUxwHyUdMJIaREBPzSAsn9hy7kupX9DA",
+      "basis_revision": "119",
+      "role": "PLATFORM_FUNCTIONAL_ARCHITECTURAL_AUTHORITY"
+    },
+    "canonical_handoff": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1cLTVhQDg9Zkv9ZklwU7PGbTBYsOLAg5x4_1aA2yVZNA",
+      "basis_revision": "59",
+      "role": "CURRENT_CHAT_RESUME_AND_GOVERNED_STATE_BASIS"
+    },
+    "rule_doc_20": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1L2yqy6XiKVsdbXe6vrVmlvFXRJCUFoXncnXeu7Bbpos",
+      "basis_revision": "4",
+      "role": "CANONICAL_CHAT_HANDOFF_CONTINUITY_PROTOCOL",
+      "status": "ACTIVE_PERMANENT"
+    },
+    "rule_doc_21": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1GyG1PdBZ3q1maqCva_ohS_PYgRovYXZD_tZ-Rj4jkNE",
+      "basis_revision": "3",
+      "role": "DUAL_SOURCE_PROMPT_VERIFICATION_PROTOCOL",
+      "status": "ACTIVE_PERMANENT",
+      "github_mirror": {
+        "branch": "governance/rule-doc-21-20260824",
+        "commit": "51e5e409e404067a34979d811ae4028962ed3e40"
+      }
+    },
+    "documentation_registry": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1p8ES5MBaJjWQdm9q8IDNnXu2tC5vDLxo3JTmvJkz_fI",
+      "role": "DOCUMENT_INDEX_AND_GOVERNANCE_REGISTRY"
+    },
+    "provenance_registry": {
+      "source": "GOOGLE_DRIVE",
+      "id": "1n3x0q9XUVt7saWLXvVgB1HYMzwppp0ykIzXH15DVN3k",
+      "role": "TECHNICAL_PROVENANCE_AND_ARTIFACT_LINEAGE"
+    },
+    "kairos_coordinate_registry": {
+      "source": "GITHUB",
+      "repository": "carmelouk-hub/airen",
+      "path": "machine-context/kairos-cross-source-coordinate-registry-v0.1.json",
+      "ref_basis": "foundation/airenos-identity-f26-keycloak-render-staging-20260906",
+      "role": "CROSS_SOURCE_LOGICAL_COORDINATE_BINDING"
+    }
+  },
+  "protected_boundaries": {
+    "identity_f2_6_k3": {
+      "branch": "foundation/airenos-identity-f26-keycloak-render-staging-20260906",
+      "head": "a5d86a321b5a881c68ad4830afa2244d2dd6af11",
+      "state": "CLOSED_PASS",
+      "protected": true
+    },
+    "r3_control_plane": {
+      "branch": "r3/control-plane-20260822",
+      "head": "3d32b53bde2191c7718606cf9d3fe3497ae3f626",
+      "state": "CLOSED_PASS",
+      "protected": true
+    },
+    "main": {
+      "branch": "main",
+      "head": "b846344f8cc93bb888fe2b4a686a8f0ecae8ec4c",
+      "state": "PROTECTED_UNCHANGED",
+      "protected": true
+    },
+    "ristoairen_rbl": {
+      "branch": "rbl/ristoairen-real-baseline-01-20260827",
+      "head": "d055fba86d938aa38cee648171425046c7d972a4",
+      "state": "PROTECTED_BASELINE",
+      "protected": true
+    },
+    "kairos_k4": {
+      "branch": "kairos/k4-interactive-map-base44-20260830",
+      "head": "ff97685ec4d427c8793c0c8b8bbceece5258fc8a",
+      "state": "OPEN",
+      "protected": true
+    },
+    "pr_4": {
+      "repository": "carmelouk-hub/airen",
+      "number": 4,
+      "state": "OPEN_DRAFT_UNMERGED",
+      "must_remain_unmerged": true
+    }
+  },
+  "governed_states": {
+    "r3": {
+      "coordinate": "AOS.R3",
+      "state": "CLOSED_PASS",
+      "claim_scope": "R3_A_THROUGH_R3_J"
+    },
+    "identity_f2_6_k3": {
+      "coordinate": "AOS.IDENTITY.F2_6.K3",
+      "state": "CLOSED_PASS",
+      "claim_scope": "TERMINAL_CLOSURE_REGISTERED_2026_09_07"
+    },
+    "kairos_k3": {
+      "coordinate": "AOS.KAIROS.K3",
+      "state": "CLOSED_PASS"
+    },
+    "kairos_k4": {
+      "coordinate": "AOS.KAIROS.K4",
+      "state": "OPEN",
+      "known_substates": {
+        "k4_c2": "CLOSED_PASS",
+        "k4_c3_staging_deploy_contract": "IMPLEMENTED_CI_PASS_GOVERNANCE_REGISTERED",
+        "k4_c3_runtime_deploy_session_handoff_proof": "OPEN_NOT_YET_EXECUTED"
+      }
+    },
+    "kairos_k5": {
+      "coordinate": "AOS.KAIROS.K5",
+      "state": "NOT_AUTHORIZED"
+    },
+    "aos_nova_synthetic_cleanup": {
+      "coordinate": "AOS.NOVA.SYNTHETIC_CLEANUP",
+      "state": "CLOSED_VERIFIED_WITH_INERT_LEGACY_SOURCE",
+      "base44_app_id": "6a9fb39f662a14e7c3692df6",
+      "base44_checkpoint": "6a9ff045158a637edc9fe6b8",
+      "base44_commit": "b15d9e10e4e58cfbce148362d0b0ffd26222ff60"
+    },
+    "aos_nova_release_0": {
+      "coordinate": "AOS.NOVA.RELEASE_0",
+      "state": "NOT_CERTIFIED",
+      "build": "PASS",
+      "lint": "PASS",
+      "global_typecheck": "FAIL_BASELINE_57_NON_TARGET_ERRORS",
+      "preview_http_smoke": "PASS",
+      "visual_runtime_acceptance": "NOT_INDEPENDENTLY_VERIFIED"
+    },
+    "production": {
+      "coordinate": "AOS.PRODUCTION",
+      "state": "NO_CHANGE_NOT_AUTHORIZED"
+    }
+  },
+  "consumer_contract": {
+    "display_current_state_only_when_verified_against_sources": true,
+    "stale_snapshot_must_be_labeled": true,
+    "basis_revision_must_not_be_rendered_as_live_revision": true,
+    "base44_is_authority": false,
+    "client_may_self_promote_state": false,
+    "missing_state_behavior": "SHOW_UNKNOWN_OR_NOT_VERIFIED",
+    "automatic_gate_promotion": false
+  },
+  "update_contract": {
+    "trigger": "AFTER_GOVERNED_STATE_CHANGE_OR_BEFORE_CONSUMER_CLAIMS_CURRENT_STATE",
+    "precondition": "FRESH_RULE_DOC_21_DUAL_SOURCE_RECONCILIATION",
+    "write_mode": "GOVERNED_APPEND_OR_FAST_FORWARD_ON_DEDICATED_REGISTRY_BRANCH",
+    "postcondition": "REMOTE_READ_BACK_THEN_CROSS_SOURCE_RECONCILIATION",
+    "production_side_effects": "FORBIDDEN"
+  },
+  "non_claims": [
+    "This registry does not certify Release 0.",
+    "This registry does not authorize K5.",
+    "This registry does not authorize production, merge, Session Authority, bearer activation, Stripe LIVE, provider mutation or decommission.",
+    "This registry does not replace DOC-000, PROV-000, the Platform Bible, the canonical Handoff, gate-specific human authorities or runtime evidence."
+  ]
+}
