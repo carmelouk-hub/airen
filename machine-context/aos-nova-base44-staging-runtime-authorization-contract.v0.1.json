@@ -1,0 +1,87 @@
+{
+  "schema": "airenos.aos-nova.base44-staging-runtime-authorization-contract.v0.1",
+  "contract_id": "AOS-NOVA-BASE44-STAGING-AUTH-001",
+  "version": "0.1",
+  "status": "IMPLEMENTED_GOVERNED_NOT_EXECUTED",
+  "date": "2026-09-08",
+  "scope": "AOS_NOVA_BASE44_NON_PRODUCTION_AUTHENTICATED_RUNTIME_EVIDENCE_ONLY",
+  "purpose": "Authorize only the minimum non-production Base44 runtime needed to reproduce a real authenticated application session and verify the AOS-NOVA Registry v2 consumer without test seams.",
+  "preconditions": {
+    "fresh_rule_doc_21_reconciliation_required": true,
+    "canonical_handoff_required": true,
+    "platform_bible_required": true,
+    "protected_boundaries_must_match": true,
+    "pr_4_must_remain_open_draft_unmerged": true,
+    "base44_source_must_match_governed_checkpoint": true,
+    "registry_v2_binding_must_match": true
+  },
+  "authorized_actions": {
+    "create_or_enable_non_production_base44_runtime_for_aos_nova": true,
+    "use_existing_registered_base44_user_for_runtime_login": true,
+    "verify_real_base44_auth_me_session": true,
+    "verify_protected_control_plane_rendering": true,
+    "verify_registry_v2_non_live_read_only_semantics": true,
+    "collect_runtime_evidence": true,
+    "create_governed_checkpoint_if_source_changes_are_strictly_required_for_staging_runtime_compatibility": true,
+    "register_result_in_canonical_handoff": true
+  },
+  "explicitly_denied": {
+    "production_deploy": true,
+    "release_0_certification": true,
+    "merge_pr_4": true,
+    "main_mutation": true,
+    "r3_mutation": true,
+    "identity_mutation": true,
+    "rbl_mutation": true,
+    "k4_mutation": true,
+    "k5_activation": true,
+    "airenos_session_authority_activation": true,
+    "airenos_bearer_issuance": true,
+    "stripe_live": true,
+    "provider_production_cutover": true,
+    "base44_role_to_airenos_authority_promotion": true,
+    "test_seam_or_mock_for_final_authenticated_acceptance": true,
+    "credential_invention_or_password_reset_without_separate_authorization": true,
+    "automatic_gate_promotion": true
+  },
+  "runtime_constraints": {
+    "environment_class": "NON_PRODUCTION_STAGING_ONLY",
+    "base44_is_presentation_only": true,
+    "base44_user_role_is_not_airenos_authority": true,
+    "registry_is_non_live_snapshot": true,
+    "registry_consumer_is_read_only": true,
+    "session_must_be_real_base44_application_authentication": true,
+    "final_acceptance_requires_base44_auth_me_success": true,
+    "final_acceptance_must_not_use_test_seam": true,
+    "minimum_user_set": "EXISTING_REGISTERED_USERS_ONLY",
+    "secrets_must_not_be_committed_or_logged": true
+  },
+  "acceptance_evidence": {
+    "required": [
+      "BASE44_STAGING_RUNTIME_REACHABLE",
+      "REAL_LOGIN_FLOW_COMPLETES",
+      "BASE44_AUTH_ME_RETURNS_REGISTERED_USER",
+      "PROTECTED_CONTROL_PLANE_RENDERS_WITHOUT_TEST_SEAM",
+      "REGISTRY_V2_BINDING_MATCHES_GOVERNED_COMMIT_BLOB_SHA256",
+      "REGISTRY_REMAINS_NON_LIVE_READ_ONLY",
+      "NO_BASE44_ROLE_PROMOTION_TO_AIRENOS_AUTHORITY",
+      "NO_CONSOLE_OR_PAGE_ERRORS_MATERIAL_TO_TARGET_FLOW",
+      "POST_ACTION_REMOTE_READ_BACK_PASS",
+      "FINAL_RULE_DOC_21_RECONCILIATION_PASS"
+    ],
+    "fail_closed_on_missing_evidence": true
+  },
+  "terminal_states": {
+    "contract_implemented": "IMPLEMENTED_GOVERNED_NOT_EXECUTED",
+    "runtime_acceptance_pass": "CLOSED_VERIFIED_REAL_AUTH_PASS",
+    "runtime_acceptance_blocked": "EVIDENCE_BLOCKED_NOT_FAILED",
+    "runtime_acceptance_fail": "FAILED_TARGET_RUNTIME_ACCEPTANCE"
+  },
+  "non_implication": {
+    "runtime_acceptance_pass_implies_release_0_certified": false,
+    "runtime_acceptance_pass_implies_production_authorized": false,
+    "runtime_acceptance_pass_implies_session_authority_authorized": false,
+    "runtime_acceptance_pass_implies_bearer_authorized": false,
+    "runtime_acceptance_pass_implies_k5_authorized": false
+  }
+}
