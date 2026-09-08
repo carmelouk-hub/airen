@@ -1,0 +1,305 @@
+{
+  "schema": "airenos.platform-state-registry-refresh-rebind-protocol.v0.1",
+  "protocol_id": "AOS-PSR-RR-001",
+  "version": 1,
+  "status": "GOVERNED_PROTOCOL_IMPLEMENTED_NOT_SELF_EXECUTING",
+  "scope": "AIRENOS_PLATFORM_STATE_REGISTRY_REFRESH_AND_PRESENTATION_CONSUMER_REBIND",
+  "purpose": "Define a fail-closed, provenance-preserving process for producing a new governed Platform State Registry snapshot and rebinding presentation consumers without allowing the Registry, automation, Base44, CI, or any client to certify gates, open gates, authorize production, or override canonical source authorities.",
+  "seed_registry": {
+    "registry_id": "AOS-PSR-001",
+    "schema": "airenos.platform-state-registry.v0.1",
+    "repository": "carmelouk-hub/airen",
+    "path": "machine-context/airenos-platform-state-registry.v0.1.json",
+    "commit": "2dfe06f7cdccc8e7ab38e4accb7a252e21a2d687",
+    "blob": "c644ea171f8e9df5471ee209403b02ac3029447b",
+    "sha256": "6aa8741183e8d703752c6ba6e4c8d12a54cfb17c05c4e7a177fbe068b672874d",
+    "snapshot_version": 1
+  },
+  "authority_model": {
+    "protocol_role": "DERIVATION_AND_REBIND_CONTROL_PROTOCOL",
+    "is_human_authority": false,
+    "may_certify_gate": false,
+    "may_open_gate": false,
+    "may_authorize_production": false,
+    "may_issue_session_authority": false,
+    "may_issue_airenos_bearer": false,
+    "may_enable_stripe_live": false,
+    "may_authorize_k5": false,
+    "may_merge_protected_pr": false,
+    "may_override_source_authority": false,
+    "may_infer_missing_state": false,
+    "may_rewrite_certified_history": false,
+    "conflict_policy": "FAIL_CLOSED_SOURCE_AUTHORITY_WINS",
+    "unknown_policy": "UNKNOWN_NOT_INFERRED",
+    "history_policy": "APPEND_ONLY_REGISTRATION_AND_GIT_HISTORY_PRESERVED",
+    "basis_revision_policy": "SOURCE_REVISIONS_ARE_INPUT_BASIS_OBSERVATIONS_NOT_MUTUAL_REVISION_TARGETS"
+  },
+  "transaction_model": {
+    "transaction_id_format": "AOS-PSR-REFRESH-YYYYMMDD-HHMMSSZ",
+    "atomicity": "LOGICAL_GOVERNED_TRANSACTION",
+    "retry_policy": "RESTART_FROM_FRESH_RECONCILIATION",
+    "partial_write_policy": "DO_NOT_PROMOTE_PARTIAL_RESULT",
+    "concurrent_change_policy": "ABORT_AND_RESTART",
+    "candidate_branch_policy": "ISOLATED_GOVERNANCE_BRANCH_FROM_LAST_REGISTERED_REGISTRY_COMMIT",
+    "candidate_branch_is_authority": false,
+    "registered_commit_is_immutable_snapshot": true,
+    "branch_name_is_not_authority": true
+  },
+  "refresh_preconditions": [
+    "READ_CURRENT_CANONICAL_HANDOFF_AND_VERIFY_CURRENT_REVISION",
+    "READ_CURRENT_PLATFORM_BIBLE_AND_VERIFY_CURRENT_REVISION",
+    "READ_LAST_REGISTERED_PLATFORM_STATE_REGISTRY_COMMIT_BYTES",
+    "VERIFY_LAST_REGISTERED_REGISTRY_BLOB_AND_SHA256",
+    "FRESH_GITHUB_AND_GOOGLE_DRIVE_DUAL_SOURCE_RECONCILIATION",
+    "VERIFY_ALL_PROTECTED_BOUNDARIES_RELEVANT_TO_REGISTRY_SCOPE",
+    "VERIFY_PR4_OPEN_DRAFT_UNMERGED",
+    "FAIL_CLOSED_ON_SOURCE_UNAVAILABLE_MISMATCH_OR_INCOMPLETE_EVIDENCE"
+  ],
+  "refresh_pipeline": [
+    {
+      "stage": "R0_PRECHECK",
+      "action": "Perform fresh RULE-DOC-21 reconciliation before any candidate generation.",
+      "writes_allowed": false,
+      "exit_states": ["PASS", "BLOCKED"]
+    },
+    {
+      "stage": "R1_OBSERVE",
+      "action": "Collect only explicit current facts from canonical human authorities and verified protected GitHub boundaries.",
+      "writes_allowed": false,
+      "rules": [
+        "DO_NOT_DERIVE_GATE_PASS_FROM_CI_ALONE",
+        "DO_NOT_TREAT_BASE44_AS_AUTHORITY",
+        "DO_NOT_TREAT_REGISTRY_PREVIOUS_VALUES_AS_SOURCE_AUTHORITY",
+        "DO_NOT_FILL_ABSENT_STATE_WITH_PRIOR_VALUE_UNLESS_SOURCE_EXPLICITLY_PRESERVES_IT"
+      ]
+    },
+    {
+      "stage": "R2_CANDIDATE",
+      "action": "Generate a complete candidate Registry document from the last registered snapshot plus current explicit source-authority observations.",
+      "writes_allowed": true,
+      "write_class": "ISOLATED_CANDIDATE_ONLY",
+      "rules": [
+        "INCREMENT_SNAPSHOT_VERSION_EXACTLY_BY_ONE",
+        "SET_NEW_OBSERVED_AT_TIMESTAMP",
+        "UPDATE_BASIS_REVISIONS_TO_THE_REVISIONS_ACTUALLY_READ",
+        "PRESERVE_AUTHORITY_MODEL_DENY_FLAGS",
+        "PRESERVE_UNKNOWN_NOT_INFERRED_POLICY",
+        "PRESERVE_PROTECTED_BOUNDARY_IDENTIFIERS",
+        "PRESERVE_HISTORICAL_FAILURES_AND_CLOSED_CERTIFIED_HISTORY"
+      ]
+    },
+    {
+      "stage": "R3_STRUCTURAL_VALIDATE",
+      "action": "Validate schema shape, required deny flags, identifiers, snapshot monotonicity, protected-boundary coverage and source references.",
+      "writes_allowed": false,
+      "required_checks": [
+        "REGISTRY_ID_UNCHANGED",
+        "SCHEMA_COMPATIBLE",
+        "SNAPSHOT_VERSION_PREVIOUS_PLUS_ONE",
+        "MAY_CERTIFY_GATE_FALSE",
+        "MAY_OPEN_GATE_FALSE",
+        "MAY_AUTHORIZE_PRODUCTION_FALSE",
+        "MAY_OVERRIDE_SOURCE_AUTHORITY_FALSE",
+        "CONFLICT_POLICY_FAIL_CLOSED",
+        "UNKNOWN_POLICY_UNKNOWN_NOT_INFERRED"
+      ]
+    },
+    {
+      "stage": "R4_SEMANTIC_DIFF",
+      "action": "Compare candidate with last registered Registry and classify every changed field.",
+      "writes_allowed": false,
+      "change_classes": {
+        "PROVENANCE_ONLY": "Basis revision, observation timestamp, registered evidence pointer or equivalent provenance movement with no governed-state semantic change.",
+        "BOUNDARY_MOVEMENT": "Branch head, PR state or other protected boundary changed and must be supported by the corresponding canonical source and authorization context.",
+        "STATE_TRANSITION": "Governed state changed and must have explicit canonical human-authority support; tests or implementation evidence alone are insufficient.",
+        "AUTHORITY_MODEL_CHANGE": "Forbidden inside ordinary refresh; requires a separately authorized governance protocol change.",
+        "UNKNOWN_OR_UNSUPPORTED": "Fail closed. Candidate cannot be registered."
+      }
+    },
+    {
+      "stage": "R5_PREPUBLISH_RECONCILE",
+      "action": "Repeat fresh GitHub plus Drive reconciliation immediately before publishing the candidate snapshot.",
+      "writes_allowed": false,
+      "rules": [
+        "ALL_INPUT_SOURCE_REVISIONS_AND_REFS_MUST_STILL_MATCH_CANDIDATE_BASIS",
+        "ANY_CONCURRENT_SOURCE_ADVANCE_ABORTS_TRANSACTION",
+        "PR4_MUST_STILL_BE_OPEN_DRAFT_UNMERGED"
+      ]
+    },
+    {
+      "stage": "R6_PUBLISH_SNAPSHOT",
+      "action": "Commit the validated complete Registry candidate on its isolated governance branch. The commit becomes only a candidate snapshot until human-governance registration is completed.",
+      "writes_allowed": true,
+      "rules": [
+        "ONE_COMPLETE_REGISTRY_FILE",
+        "NO_PROTECTED_BRANCH_MUTATION",
+        "NO_MAIN_R3_RBL_K4_IDENTITY_MUTATION",
+        "NO_PRODUCTION_ACTION",
+        "RECORD_COMMIT_BLOB_SHA256"
+      ]
+    },
+    {
+      "stage": "R7_REMOTE_READBACK",
+      "action": "Read the committed Registry bytes remotely and verify commit, blob, SHA-256 and content match the candidate exactly.",
+      "writes_allowed": false,
+      "exit_states": ["MATCH", "BLOCKED"]
+    },
+    {
+      "stage": "R8_REGISTER_SNAPSHOT",
+      "action": "Append the new Registry snapshot commit/blob/hash/version and classification to the canonical Handoff using revision-locked Google Docs write control.",
+      "writes_allowed": true,
+      "rules": [
+        "APPEND_ONLY",
+        "DO_NOT_REWRITE_PRIOR_REGISTRY_REGISTRATIONS",
+        "REGISTRATION_DOES_NOT_CERTIFY_ANY_NEW_GATE_BY_ITSELF",
+        "SOURCE_BASIS_REVISIONS_REMAIN_INPUT_PROVENANCE_NOT_CURRENT_REVISION_PROMISES"
+      ]
+    },
+    {
+      "stage": "R9_POSTREGISTER_RECONCILE",
+      "action": "Remote read-back the Handoff registration and perform fresh cross-source reconciliation.",
+      "writes_allowed": false,
+      "success_state": "REGISTRY_REFRESH_REGISTERED"
+    }
+  ],
+  "state_transition_rule": {
+    "promotion_requires_explicit_source_authority": true,
+    "allowed_evidence_alone": false,
+    "examples": {
+      "ci_pass_without_governance_registration": "MUST_NOT_PROMOTE",
+      "base44_checkpoint_without_canonical_registration": "MUST_NOT_PROMOTE",
+      "runtime_smoke_without_governed_gate_authority": "MUST_NOT_PROMOTE",
+      "explicit_canonical_handoff_or_other_designated_human_authority_transition": "MAY_BE_REFLECTED_AFTER_DUAL_SOURCE_VERIFICATION"
+    }
+  },
+  "rebind_preconditions": [
+    "NEW_REGISTRY_SNAPSHOT_IS_REMOTE_READBACK_MATCH",
+    "NEW_REGISTRY_SNAPSHOT_IS_REGISTERED_IN_CANONICAL_HANDOFF",
+    "POSTREGISTER_CROSS_SOURCE_RECONCILIATION_PASS",
+    "CONSUMER_TARGET_IS_PRESENTATION_ONLY_AND_NON_AUTHORITATIVE",
+    "CONSUMER_CURRENT_BINDING_IS_READABLE_AND_HASHABLE"
+  ],
+  "rebind_pipeline": [
+    {
+      "stage": "B0_PRECHECK",
+      "action": "Fresh RULE-DOC-21 reconciliation and verify the exact registered Registry commit/blob/hash selected for rebind.",
+      "writes_allowed": false
+    },
+    {
+      "stage": "B1_FETCH_REGISTERED_BYTES",
+      "action": "Fetch Registry bytes from the exact registered immutable commit, never from an unpinned branch tip.",
+      "writes_allowed": false
+    },
+    {
+      "stage": "B2_VERIFY_SOURCE_BYTES",
+      "action": "Compute SHA-256 and verify it equals the registered Registry digest before touching the consumer.",
+      "writes_allowed": false
+    },
+    {
+      "stage": "B3_COPY_BYTE_IDENTICAL",
+      "action": "Replace the consumer Registry data copy with byte-identical registered Registry bytes only.",
+      "writes_allowed": true,
+      "consumer_rules": [
+        "NO_TRANSFORMATION_OF_REGISTRY_BYTES",
+        "NO_CLIENT_SIDE_STATE_PROMOTION",
+        "NO_LIVE_AUTHORITY_CLAIM",
+        "NO_LOCAL_STORAGE_OR_ENTITY_PERSISTENCE_FOR_AUTHORITY_STATE"
+      ]
+    },
+    {
+      "stage": "B4_UPDATE_BINDING_METADATA",
+      "action": "Update consumer binding metadata to the exact source commit, blob and SHA-256 only; snapshot semantic values must continue to come from the Registry document.",
+      "writes_allowed": true
+    },
+    {
+      "stage": "B5_CONSUMER_VALIDATE",
+      "action": "Run build, lint, target typecheck, fail-closed contract tests, freshness classification tests and preview HTTP smoke.",
+      "writes_allowed": false,
+      "required_behavior": [
+        "VALID_RECENT_TO_VERIFIED_SNAPSHOT_NOT_LIVE",
+        "VALID_OLD_TO_STALE_SNAPSHOT",
+        "INVALID_AUTHORITY_FLAGS_TO_UNKNOWN_NOT_VERIFIED",
+        "MISSING_COORDINATE_TO_NULL_OR_UNKNOWN_NOT_INFERRED",
+        "IS_LIVE_ALWAYS_FALSE"
+      ]
+    },
+    {
+      "stage": "B6_CHECKPOINT",
+      "action": "Create a consumer checkpoint only after validation pass; checkpoint is presentation evidence and not Registry or gate authority.",
+      "writes_allowed": true
+    },
+    {
+      "stage": "B7_REMOTE_READBACK",
+      "action": "Read consumer data, adapter and binding remotely; verify source hash and checkpoint commit.",
+      "writes_allowed": false
+    },
+    {
+      "stage": "B8_REGISTER_REBIND",
+      "action": "Append consumer rebind evidence to the canonical Handoff with revision lock.",
+      "writes_allowed": true
+    },
+    {
+      "stage": "B9_FINAL_RECONCILE",
+      "action": "Remote read-back registration and perform final GitHub plus Drive plus consumer reconciliation.",
+      "writes_allowed": false,
+      "success_state": "CONSUMER_REBIND_REGISTERED"
+    }
+  ],
+  "consumer_binding_contract": {
+    "source_selection": "EXACT_REGISTERED_COMMIT_ONLY",
+    "required_binding_fields": [
+      "registryId",
+      "schema",
+      "sourceRepository",
+      "sourcePath",
+      "sourceCommit",
+      "sourceBlob",
+      "sourceSha256"
+    ],
+    "source_bytes_must_match_registered_sha256": true,
+    "consumer_copy_must_match_source_bytes": true,
+    "consumer_may_fetch_live_authority_directly": false,
+    "consumer_may_auto_refresh": false,
+    "consumer_may_self_promote_state": false,
+    "consumer_may_write_registry": false,
+    "consumer_may_become_authority": false
+  },
+  "staleness_policy": {
+    "consumer_snapshot_is_not_live": true,
+    "default_max_age_hours": 24,
+    "expired_classification": "STALE_SNAPSHOT",
+    "invalid_classification": "UNKNOWN_NOT_VERIFIED",
+    "staleness_does_not_trigger_automatic_rebind": true,
+    "staleness_does_not_change_canonical_governed_state": true
+  },
+  "abort_conditions": [
+    "CANONICAL_SOURCE_UNAVAILABLE",
+    "DRIVE_REVISION_CHANGED_DURING_TRANSACTION",
+    "PROTECTED_GITHUB_REF_CHANGED_DURING_TRANSACTION",
+    "PR4_NOT_OPEN_DRAFT_UNMERGED",
+    "REGISTRY_DIGEST_MISMATCH",
+    "UNSUPPORTED_STATE_TRANSITION",
+    "AUTHORITY_MODEL_DRIFT",
+    "CANDIDATE_SCHEMA_INVALID",
+    "CONSUMER_COPY_NOT_BYTE_IDENTICAL",
+    "CONSUMER_FAIL_CLOSED_TEST_FAILURE",
+    "ANY_ATTEMPT_TO_OPEN_GATE_OR_AUTHORIZE_PRODUCTION_FROM_PROTOCOL_OUTPUT"
+  ],
+  "explicit_non_effects": [
+    "NO_PRODUCTION_CUTOVER",
+    "NO_MERGE_AUTHORIZATION",
+    "NO_SESSION_AUTHORITY_ACTIVATION",
+    "NO_AIRENOS_BEARER_ISSUANCE",
+    "NO_STRIPE_LIVE_ENABLEMENT",
+    "NO_K5_AUTHORIZATION",
+    "NO_PROVIDER_DEPLOYMENT",
+    "NO_BASE44_DECOMMISSION",
+    "NO_REWRITE_OF_CERTIFIED_HISTORY"
+  ],
+  "completion_states": {
+    "protocol_implemented": "AOS_PSR_REFRESH_REBIND_PROTOCOL_IMPLEMENTED",
+    "registry_refresh_success": "REGISTRY_REFRESH_REGISTERED",
+    "consumer_rebind_success": "CONSUMER_REBIND_REGISTERED",
+    "blocked": "FAIL_CLOSED_BLOCKED"
+  }
+}
