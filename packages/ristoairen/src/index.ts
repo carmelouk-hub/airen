@@ -13,4 +13,5 @@ export * from "./production/index.ts";
 export * from "./pos/index.ts";
 export * from "./crm/index.ts";
 export * from "./events/index.ts";
+export * from "./public-content/index.ts";
 export * from "./airenpay/index.ts";
