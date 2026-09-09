@@ -73,8 +73,8 @@ export function resolveAtmosDaypart(
     const expires = config.previewExpiresAt ? Date.parse(config.previewExpiresAt) : Number.POSITIVE_INFINITY;
     if (at.getTime() < expires) return config.previewDaypart;
   }
-  if (findActiveAtmosEvent(events, at)) return "EVENT";
   if (!config.enabled) return "DAY";
+  if (findActiveAtmosEvent(events, at)) return "EVENT";
 
   const { minuteOfDay } = localParts(at, config.timezone);
   const dawn = parseHHMM(config.thresholds.dawnStart) ?? 360;
