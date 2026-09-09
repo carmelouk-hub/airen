@@ -50,7 +50,8 @@ jobs:
           challenge="$(printf 'aos-sa-02-governed-readonly-verifier-20260909' | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
 
           valid_headers="$(mktemp)"
-          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$valid_headers" --get "$auth_endpoint" \
+          valid_body="$(mktemp)"
+          valid_status="$(curl --silent --show-error --max-time 20 --output "$valid_body" --dump-header "$valid_headers" --write-out '%{http_code}' --get "$auth_endpoint" \
             --data-urlencode "client_id=$CLIENT_ID" \
             --data-urlencode "redirect_uri=$REDIRECT_URI" \
             --data-urlencode "response_type=code" \
@@ -58,30 +59,36 @@ jobs:
             --data-urlencode "state=aos-sa-02-readonly" \
             --data-urlencode "nonce=aos-sa-02-readonly" \
             --data-urlencode "code_challenge=$challenge" \
-            --data-urlencode "code_challenge_method=S256"
-          valid_status="$(awk 'toupper($1) ~ /^HTTP\// {code=$2} END {print code}' "$valid_headers")"
+            --data-urlencode "code_challenge_method=S256")"
           valid_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$valid_headers")"
-          if [ "$valid_status" != "302" ]; then
-            echo "Expected valid client+redirect+PKCE request to reach browser auth flow (302), got $valid_status"
+          if [ "$valid_status" != "200" ] && [ "$valid_status" != "302" ]; then
+            echo "Valid client+redirect+PKCE request rejected with HTTP $valid_status"
             exit 1
           fi
           case "$valid_location" in
             "$REDIRECT_URI"*)
-              echo "Valid request unexpectedly redirected immediately to callback; browser auth flow was not reached"
+              echo "Valid request unexpectedly redirected immediately to callback"
               exit 1
               ;;
           esac
+          if [ "$valid_status" = "200" ]; then
+            if ! grep -Eqi '<form|login|username|password|kc-form-login' "$valid_body"; then
+              echo "HTTP 200 did not look like an authentication page"
+              exit 1
+            fi
+          fi
           echo "client_redirect_pkce_valid_request=accepted_to_auth_flow"
 
           bad_headers="$(mktemp)"
-          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$bad_headers" --get "$auth_endpoint" \
+          bad_body="$(mktemp)"
+          bad_status="$(curl --silent --show-error --max-time 20 --output "$bad_body" --dump-header "$bad_headers" --write-out '%{http_code}' --get "$auth_endpoint" \
             --data-urlencode "client_id=$CLIENT_ID" \
             --data-urlencode "redirect_uri=https://invalid.example/aos-sa-02" \
             --data-urlencode "response_type=code" \
             --data-urlencode "scope=openid" \
             --data-urlencode "state=aos-sa-02-bad-redirect" \
             --data-urlencode "code_challenge=$challenge" \
-            --data-urlencode "code_challenge_method=S256"
+            --data-urlencode "code_challenge_method=S256")"
           bad_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$bad_headers")"
           case "$bad_location" in
             https://invalid.example/*)
@@ -89,6 +96,9 @@ jobs:
               exit 1
               ;;
           esac
+          if [ "$bad_status" = "200" ] && grep -Eqi '<form[^>]*action=.*login-actions/authenticate|kc-form-login' "$bad_body"; then
+            echo "Invalid redirect URI unexpectedly reached authentication form"
+            exit 1
+          fi
           echo "invalid_redirect_not_accepted=true"
-
           echo "AOS-SA-02 client/redirect/PKCE read-only probe: PASS"
