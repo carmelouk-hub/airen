@@ -11,4 +11,5 @@ export * from "./recovery/index.ts";
 export * from "./booking/index.ts";
 export * from "./production/index.ts";
 export * from "./pos/index.ts";
+export * from "./crm/index.ts";
 export * from "./airenpay/index.ts";
