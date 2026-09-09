@@ -23,7 +23,7 @@ jobs:
           set -euo pipefail
           DISCOVERY="$STAGING_BASE/realms/$REALM/.well-known/openid-configuration"
           discovery_json="$(curl --fail --silent --show-error --location --max-time 20 "$DISCOVERY")"
-          node -e '
+          DISCOVERY_JSON="$discovery_json" node -e '
             const d=JSON.parse(process.env.DISCOVERY_JSON);
             const expectedBase=process.env.STAGING_BASE+"/realms/"+process.env.REALM;
             if (d.issuer !== expectedBase) throw new Error(`issuer mismatch: ${d.issuer}`);
@@ -31,7 +31,7 @@ jobs:
             if (!Array.isArray(d.response_types_supported) || !d.response_types_supported.includes("code")) throw new Error("authorization code response type missing");
             console.log("issuer="+d.issuer);
             console.log("jwks_uri="+d.jwks_uri);
-          ' DISCOVERY_JSON="$discovery_json"
+          '
           jwks_uri="$(DISCOVERY_JSON="$discovery_json" node -e 'const d=JSON.parse(process.env.DISCOVERY_JSON); process.stdout.write(d.jwks_uri)')"
           jwks_json="$(curl --fail --silent --show-error --location --max-time 20 "$jwks_uri")"
           JWKS_JSON="$jwks_json" node -e '
