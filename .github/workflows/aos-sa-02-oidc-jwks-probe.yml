@@ -1,4 +1,4 @@
-name: AOS-SA-02 OIDC JWKS Read-Only Probe
+name: AOS-SA-02 OIDC Client Read-Only Probe
 
 on:
   push:
@@ -10,15 +10,17 @@ permissions:
   contents: read
 
 jobs:
-  oidc-jwks-readonly-probe:
+  oidc-client-readonly-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe staging OIDC discovery and JWKS
+      - name: Probe staging OIDC discovery, JWKS, client redirect and PKCE
         shell: bash
         env:
           STAGING_BASE: https://airenos-keycloak-f26-staging.onrender.com
           REALM: airenos
+          CLIENT_ID: airenos-browser-session
+          REDIRECT_URI: https://session.airenos.com/oidc/callback
         run: |
           set -euo pipefail
           DISCOVERY="$STAGING_BASE/realms/$REALM/.well-known/openid-configuration"
@@ -27,19 +29,66 @@ jobs:
             const d=JSON.parse(process.env.DISCOVERY_JSON);
             const expectedBase=process.env.STAGING_BASE+"/realms/"+process.env.REALM;
             if (d.issuer !== expectedBase) throw new Error(`issuer mismatch: ${d.issuer}`);
-            if (!d.jwks_uri) throw new Error("jwks_uri missing");
+            if (!d.jwks_uri || !d.authorization_endpoint) throw new Error("OIDC endpoints missing");
             if (!Array.isArray(d.response_types_supported) || !d.response_types_supported.includes("code")) throw new Error("authorization code response type missing");
+            const methods=d.code_challenge_methods_supported || [];
+            if (!methods.includes("S256")) throw new Error("PKCE S256 not advertised");
             console.log("issuer="+d.issuer);
-            console.log("jwks_uri="+d.jwks_uri);
+            console.log("authorization_endpoint="+d.authorization_endpoint);
+            console.log("pkce_s256_advertised=true");
           '
           jwks_uri="$(DISCOVERY_JSON="$discovery_json" node -e 'const d=JSON.parse(process.env.DISCOVERY_JSON); process.stdout.write(d.jwks_uri)')"
           jwks_json="$(curl --fail --silent --show-error --location --max-time 20 "$jwks_uri")"
           JWKS_JSON="$jwks_json" node -e '
             const j=JSON.parse(process.env.JWKS_JSON);
-            if (!Array.isArray(j.keys) || j.keys.length < 1) throw new Error("JWKS has no signing keys");
-            const usable=j.keys.filter(k => k.kid && k.kty && (k.use === "sig" || !k.use));
+            const usable=(j.keys||[]).filter(k => k.kid && k.kty && (k.use === "sig" || !k.use));
             if (!usable.length) throw new Error("JWKS has no usable signing key");
-            console.log("jwks_keys="+j.keys.length);
             console.log("usable_signing_keys="+usable.length);
           '
-          echo "AOS-SA-02 OIDC/JWKS read-only probe: PASS"
+
+          auth_endpoint="$(DISCOVERY_JSON="$discovery_json" node -e 'const d=JSON.parse(process.env.DISCOVERY_JSON); process.stdout.write(d.authorization_endpoint)')"
+          challenge="$(printf 'aos-sa-02-governed-readonly-verifier-20260909' | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+
+          valid_headers="$(mktemp)"
+          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$valid_headers" --get "$auth_endpoint" \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode "redirect_uri=$REDIRECT_URI" \
+            --data-urlencode "response_type=code" \
+            --data-urlencode "scope=openid" \
+            --data-urlencode "state=aos-sa-02-readonly" \
+            --data-urlencode "nonce=aos-sa-02-readonly" \
+            --data-urlencode "code_challenge=$challenge" \
+            --data-urlencode "code_challenge_method=S256"
+          valid_status="$(awk 'toupper($1) ~ /^HTTP\// {code=$2} END {print code}' "$valid_headers")"
+          valid_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$valid_headers")"
+          if [ "$valid_status" != "302" ]; then
+            echo "Expected valid client+redirect+PKCE request to reach browser auth flow (302), got $valid_status"
+            exit 1
+          fi
+          case "$valid_location" in
+            "$REDIRECT_URI"*)
+              echo "Valid request unexpectedly redirected immediately to callback; browser auth flow was not reached"
+              exit 1
+              ;;
+          esac
+          echo "client_redirect_pkce_valid_request=accepted_to_auth_flow"
+
+          bad_headers="$(mktemp)"
+          curl --silent --show-error --max-time 20 --output /dev/null --dump-header "$bad_headers" --get "$auth_endpoint" \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode "redirect_uri=https://invalid.example/aos-sa-02" \
+            --data-urlencode "response_type=code" \
+            --data-urlencode "scope=openid" \
+            --data-urlencode "state=aos-sa-02-bad-redirect" \
+            --data-urlencode "code_challenge=$challenge" \
+            --data-urlencode "code_challenge_method=S256"
+          bad_location="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$bad_headers")"
+          case "$bad_location" in
+            https://invalid.example/*)
+              echo "Invalid redirect URI was accepted"
+              exit 1
+              ;;
+          esac
+          echo "invalid_redirect_not_accepted=true"
+
+          echo "AOS-SA-02 client/redirect/PKCE read-only probe: PASS"
