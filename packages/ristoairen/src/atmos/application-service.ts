@@ -1,4 +1,4 @@
-import type { ResourceScope, SecurityContext } from "../../../shared-contracts/src/index.ts";
+import { AppError, type ResourceScope, type SecurityContext } from "../../../shared-contracts/src/index.ts";
 import type {
   AtmosConfigMutationInputV1,
   AtmosConfigMutationResultV1,
@@ -33,7 +33,7 @@ export class AtmosApplicationService {
   ): Promise<AtmosConfigMutationResultV1> {
     await this.productAccess.assertRistoAirenAccess(context);
     requireAtmosWrite(context, input);
-    if (!idempotencyKey?.trim()) throw new Error("ATMOS_IDEMPOTENCY_KEY_REQUIRED");
+    if (!idempotencyKey?.trim()) throw new AppError("VALIDATION_FAILED", "ATMOS_IDEMPOTENCY_KEY_REQUIRED");
     return this.repository.saveConfiguration(context, validateAtmosMutation(input), idempotencyKey.trim());
   }
 }
