@@ -6,5 +6,6 @@ export interface RistoApplicationService<TInput, TResult> {
   execute(input: TInput, context: SecurityContext): Promise<TResult>;
 }
 
+export * from "./baseline/index.ts";
 export * from "./booking/index.ts";
 export * from "./airenpay/index.ts";
