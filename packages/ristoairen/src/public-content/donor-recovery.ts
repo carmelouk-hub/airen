@@ -65,3 +65,10 @@ export const EX_CORTE_PUBLIC_CONTENT_RECOVERY_RULES = Object.freeze({
     "SITEMAP_FROM_PUBLISHABLE_PROJECTIONS",
   ]),
 });
+
+export const REC006_PUBLIC_CONTENT_RECOVERY_EVIDENCE = Object.freeze({
+  acceptanceTests: Object.freeze(["GJ2-002", "GJ2-036"]),
+  runtimeState: "RUNTIME_PENDING" as const,
+  donorRole: "RECOVERY_DONOR_ONLY" as const,
+  publicAuthority: "AIRENOS_TENANT_DOMAIN_RESOLUTION" as const,
+});
