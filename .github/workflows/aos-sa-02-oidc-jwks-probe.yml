@@ -1,0 +1,45 @@
+name: AOS-SA-02 OIDC JWKS Read-Only Probe
+
+on:
+  push:
+    branches:
+      - foundation/aos-sa-02-oidc-jwks-probe-20260909
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  oidc-jwks-readonly-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe staging OIDC discovery and JWKS
+        shell: bash
+        env:
+          STAGING_BASE: https://airenos-keycloak-f26-staging.onrender.com
+          REALM: airenos
+        run: |
+          set -euo pipefail
+          DISCOVERY="$STAGING_BASE/realms/$REALM/.well-known/openid-configuration"
+          discovery_json="$(curl --fail --silent --show-error --location --max-time 20 "$DISCOVERY")"
+          node -e '
+            const d=JSON.parse(process.env.DISCOVERY_JSON);
+            const expectedBase=process.env.STAGING_BASE+"/realms/"+process.env.REALM;
+            if (d.issuer !== expectedBase) throw new Error(`issuer mismatch: ${d.issuer}`);
+            if (!d.jwks_uri) throw new Error("jwks_uri missing");
+            if (!Array.isArray(d.response_types_supported) || !d.response_types_supported.includes("code")) throw new Error("authorization code response type missing");
+            console.log("issuer="+d.issuer);
+            console.log("jwks_uri="+d.jwks_uri);
+          ' DISCOVERY_JSON="$discovery_json"
+          jwks_uri="$(DISCOVERY_JSON="$discovery_json" node -e 'const d=JSON.parse(process.env.DISCOVERY_JSON); process.stdout.write(d.jwks_uri)')"
+          jwks_json="$(curl --fail --silent --show-error --location --max-time 20 "$jwks_uri")"
+          JWKS_JSON="$jwks_json" node -e '
+            const j=JSON.parse(process.env.JWKS_JSON);
+            if (!Array.isArray(j.keys) || j.keys.length < 1) throw new Error("JWKS has no signing keys");
+            const usable=j.keys.filter(k => k.kid && k.kty && (k.use === "sig" || !k.use));
+            if (!usable.length) throw new Error("JWKS has no usable signing key");
+            console.log("jwks_keys="+j.keys.length);
+            console.log("usable_signing_keys="+usable.length);
+          '
+          echo "AOS-SA-02 OIDC/JWKS read-only probe: PASS"
