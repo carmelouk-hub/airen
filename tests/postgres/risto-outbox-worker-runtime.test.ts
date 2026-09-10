@@ -53,7 +53,12 @@ async function state(eventId: string) {
 
 class SyntheticAdapter implements OutboxDeliveryAdapter {
   deliveries = 0;
-  constructor(private failuresRemaining = 0) {}
+  private failuresRemaining: number;
+
+  constructor(failuresRemaining = 0) {
+    this.failuresRemaining = failuresRemaining;
+  }
+
   async deliver(_message: OutboxDeliveryMessage): Promise<void> {
     this.deliveries += 1;
     if (this.failuresRemaining > 0) {
