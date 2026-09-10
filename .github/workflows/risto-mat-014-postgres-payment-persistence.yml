@@ -1,0 +1,66 @@
+name: risto-mat-014-postgres-payment-persistence
+
+on:
+  push:
+    branches:
+      - "risto/mat-014-postgres-payment-persistence-20260910"
+
+permissions:
+  contents: read
+
+jobs:
+  payment-postgres-persistence:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify MAT-014 governed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="9a89c7bc837dce7756a486c14e7af5d7c3ff7771"
+          git cat-file -e "${base}^{commit}"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/risto-mat-014-postgres-payment-persistence.yml" \
+            "db/migrations/0030_risto_payment_persistence.sql" \
+            "packages/persistence-postgres/src/risto-payment-record.ts" \
+            "tests/postgres/risto-payment-record-persistence.test.ts" | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+      - name: Install locked Node PostgreSQL dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply AIRenOS bootstrap and canonical migrations through MAT-014
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+      - name: Run provider-independent payment.record boundary regression
+        run: node --experimental-strip-types --test tests/integration/risto-payment-record-boundary.test.ts
+      - name: Run MAT-014 PostgreSQL payment persistence runtime proof
+        run: node --experimental-strip-types --test tests/postgres/risto-payment-record-persistence.test.ts
