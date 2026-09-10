@@ -1,0 +1,92 @@
+name: risto-mat-022-refund-approval
+
+on:
+  push:
+    branches:
+      - "risto/mat-022-refund-approval-workflow-20260910"
+
+permissions:
+  contents: read
+
+jobs:
+  refund-approval-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify MAT-022 governed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="8549f67e7e16fcaf14b6b0177a14e3f524c4ad51"
+          git cat-file -e "${base}^{commit}"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/risto-mat-022-refund-approval.yml" \
+            "db/migrations/0033_risto_refund_approval_workflow.sql" \
+            "packages/persistence-postgres/src/risto-refund-request.ts" \
+            "packages/ristoairen/src/pos/refund-request.ts" \
+            "tests/postgres/risto-refund-request-runtime.test.ts" | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+
+      - name: Install locked Node PostgreSQL dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and canonical migrations through MAT-022
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: Run MAT-014 payment persistence regression
+        run: node --experimental-strip-types --test tests/postgres/risto-payment-record-persistence.test.ts
+
+      - name: Run MAT-015 provider-neutral dispatcher regression
+        run: node --experimental-strip-types --test tests/integration/risto-outbox-delivery-recovery.test.ts
+
+      - name: Run MAT-016 PostgreSQL outbox worker regression
+        run: node --experimental-strip-types --test tests/postgres/risto-outbox-worker-runtime.test.ts
+
+      - name: Run MAT-017 background job engine regression
+        run: node --experimental-strip-types --test tests/integration/risto-background-job-engine.test.ts
+
+      - name: Run MAT-017 PostgreSQL scheduled recovery regression
+        run: node --experimental-strip-types --test tests/postgres/risto-background-outbox-worker-runtime.test.ts
+
+      - name: Run MAT-018 PostgreSQL webhook replay regression
+        run: node --experimental-strip-types --test tests/postgres/risto-webhook-replay-runtime.test.ts
+
+      - name: Run MAT-019 provider capture domain-effect regression
+        run: node --experimental-strip-types --test tests/postgres/risto-provider-payment-capture-runtime.test.ts
+
+      - name: Run MAT-022 persisted refund approval workflow proof
+        run: node --experimental-strip-types --test tests/postgres/risto-refund-request-runtime.test.ts
