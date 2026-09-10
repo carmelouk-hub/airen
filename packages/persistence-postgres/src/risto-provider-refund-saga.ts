@@ -186,7 +186,13 @@ export class PostgresProviderRefundSagaTransaction implements ProviderRefundSaga
 }
 
 export class PostgresProviderRefundSagaUnitOfWork implements UnitOfWork<ProviderRefundSagaTransaction> {
-  constructor(private readonly pool: Pool, private readonly assumeRole = "airen_app") {}
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_app") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
 
   async transaction<T>(fn: (tx: ProviderRefundSagaTransaction) => Promise<T>, context?: SecurityContext): Promise<T> {
     if (!context) throw new Error("SecurityContext is required for provider refund saga");
