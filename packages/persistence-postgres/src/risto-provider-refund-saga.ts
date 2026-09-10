@@ -66,8 +66,7 @@ export class PostgresProviderRefundSagaTransaction implements ProviderRefundSaga
           AND rp.refund_of_payment_id=rr.payment_id AND rp.id=$2::uuid
          JOIN ristoairen.payments op
            ON op.tenant_id=rr.tenant_id AND op.location_id=rr.location_id AND op.id=rr.payment_id
-        WHERE rr.id=$1::uuid
-        FOR UPDATE OF rr,rp,op`,
+        WHERE rr.id=$1::uuid`,
       [refundRequestId, refundPaymentId]
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
