@@ -1,0 +1,31 @@
+name: risto-mat-013-payment-record-ci
+
+on:
+  push:
+    branches:
+      - "risto/mat-013-payment-record-ci-evidence-20260910"
+
+permissions:
+  contents: read
+
+jobs:
+  payment-record-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify MAT-013 evidence-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="943126764a640e27c87f78b90de435b71503646f"
+          git cat-file -e "${base}^{commit}"
+          mapfile -t files < <(git diff --name-only "$base" "$GITHUB_SHA")
+          test "${#files[@]}" -eq 1
+          test "${files[0]}" = ".github/workflows/risto-mat-013-payment-record-ci.yml"
+      - name: Run RISTOAIREN payment.record boundary test
+        run: node --experimental-strip-types --test tests/integration/risto-payment-record-boundary.test.ts
