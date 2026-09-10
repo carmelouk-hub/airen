@@ -7,235 +7,58 @@ import type {
   IngredientMaterial,
   InventoryEnvironmentClass,
   InventoryReceiveTransaction,
+  PurchaseOrderLineMaterial,
+  PurchaseOrderRecord,
   StockItemRecord,
-  StockMovementRecord
+  StockMovementRecord,
+  SupplierPriceRecord
 } from "../../ristoairen/src/inventory/inventory-receive-stock-movement.ts";
 
-function assertRoleIdentifier(role: string): string {
-  if (!/^[a-z_][a-z0-9_]*$/.test(role)) throw new Error("Unsafe PostgreSQL role identifier");
-  return role;
-}
+function assertRoleIdentifier(role:string):string{if(!/^[a-z_][a-z0-9_]*$/.test(role))throw new Error("Unsafe PostgreSQL role identifier");return role;}
+function iso(value:unknown):string{return new Date(String(value)).toISOString();}
+function receiptFromRow(row:Record<string,unknown>):GoodsReceiptRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),supplierId:String(row.supplierId),...(row.purchaseOrderId==null?{}:{purchaseOrderId:String(row.purchaseOrderId)}),receiptNumber:String(row.receiptNumber),receivedAt:iso(row.receivedAt),receivedByIdentityId:String(row.receivedByIdentityId),status:String(row.status) as GoodsReceiptRecord["status"],sourceRequestKey:String(row.sourceRequestKey),rowVersion:Number(row.rowVersion),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass,...(row.confirmedAt==null?{}:{confirmedAt:iso(row.confirmedAt)}),...(row.confirmedByIdentityId==null?{}:{confirmedByIdentityId:String(row.confirmedByIdentityId)})});}
+function lineFromRow(row:Record<string,unknown>):GoodsReceiptLineRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),goodsReceiptId:String(row.goodsReceiptId),ingredientId:String(row.ingredientId),uomId:String(row.uomId),quantityReceived:String(row.quantityReceived),rejectedQuantity:String(row.rejectedQuantity),...(row.purchaseOrderLineId==null?{}:{purchaseOrderLineId:String(row.purchaseOrderLineId)}),...(row.unitCostActual==null?{}:{unitCostActual:String(row.unitCostActual)}),sourceLineKey:String(row.sourceLineKey),rowVersion:Number(row.rowVersion),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass});}
+function movementFromRow(row:Record<string,unknown>):StockMovementRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),ingredientId:String(row.ingredientId),movementType:"RECEIPT",quantityDelta:String(row.quantityDelta),uomId:String(row.uomId),sourceEntityId:String(row.sourceEntityId),idempotencyKey:String(row.idempotencyKey),occurredAt:iso(row.occurredAt),postedAt:iso(row.postedAt)});}
+function stockItemFromRow(row:Record<string,unknown>):StockItemRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),ingredientId:String(row.ingredientId),onHandQuantity:String(row.onHandQuantity),baseUomId:String(row.baseUomId),...(row.lastMovementAt==null?{}:{lastMovementAt:iso(row.lastMovementAt)})});}
+function purchaseOrderFromRow(row:Record<string,unknown>):PurchaseOrderRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),supplierId:String(row.supplierId),status:String(row.status) as PurchaseOrderRecord["status"],currency:String(row.currency),rowVersion:Number(row.rowVersion),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass});}
+function purchaseOrderLineFromRow(row:Record<string,unknown>):PurchaseOrderLineMaterial{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),purchaseOrderId:String(row.purchaseOrderId),supplierItemId:String(row.supplierItemId),supplierId:String(row.supplierId),ingredientId:String(row.ingredientId),uomId:String(row.uomId),quantityOrdered:String(row.quantityOrdered),supplierItemActive:Boolean(row.supplierItemActive),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass});}
+function supplierPriceFromRow(row:Record<string,unknown>):SupplierPriceRecord{return Object.freeze({id:String(row.id),tenantId:String(row.tenantId),supplierItemId:String(row.supplierItemId),unitCost:String(row.unitCost),currency:String(row.currency),effectiveAt:iso(row.effectiveAt),sourceEntityId:String(row.sourceEntityId),recordedByIdentityId:String(row.recordedByIdentityId),correlationId:String(row.correlationId),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass});}
 
-function iso(value: unknown): string { return new Date(String(value)).toISOString(); }
-
-function receiptFromRow(row: Record<string,unknown>): GoodsReceiptRecord {
-  return Object.freeze({
-    id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),supplierId:String(row.supplierId),
-    receiptNumber:String(row.receiptNumber),receivedAt:iso(row.receivedAt),receivedByIdentityId:String(row.receivedByIdentityId),
-    status:String(row.status) as GoodsReceiptRecord["status"],sourceRequestKey:String(row.sourceRequestKey),
-    rowVersion:Number(row.rowVersion),environmentClass:String(row.environmentClass) as InventoryEnvironmentClass,
-    ...(row.confirmedAt==null?{}:{confirmedAt:iso(row.confirmedAt)}),
-    ...(row.confirmedByIdentityId==null?{}:{confirmedByIdentityId:String(row.confirmedByIdentityId)})
-  });
-}
-
-function lineFromRow(row: Record<string,unknown>): GoodsReceiptLineRecord {
-  return Object.freeze({
-    id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),goodsReceiptId:String(row.goodsReceiptId),
-    ingredientId:String(row.ingredientId),uomId:String(row.uomId),quantityReceived:String(row.quantityReceived),
-    rejectedQuantity:String(row.rejectedQuantity),sourceLineKey:String(row.sourceLineKey),rowVersion:Number(row.rowVersion),
-    environmentClass:String(row.environmentClass) as InventoryEnvironmentClass
-  });
-}
-
-function movementFromRow(row: Record<string,unknown>): StockMovementRecord {
-  return Object.freeze({
-    id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),ingredientId:String(row.ingredientId),
-    movementType:"RECEIPT",quantityDelta:String(row.quantityDelta),uomId:String(row.uomId),sourceEntityId:String(row.sourceEntityId),
-    idempotencyKey:String(row.idempotencyKey),occurredAt:iso(row.occurredAt),postedAt:iso(row.postedAt)
-  });
-}
-
-function stockItemFromRow(row: Record<string,unknown>): StockItemRecord {
-  return Object.freeze({
-    id:String(row.id),tenantId:String(row.tenantId),locationId:String(row.locationId),ingredientId:String(row.ingredientId),
-    onHandQuantity:String(row.onHandQuantity),baseUomId:String(row.baseUomId),
-    ...(row.lastMovementAt==null?{}:{lastMovementAt:iso(row.lastMovementAt)})
-  });
-}
-
-const RECEIPT_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
- supplier_id::text AS "supplierId",receipt_number AS "receiptNumber",received_at AS "receivedAt",
- received_by_identity_id::text AS "receivedByIdentityId",status,source_request_key AS "sourceRequestKey",
- row_version AS "rowVersion",environment_class AS "environmentClass",confirmed_at AS "confirmedAt",
- confirmed_by_identity_id::text AS "confirmedByIdentityId" FROM ristoairen.goods_receipts`;
-
-const LINE_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
- goods_receipt_id::text AS "goodsReceiptId",ingredient_id::text AS "ingredientId",uom_id::text AS "uomId",
- quantity_received::text AS "quantityReceived",rejected_quantity::text AS "rejectedQuantity",
- source_line_key AS "sourceLineKey",row_version AS "rowVersion",environment_class AS "environmentClass"
- FROM ristoairen.goods_receipt_lines`;
-
-const MOVEMENT_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
- ingredient_id::text AS "ingredientId",movement_type AS "movementType",quantity_delta::text AS "quantityDelta",
- uom_id::text AS "uomId",source_entity_id::text AS "sourceEntityId",idempotency_key AS "idempotencyKey",
- occurred_at AS "occurredAt",posted_at AS "postedAt" FROM ristoairen.stock_movements`;
+const RECEIPT_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",purchase_order_id::text AS "purchaseOrderId",receipt_number AS "receiptNumber",received_at AS "receivedAt",received_by_identity_id::text AS "receivedByIdentityId",status,source_request_key AS "sourceRequestKey",row_version AS "rowVersion",environment_class AS "environmentClass",confirmed_at AS "confirmedAt",confirmed_by_identity_id::text AS "confirmedByIdentityId" FROM ristoairen.goods_receipts`;
+const LINE_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",goods_receipt_id::text AS "goodsReceiptId",ingredient_id::text AS "ingredientId",uom_id::text AS "uomId",quantity_received::text AS "quantityReceived",rejected_quantity::text AS "rejectedQuantity",purchase_order_line_id::text AS "purchaseOrderLineId",unit_cost_actual::text AS "unitCostActual",source_line_key AS "sourceLineKey",row_version AS "rowVersion",environment_class AS "environmentClass" FROM ristoairen.goods_receipt_lines`;
+const MOVEMENT_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",ingredient_id::text AS "ingredientId",movement_type AS "movementType",quantity_delta::text AS "quantityDelta",uom_id::text AS "uomId",source_entity_id::text AS "sourceEntityId",idempotency_key AS "idempotencyKey",occurred_at AS "occurredAt",posted_at AS "postedAt" FROM ristoairen.stock_movements`;
+const PO_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",status,currency,row_version AS "rowVersion",environment_class AS "environmentClass" FROM ristoairen.purchase_orders`;
+const PRICE_SELECT=`SELECT id::text AS id,tenant_id::text AS "tenantId",supplier_item_id::text AS "supplierItemId",unit_cost::text AS "unitCost",currency,effective_at AS "effectiveAt",source_entity_id::text AS "sourceEntityId",recorded_by_identity_id::text AS "recordedByIdentityId",correlation_id AS "correlationId",environment_class AS "environmentClass" FROM ristoairen.supplier_prices`;
 
 export class PostgresInventoryReceiveTransaction implements InventoryReceiveTransaction {
-  private readonly client: PoolClient;
-  private readonly context: SecurityContext;
+  private readonly client:PoolClient;private readonly context:SecurityContext;
+  constructor(client:PoolClient,context:SecurityContext){this.client=client;this.context=context;}
 
-  constructor(client: PoolClient,context: SecurityContext) { this.client=client; this.context=context; }
+  async getSupplier(supplierId:string):Promise<Readonly<{id:string;active:boolean}>|null>{const r=await this.client.query("SELECT id::text AS id,active FROM ristoairen.suppliers WHERE id=$1::uuid",[supplierId]);return r.rows[0]?Object.freeze({id:String(r.rows[0].id),active:Boolean(r.rows[0].active)}):null;}
+  async findReceiptByRequestKey(sourceRequestKey:string):Promise<GoodsReceiptRecord|null>{await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:create:${this.context.tenantId}:${this.context.locationId}:${sourceRequestKey}`]);const r=await this.client.query(`${RECEIPT_SELECT} WHERE source_request_key=$1`,[sourceRequestKey]);return r.rows[0]?receiptFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async insertReceipt(input:Readonly<{tenantId:string;locationId:string;supplierId:string;purchaseOrderId?:string;receiptNumber:string;receivedAt:string;receivedByIdentityId:string;sourceRequestKey:string;environmentClass:InventoryEnvironmentClass}>):Promise<GoodsReceiptRecord>{const r=await this.client.query(`INSERT INTO ristoairen.goods_receipts (tenant_id,location_id,supplier_id,purchase_order_id,receipt_number,received_at,received_by_identity_id,status,source_request_key,row_version,environment_class) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::timestamptz,$7::uuid,'DRAFT',$8,1,$9) RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",purchase_order_id::text AS "purchaseOrderId",receipt_number AS "receiptNumber",received_at AS "receivedAt",received_by_identity_id::text AS "receivedByIdentityId",status,source_request_key AS "sourceRequestKey",row_version AS "rowVersion",environment_class AS "environmentClass",confirmed_at AS "confirmedAt",confirmed_by_identity_id::text AS "confirmedByIdentityId"`,[input.tenantId,input.locationId,input.supplierId,input.purchaseOrderId??null,input.receiptNumber,input.receivedAt,input.receivedByIdentityId,input.sourceRequestKey,input.environmentClass]);return receiptFromRow(r.rows[0] as Record<string,unknown>);}
+  async getReceiptForLine(goodsReceiptId:string):Promise<GoodsReceiptRecord|null>{const r=await this.client.query(`${RECEIPT_SELECT} WHERE id=$1::uuid FOR UPDATE`,[goodsReceiptId]);return r.rows[0]?receiptFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async getIngredient(ingredientId:string):Promise<IngredientMaterial|null>{const r=await this.client.query("SELECT id::text AS id,tenant_id::text AS \"tenantId\",base_uom_id::text AS \"baseUomId\",active FROM ristoairen.ingredients WHERE id=$1::uuid",[ingredientId]);return r.rows[0]?Object.freeze({id:String(r.rows[0].id),tenantId:String(r.rows[0].tenantId),baseUomId:String(r.rows[0].baseUomId),active:Boolean(r.rows[0].active)}):null;}
+  async uomExists(uomId:string):Promise<boolean>{const r=await this.client.query("SELECT 1 FROM ristoairen.units_of_measure WHERE id=$1::uuid AND active=true",[uomId]);return Boolean(r.rows[0]);}
+  async findLineByRequestKey(goodsReceiptId:string,sourceLineKey:string):Promise<GoodsReceiptLineRecord|null>{await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:line:${this.context.tenantId}:${this.context.locationId}:${goodsReceiptId}:${sourceLineKey}`]);const r=await this.client.query(`${LINE_SELECT} WHERE goods_receipt_id=$1::uuid AND source_line_key=$2`,[goodsReceiptId,sourceLineKey]);return r.rows[0]?lineFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async insertLine(input:Readonly<{tenantId:string;locationId:string;goodsReceiptId:string;ingredientId:string;uomId:string;quantityReceived:string;purchaseOrderLineId?:string;unitCostActual?:string;sourceLineKey:string;environmentClass:InventoryEnvironmentClass}>):Promise<GoodsReceiptLineRecord>{const r=await this.client.query(`INSERT INTO ristoairen.goods_receipt_lines (tenant_id,location_id,goods_receipt_id,ingredient_id,uom_id,quantity_received,rejected_quantity,purchase_order_line_id,unit_cost_actual,source_line_key,row_version,environment_class) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6::numeric,0,$7::uuid,$8::numeric,$9,1,$10) RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",goods_receipt_id::text AS "goodsReceiptId",ingredient_id::text AS "ingredientId",uom_id::text AS "uomId",quantity_received::text AS "quantityReceived",rejected_quantity::text AS "rejectedQuantity",purchase_order_line_id::text AS "purchaseOrderLineId",unit_cost_actual::text AS "unitCostActual",source_line_key AS "sourceLineKey",row_version AS "rowVersion",environment_class AS "environmentClass"`,[input.tenantId,input.locationId,input.goodsReceiptId,input.ingredientId,input.uomId,input.quantityReceived,input.purchaseOrderLineId??null,input.unitCostActual??null,input.sourceLineKey,input.environmentClass]);return lineFromRow(r.rows[0] as Record<string,unknown>);}
+  async getReceiptForFinalize(goodsReceiptId:string):Promise<GoodsReceiptRecord|null>{await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:finalize:${this.context.tenantId}:${this.context.locationId}:${goodsReceiptId}`]);const r=await this.client.query(`${RECEIPT_SELECT} WHERE id=$1::uuid FOR UPDATE`,[goodsReceiptId]);return r.rows[0]?receiptFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async listReceiptLines(goodsReceiptId:string):Promise<readonly GoodsReceiptLineRecord[]>{const r=await this.client.query(`${LINE_SELECT} WHERE goods_receipt_id=$1::uuid ORDER BY created_at,id`,[goodsReceiptId]);return Object.freeze((r.rows as Record<string,unknown>[]).map(lineFromRow));}
+  async confirmReceipt(input:Readonly<{goodsReceiptId:string;expectedRowVersion:number;confirmedAt:string;confirmedByIdentityId:string}>):Promise<GoodsReceiptRecord>{const r=await this.client.query(`UPDATE ristoairen.goods_receipts SET status='CONFIRMED',confirmed_at=$3::timestamptz,confirmed_by_identity_id=$4::uuid,row_version=row_version+1,updated_at=$3::timestamptz WHERE id=$1::uuid AND status='DRAFT' AND row_version=$2 RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",purchase_order_id::text AS "purchaseOrderId",receipt_number AS "receiptNumber",received_at AS "receivedAt",received_by_identity_id::text AS "receivedByIdentityId",status,source_request_key AS "sourceRequestKey",row_version AS "rowVersion",environment_class AS "environmentClass",confirmed_at AS "confirmedAt",confirmed_by_identity_id::text AS "confirmedByIdentityId"`,[input.goodsReceiptId,input.expectedRowVersion,input.confirmedAt,input.confirmedByIdentityId]);if(!r.rows[0])throw new Error("GOODS_RECEIPT_CONFIRM_STATE_CONFLICT");return receiptFromRow(r.rows[0] as Record<string,unknown>);}
+  async insertReceiptMovement(input:Readonly<{tenantId:string;locationId:string;line:GoodsReceiptLineRecord;occurredAt:string;postedAt:string;postedByIdentityId:string;idempotencyKey:string;correlationId:string;environmentClass:InventoryEnvironmentClass}>):Promise<Readonly<{movement:StockMovementRecord;replayed:boolean}>>{const existing=await this.client.query(`${MOVEMENT_SELECT} WHERE idempotency_key=$1`,[input.idempotencyKey]);if(existing.rows[0])return Object.freeze({movement:movementFromRow(existing.rows[0] as Record<string,unknown>),replayed:true});const r=await this.client.query(`INSERT INTO ristoairen.stock_movements (tenant_id,location_id,ingredient_id,movement_type,quantity_delta,uom_id,base_quantity_delta,source_entity_type,source_entity_id,reason_code,occurred_at,posted_at,posted_by_identity_id,idempotency_key,correlation_id,environment_class) VALUES ($1::uuid,$2::uuid,$3::uuid,'RECEIPT',$4::numeric,$5::uuid,$4::numeric,'GoodsReceiptLine',$6::uuid,'GOODS_RECEIPT_CONFIRMED',$7::timestamptz,$8::timestamptz,$9::uuid,$10,$11,$12) ON CONFLICT (tenant_id,location_id,idempotency_key) DO NOTHING RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",ingredient_id::text AS "ingredientId",movement_type AS "movementType",quantity_delta::text AS "quantityDelta",uom_id::text AS "uomId",source_entity_id::text AS "sourceEntityId",idempotency_key AS "idempotencyKey",occurred_at AS "occurredAt",posted_at AS "postedAt"`,[input.tenantId,input.locationId,input.line.ingredientId,input.line.quantityReceived,input.line.uomId,input.line.id,input.occurredAt,input.postedAt,input.postedByIdentityId,input.idempotencyKey,input.correlationId,input.environmentClass]);if(r.rows[0])return Object.freeze({movement:movementFromRow(r.rows[0] as Record<string,unknown>),replayed:false});const replay=await this.client.query(`${MOVEMENT_SELECT} WHERE idempotency_key=$1`,[input.idempotencyKey]);if(!replay.rows[0])throw new Error("STOCK_MOVEMENT_IDEMPOTENCY_CONFLICT");return Object.freeze({movement:movementFromRow(replay.rows[0] as Record<string,unknown>),replayed:true});}
+  async listReceiptMovements(goodsReceiptId:string):Promise<readonly StockMovementRecord[]>{const r=await this.client.query(`${MOVEMENT_SELECT} WHERE source_entity_id IN (SELECT id FROM ristoairen.goods_receipt_lines WHERE goods_receipt_id=$1::uuid) AND movement_type='RECEIPT' ORDER BY posted_at,id`,[goodsReceiptId]);return Object.freeze((r.rows as Record<string,unknown>[]).map(movementFromRow));}
+  async listReceiptStockItems(goodsReceiptId:string):Promise<readonly StockItemRecord[]>{const r=await this.client.query(`SELECT DISTINCT ON (s.ingredient_id) s.id::text AS id,s.tenant_id::text AS "tenantId",s.location_id::text AS "locationId",s.ingredient_id::text AS "ingredientId",s.on_hand_quantity::text AS "onHandQuantity",s.base_uom_id::text AS "baseUomId",s.last_movement_at AS "lastMovementAt" FROM ristoairen.stock_items s JOIN ristoairen.goods_receipt_lines l ON l.tenant_id=s.tenant_id AND l.location_id=s.location_id AND l.ingredient_id=s.ingredient_id WHERE l.goods_receipt_id=$1::uuid ORDER BY s.ingredient_id,s.id`,[goodsReceiptId]);return Object.freeze((r.rows as Record<string,unknown>[]).map(stockItemFromRow));}
 
-  async getSupplier(supplierId:string): Promise<Readonly<{id:string;active:boolean}>|null> {
-    const result=await this.client.query("SELECT id::text AS id,active FROM ristoairen.suppliers WHERE id=$1::uuid",[supplierId]);
-    return result.rows[0]?Object.freeze({id:String(result.rows[0].id),active:Boolean(result.rows[0].active)}):null;
-  }
+  async getPurchaseOrder(purchaseOrderId:string,forUpdate:boolean):Promise<PurchaseOrderRecord|null>{const r=await this.client.query(`${PO_SELECT} WHERE id=$1::uuid${forUpdate?" FOR UPDATE":""}`,[purchaseOrderId]);return r.rows[0]?purchaseOrderFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async getPurchaseOrderLine(purchaseOrderLineId:string):Promise<PurchaseOrderLineMaterial|null>{const r=await this.client.query(`SELECT pol.id::text AS id,pol.tenant_id::text AS "tenantId",pol.location_id::text AS "locationId",pol.purchase_order_id::text AS "purchaseOrderId",pol.supplier_item_id::text AS "supplierItemId",si.supplier_id::text AS "supplierId",pol.ingredient_id::text AS "ingredientId",pol.uom_id::text AS "uomId",pol.quantity_ordered::text AS "quantityOrdered",si.active AS "supplierItemActive",pol.environment_class AS "environmentClass" FROM ristoairen.purchase_order_lines pol JOIN ristoairen.supplier_items si ON si.tenant_id=pol.tenant_id AND si.id=pol.supplier_item_id WHERE pol.id=$1::uuid`,[purchaseOrderLineId]);return r.rows[0]?purchaseOrderLineFromRow(r.rows[0] as Record<string,unknown>):null;}
+  async getConfirmedQuantityForPurchaseOrderLine(purchaseOrderLineId:string):Promise<string>{const r=await this.client.query(`SELECT COALESCE(sum(l.quantity_received),0)::numeric(18,6)::text AS quantity FROM ristoairen.goods_receipt_lines l JOIN ristoairen.goods_receipts gr ON gr.tenant_id=l.tenant_id AND gr.location_id=l.location_id AND gr.id=l.goods_receipt_id WHERE l.purchase_order_line_id=$1::uuid AND gr.status='CONFIRMED'`,[purchaseOrderLineId]);return String(r.rows[0]?.quantity??"0.000000");}
+  async insertSupplierPrice(input:Readonly<{tenantId:string;supplierItemId:string;unitCost:string;currency:string;effectiveAt:string;sourceEntityId:string;recordedByIdentityId:string;correlationId:string;environmentClass:InventoryEnvironmentClass}>):Promise<Readonly<{supplierPrice:SupplierPriceRecord;replayed:boolean}>>{const existing=await this.client.query(`${PRICE_SELECT} WHERE source_entity_type='GoodsReceiptLine' AND source_entity_id=$1::uuid`,[input.sourceEntityId]);if(existing.rows[0]){const p=supplierPriceFromRow(existing.rows[0] as Record<string,unknown>);if(p.supplierItemId!==input.supplierItemId||p.unitCost!==input.unitCost||p.currency!==input.currency||p.effectiveAt!==new Date(input.effectiveAt).toISOString()||p.environmentClass!==input.environmentClass)throw new Error("SUPPLIER_PRICE_IDEMPOTENCY_CONFLICT");return Object.freeze({supplierPrice:p,replayed:true});}const r=await this.client.query(`INSERT INTO ristoairen.supplier_prices (tenant_id,supplier_item_id,unit_cost,currency,effective_at,source_entity_type,source_entity_id,recorded_by_identity_id,correlation_id,environment_class) VALUES ($1::uuid,$2::uuid,$3::numeric,$4,$5::timestamptz,'GoodsReceiptLine',$6::uuid,$7::uuid,$8,$9) ON CONFLICT (tenant_id,source_entity_type,source_entity_id) DO NOTHING RETURNING id::text AS id,tenant_id::text AS "tenantId",supplier_item_id::text AS "supplierItemId",unit_cost::text AS "unitCost",currency,effective_at AS "effectiveAt",source_entity_id::text AS "sourceEntityId",recorded_by_identity_id::text AS "recordedByIdentityId",correlation_id AS "correlationId",environment_class AS "environmentClass"`,[input.tenantId,input.supplierItemId,input.unitCost,input.currency,input.effectiveAt,input.sourceEntityId,input.recordedByIdentityId,input.correlationId,input.environmentClass]);if(r.rows[0])return Object.freeze({supplierPrice:supplierPriceFromRow(r.rows[0] as Record<string,unknown>),replayed:false});const replay=await this.client.query(`${PRICE_SELECT} WHERE source_entity_type='GoodsReceiptLine' AND source_entity_id=$1::uuid`,[input.sourceEntityId]);if(!replay.rows[0])throw new Error("SUPPLIER_PRICE_IDEMPOTENCY_CONFLICT");return Object.freeze({supplierPrice:supplierPriceFromRow(replay.rows[0] as Record<string,unknown>),replayed:true});}
+  async listReceiptSupplierPrices(goodsReceiptId:string):Promise<readonly SupplierPriceRecord[]>{const r=await this.client.query(`${PRICE_SELECT} WHERE source_entity_type='GoodsReceiptLine' AND source_entity_id IN (SELECT id FROM ristoairen.goods_receipt_lines WHERE goods_receipt_id=$1::uuid) ORDER BY effective_at,id`,[goodsReceiptId]);return Object.freeze((r.rows as Record<string,unknown>[]).map(supplierPriceFromRow));}
+  async resolvePurchaseOrderReceivingStatus(purchaseOrderId:string):Promise<"PARTIALLY_RECEIVED"|"RECEIVED">{const r=await this.client.query(`SELECT count(*)::int AS line_count,bool_and(COALESCE(x.received,0)=pol.quantity_ordered) AS all_received FROM ristoairen.purchase_order_lines pol LEFT JOIN (SELECT l.purchase_order_line_id,sum(l.quantity_received) AS received FROM ristoairen.goods_receipt_lines l JOIN ristoairen.goods_receipts gr ON gr.tenant_id=l.tenant_id AND gr.location_id=l.location_id AND gr.id=l.goods_receipt_id WHERE gr.status='CONFIRMED' GROUP BY l.purchase_order_line_id) x ON x.purchase_order_line_id=pol.id WHERE pol.purchase_order_id=$1::uuid`,[purchaseOrderId]);if(Number(r.rows[0]?.line_count??0)<1)throw new Error("PURCHASE_ORDER_REQUIRES_LINES");return r.rows[0].all_received===true?"RECEIVED":"PARTIALLY_RECEIVED";}
+  async updatePurchaseOrderReceivingStatus(input:Readonly<{purchaseOrderId:string;expectedRowVersion:number;status:"PARTIALLY_RECEIVED"|"RECEIVED";updatedAt:string}>):Promise<PurchaseOrderRecord>{const r=await this.client.query(`UPDATE ristoairen.purchase_orders SET status=$3,row_version=row_version+1,updated_at=$4::timestamptz WHERE id=$1::uuid AND row_version=$2 AND status IN ('APPROVED','SENT','PARTIALLY_RECEIVED') RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",status,currency,row_version AS "rowVersion",environment_class AS "environmentClass"`,[input.purchaseOrderId,input.expectedRowVersion,input.status,input.updatedAt]);if(!r.rows[0])throw new Error("PURCHASE_ORDER_RECEIVING_STATE_CONFLICT");return purchaseOrderFromRow(r.rows[0] as Record<string,unknown>);}
 
-  async findReceiptByRequestKey(sourceRequestKey:string): Promise<GoodsReceiptRecord|null> {
-    await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:create:${this.context.tenantId}:${this.context.locationId}:${sourceRequestKey}`]);
-    const result=await this.client.query(`${RECEIPT_SELECT} WHERE source_request_key=$1`,[sourceRequestKey]);
-    return result.rows[0]?receiptFromRow(result.rows[0] as Record<string,unknown>):null;
-  }
-
-  async insertReceipt(input:Readonly<{tenantId:string;locationId:string;supplierId:string;receiptNumber:string;receivedAt:string;receivedByIdentityId:string;sourceRequestKey:string;environmentClass:InventoryEnvironmentClass}>): Promise<GoodsReceiptRecord> {
-    const result=await this.client.query(
-      `INSERT INTO ristoairen.goods_receipts
-       (tenant_id,location_id,supplier_id,receipt_number,received_at,received_by_identity_id,status,source_request_key,row_version,environment_class)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::timestamptz,$6::uuid,'DRAFT',$7,1,$8)
-       RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",
-        receipt_number AS "receiptNumber",received_at AS "receivedAt",received_by_identity_id::text AS "receivedByIdentityId",status,
-        source_request_key AS "sourceRequestKey",row_version AS "rowVersion",environment_class AS "environmentClass",
-        confirmed_at AS "confirmedAt",confirmed_by_identity_id::text AS "confirmedByIdentityId"`,
-      [input.tenantId,input.locationId,input.supplierId,input.receiptNumber,input.receivedAt,input.receivedByIdentityId,input.sourceRequestKey,input.environmentClass]
-    );
-    return receiptFromRow(result.rows[0] as Record<string,unknown>);
-  }
-
-  async getReceiptForLine(goodsReceiptId:string): Promise<GoodsReceiptRecord|null> {
-    const result=await this.client.query(`${RECEIPT_SELECT} WHERE id=$1::uuid FOR UPDATE`,[goodsReceiptId]);
-    return result.rows[0]?receiptFromRow(result.rows[0] as Record<string,unknown>):null;
-  }
-
-  async getIngredient(ingredientId:string): Promise<IngredientMaterial|null> {
-    const result=await this.client.query("SELECT id::text AS id,tenant_id::text AS \"tenantId\",base_uom_id::text AS \"baseUomId\",active FROM ristoairen.ingredients WHERE id=$1::uuid",[ingredientId]);
-    return result.rows[0]?Object.freeze({id:String(result.rows[0].id),tenantId:String(result.rows[0].tenantId),baseUomId:String(result.rows[0].baseUomId),active:Boolean(result.rows[0].active)}):null;
-  }
-
-  async uomExists(uomId:string): Promise<boolean> {
-    const result=await this.client.query("SELECT 1 FROM ristoairen.units_of_measure WHERE id=$1::uuid AND active=true",[uomId]);
-    return Boolean(result.rows[0]);
-  }
-
-  async findLineByRequestKey(goodsReceiptId:string,sourceLineKey:string): Promise<GoodsReceiptLineRecord|null> {
-    await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:line:${this.context.tenantId}:${this.context.locationId}:${goodsReceiptId}:${sourceLineKey}`]);
-    const result=await this.client.query(`${LINE_SELECT} WHERE goods_receipt_id=$1::uuid AND source_line_key=$2`,[goodsReceiptId,sourceLineKey]);
-    return result.rows[0]?lineFromRow(result.rows[0] as Record<string,unknown>):null;
-  }
-
-  async insertLine(input:Readonly<{tenantId:string;locationId:string;goodsReceiptId:string;ingredientId:string;uomId:string;quantityReceived:string;sourceLineKey:string;environmentClass:InventoryEnvironmentClass}>): Promise<GoodsReceiptLineRecord> {
-    const result=await this.client.query(
-      `INSERT INTO ristoairen.goods_receipt_lines
-       (tenant_id,location_id,goods_receipt_id,ingredient_id,uom_id,quantity_received,rejected_quantity,source_line_key,row_version,environment_class)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6::numeric,0,$7,1,$8)
-       RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",goods_receipt_id::text AS "goodsReceiptId",
-        ingredient_id::text AS "ingredientId",uom_id::text AS "uomId",quantity_received::text AS "quantityReceived",
-        rejected_quantity::text AS "rejectedQuantity",source_line_key AS "sourceLineKey",row_version AS "rowVersion",environment_class AS "environmentClass"`,
-      [input.tenantId,input.locationId,input.goodsReceiptId,input.ingredientId,input.uomId,input.quantityReceived,input.sourceLineKey,input.environmentClass]
-    );
-    return lineFromRow(result.rows[0] as Record<string,unknown>);
-  }
-
-  async getReceiptForFinalize(goodsReceiptId:string): Promise<GoodsReceiptRecord|null> {
-    await this.client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`risto:goods-receipt:finalize:${this.context.tenantId}:${this.context.locationId}:${goodsReceiptId}`]);
-    const result=await this.client.query(`${RECEIPT_SELECT} WHERE id=$1::uuid FOR UPDATE`,[goodsReceiptId]);
-    return result.rows[0]?receiptFromRow(result.rows[0] as Record<string,unknown>):null;
-  }
-
-  async listReceiptLines(goodsReceiptId:string): Promise<readonly GoodsReceiptLineRecord[]> {
-    const result=await this.client.query(`${LINE_SELECT} WHERE goods_receipt_id=$1::uuid ORDER BY created_at,id`,[goodsReceiptId]);
-    return Object.freeze((result.rows as Record<string,unknown>[]).map(lineFromRow));
-  }
-
-  async confirmReceipt(input:Readonly<{goodsReceiptId:string;expectedRowVersion:number;confirmedAt:string;confirmedByIdentityId:string}>): Promise<GoodsReceiptRecord> {
-    const result=await this.client.query(
-      `UPDATE ristoairen.goods_receipts SET status='CONFIRMED',confirmed_at=$3::timestamptz,confirmed_by_identity_id=$4::uuid,
-       row_version=row_version+1,updated_at=$3::timestamptz WHERE id=$1::uuid AND status='DRAFT' AND row_version=$2
-       RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",supplier_id::text AS "supplierId",
-        receipt_number AS "receiptNumber",received_at AS "receivedAt",received_by_identity_id::text AS "receivedByIdentityId",status,
-        source_request_key AS "sourceRequestKey",row_version AS "rowVersion",environment_class AS "environmentClass",
-        confirmed_at AS "confirmedAt",confirmed_by_identity_id::text AS "confirmedByIdentityId"`,
-      [input.goodsReceiptId,input.expectedRowVersion,input.confirmedAt,input.confirmedByIdentityId]
-    );
-    if(!result.rows[0]) throw new Error("GOODS_RECEIPT_CONFIRM_STATE_CONFLICT");
-    return receiptFromRow(result.rows[0] as Record<string,unknown>);
-  }
-
-  async insertReceiptMovement(input:Readonly<{tenantId:string;locationId:string;line:GoodsReceiptLineRecord;occurredAt:string;postedAt:string;postedByIdentityId:string;idempotencyKey:string;correlationId:string;environmentClass:InventoryEnvironmentClass}>): Promise<Readonly<{movement:StockMovementRecord;replayed:boolean}>> {
-    const existing=await this.client.query(`${MOVEMENT_SELECT} WHERE idempotency_key=$1`,[input.idempotencyKey]);
-    if(existing.rows[0]) return Object.freeze({movement:movementFromRow(existing.rows[0] as Record<string,unknown>),replayed:true});
-    const result=await this.client.query(
-      `INSERT INTO ristoairen.stock_movements
-       (tenant_id,location_id,ingredient_id,movement_type,quantity_delta,uom_id,base_quantity_delta,source_entity_type,source_entity_id,
-        reason_code,occurred_at,posted_at,posted_by_identity_id,idempotency_key,correlation_id,environment_class)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,'RECEIPT',$4::numeric,$5::uuid,$4::numeric,'GoodsReceiptLine',$6::uuid,
-        'GOODS_RECEIPT_CONFIRMED',$7::timestamptz,$8::timestamptz,$9::uuid,$10,$11,$12)
-       ON CONFLICT (tenant_id,location_id,idempotency_key) DO NOTHING
-       RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",ingredient_id::text AS "ingredientId",
-        movement_type AS "movementType",quantity_delta::text AS "quantityDelta",uom_id::text AS "uomId",source_entity_id::text AS "sourceEntityId",
-        idempotency_key AS "idempotencyKey",occurred_at AS "occurredAt",posted_at AS "postedAt"`,
-      [input.tenantId,input.locationId,input.line.ingredientId,input.line.quantityReceived,input.line.uomId,input.line.id,input.occurredAt,input.postedAt,input.postedByIdentityId,input.idempotencyKey,input.correlationId,input.environmentClass]
-    );
-    if(result.rows[0]) return Object.freeze({movement:movementFromRow(result.rows[0] as Record<string,unknown>),replayed:false});
-    const replay=await this.client.query(`${MOVEMENT_SELECT} WHERE idempotency_key=$1`,[input.idempotencyKey]);
-    if(!replay.rows[0]) throw new Error("STOCK_MOVEMENT_IDEMPOTENCY_CONFLICT");
-    return Object.freeze({movement:movementFromRow(replay.rows[0] as Record<string,unknown>),replayed:true});
-  }
-
-  async listReceiptMovements(goodsReceiptId:string): Promise<readonly StockMovementRecord[]> {
-    const result=await this.client.query(
-      `${MOVEMENT_SELECT} WHERE source_entity_id IN (SELECT id FROM ristoairen.goods_receipt_lines WHERE goods_receipt_id=$1::uuid) ORDER BY posted_at,id`,[goodsReceiptId]
-    );
-    return Object.freeze((result.rows as Record<string,unknown>[]).map(movementFromRow));
-  }
-
-  async listReceiptStockItems(goodsReceiptId:string): Promise<readonly StockItemRecord[]> {
-    const result=await this.client.query(
-      `SELECT DISTINCT ON (s.ingredient_id) s.id::text AS id,s.tenant_id::text AS "tenantId",s.location_id::text AS "locationId",
-       s.ingredient_id::text AS "ingredientId",s.on_hand_quantity::text AS "onHandQuantity",s.base_uom_id::text AS "baseUomId",
-       s.last_movement_at AS "lastMovementAt" FROM ristoairen.stock_items s
-       JOIN ristoairen.goods_receipt_lines l ON l.tenant_id=s.tenant_id AND l.location_id=s.location_id AND l.ingredient_id=s.ingredient_id
-       WHERE l.goods_receipt_id=$1::uuid ORDER BY s.ingredient_id,s.id`,[goodsReceiptId]
-    );
-    return Object.freeze((result.rows as Record<string,unknown>[]).map(stockItemFromRow));
-  }
-
-  async audit(record:AuditRecord): Promise<void> {
-    await this.client.query(
-      `INSERT INTO audit.audit_events
-       (tenant_id,location_id,actor_identity_id,actor_kind,action_key,resource_type,resource_id,correlation_id,outcome,metadata)
-       VALUES ($1::uuid,$2::uuid,$3::uuid,'system',$4,$5,$6,$7,$8,$9::jsonb)`,
-      [record.tenantId,record.locationId,record.actorIdentityId,record.actionKey,record.resourceType??null,record.resourceId??null,record.correlationId,record.outcome,JSON.stringify(record.metadata??{})]
-    );
-  }
-
-  async outbox(_event:DomainEvent & {tenantId:string;locationId:string;correlationId:string}): Promise<void> {
-    throw new Error("MAT027_INVENTORY_RECEIVE_HAS_NO_OUTBOX");
-  }
+  async audit(record:AuditRecord):Promise<void>{await this.client.query(`INSERT INTO audit.audit_events (tenant_id,location_id,actor_identity_id,actor_kind,action_key,resource_type,resource_id,correlation_id,outcome,metadata) VALUES ($1::uuid,$2::uuid,$3::uuid,'system',$4,$5,$6,$7,$8,$9::jsonb)`,[record.tenantId,record.locationId,record.actorIdentityId,record.actionKey,record.resourceType??null,record.resourceId??null,record.correlationId,record.outcome,JSON.stringify(record.metadata??{})]);}
+  async outbox(_event:DomainEvent & {tenantId:string;locationId:string;correlationId:string}):Promise<void>{throw new Error("MAT027_INVENTORY_RECEIVE_HAS_NO_OUTBOX");}
 }
 
-export class PostgresInventoryReceiveUnitOfWork implements UnitOfWork<InventoryReceiveTransaction> {
-  private readonly pool:Pool;
-  private readonly assumeRole:string;
-
-  constructor(pool:Pool,assumeRole="airen_app") { this.pool=pool; this.assumeRole=assumeRole; }
-
-  async transaction<T>(fn:(tx:InventoryReceiveTransaction)=>Promise<T>,context?:SecurityContext):Promise<T> {
-    if(!context) throw new Error("SecurityContext is required for MAT-027 inventory runtime");
-    const client=await this.pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(`SET LOCAL ROLE ${assertRoleIdentifier(this.assumeRole)}`);
-      await client.query(
-        "SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id',$4,true)",
-        [context.actorIdentityId,context.tenantId,context.locationId,context.correlationId]
-      );
-      const value=await fn(new PostgresInventoryReceiveTransaction(client,context));
-      await client.query("COMMIT");
-      return value;
-    } catch(error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally { client.release(); }
-  }
-}
+export class PostgresInventoryReceiveUnitOfWork implements UnitOfWork<InventoryReceiveTransaction>{private readonly pool:Pool;private readonly assumeRole:string;constructor(pool:Pool,assumeRole="airen_app"){this.pool=pool;this.assumeRole=assumeRole;}async transaction<T>(fn:(tx:InventoryReceiveTransaction)=>Promise<T>,context?:SecurityContext):Promise<T>{if(!context)throw new Error("SecurityContext is required for MAT-027/MAT-029 inventory runtime");const client=await this.pool.connect();try{await client.query("BEGIN");await client.query(`SET LOCAL ROLE ${assertRoleIdentifier(this.assumeRole)}`);await client.query("SELECT set_config('airen.identity_id',$1,true),set_config('airen.tenant_id',$2,true),set_config('airen.location_id',$3,true),set_config('airen.correlation_id',$4,true)",[context.actorIdentityId,context.tenantId,context.locationId,context.correlationId]);const value=await fn(new PostgresInventoryReceiveTransaction(client,context));await client.query("COMMIT");return value;}catch(error){await client.query("ROLLBACK");throw error;}finally{client.release();}}}
