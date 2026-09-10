@@ -80,6 +80,11 @@ test.after(async () => {
 });
 
 test("MAT-016 PostgreSQL outbox worker runtime boundary", async (t) => {
+  // MAT-014 regression runs in the same ephemeral PostgreSQL service and may
+  // legitimately leave its own pending domain event. MAT-016 isolates only its
+  // synthetic fixture queue before testing worker selection semantics.
+  await pool.query("DELETE FROM events.outbox_events");
+
   await t.test("worker and application roles cannot directly update durable outbox state", async () => {
     await expectDirectTableAccessDenied("airen_outbox_worker", "UPDATE events.outbox_events SET delivery_status='delivered'");
     await expectDirectTableAccessDenied("airen_app", "UPDATE events.outbox_events SET delivery_status='delivered'");
