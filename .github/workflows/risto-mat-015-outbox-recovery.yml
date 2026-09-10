@@ -1,0 +1,42 @@
+name: risto-mat-015-outbox-recovery
+
+on:
+  push:
+    branches:
+      - risto/mat-015-outbox-recovery-runtime-20260910
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  outbox-recovery-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify MAT-015 governed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='f3207c1891cb01b1e0ceeee345c7dc5462af0f2a'
+          git cat-file -e "${base}^{commit}"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            '.github/workflows/risto-mat-015-outbox-recovery.yml' \
+            'packages/integrations/src/outbox-delivery.ts' \
+            'tests/integration/risto-outbox-delivery-recovery.test.ts' | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+
+      - name: Run payment.record boundary regression
+        run: node --experimental-strip-types --test tests/integration/risto-payment-record-boundary.test.ts
+
+      - name: Run MAT-015 provider-neutral outbox recovery proof
+        run: node --experimental-strip-types --test tests/integration/risto-outbox-delivery-recovery.test.ts
