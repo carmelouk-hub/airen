@@ -92,7 +92,7 @@ CREATE TABLE ristoairen.goods_receipt_lines (
     REFERENCES ristoairen.ingredients(tenant_id,id),
   CONSTRAINT fk_risto_goods_receipt_line_uom FOREIGN KEY (tenant_id,uom_id)
     REFERENCES ristoairen.units_of_measure(tenant_id,id),
-  CONSTRAINT uq_risto_goods_receipt_line_scope_id UNIQUE (tenant_id,location_id,goods_receipt_id,id),
+  CONSTRAINT uq_risto_goods_receipt_line_scope_id UNIQUE (tenant_id,location_id,id),
   CONSTRAINT uq_risto_goods_receipt_line_request UNIQUE (tenant_id,location_id,goods_receipt_id,source_line_key)
 );
 
@@ -152,6 +152,54 @@ CREATE TABLE ristoairen.stock_movements (
   CONSTRAINT uq_risto_stock_movement_source UNIQUE (tenant_id,location_id,source_entity_type,source_entity_id)
 );
 
+CREATE OR REPLACE FUNCTION ristoairen.guard_goods_receipt_update()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF OLD.status='CONFIRMED' THEN
+    RAISE EXCEPTION 'CONFIRMED_GOODS_RECEIPT_IMMUTABLE';
+  END IF;
+  IF NEW.tenant_id<>OLD.tenant_id OR NEW.location_id<>OLD.location_id OR NEW.supplier_id<>OLD.supplier_id
+     OR NEW.purchase_order_id IS DISTINCT FROM OLD.purchase_order_id OR NEW.receipt_number<>OLD.receipt_number
+     OR NEW.received_at<>OLD.received_at OR NEW.received_by_identity_id<>OLD.received_by_identity_id
+     OR NEW.source_request_key<>OLD.source_request_key OR NEW.environment_class<>OLD.environment_class THEN
+    RAISE EXCEPTION 'GOODS_RECEIPT_IDENTITY_IMMUTABLE';
+  END IF;
+  IF NEW.status<>'CONFIRMED' OR NEW.confirmed_at IS NULL OR NEW.confirmed_by_identity_id IS NULL
+     OR NEW.row_version<>OLD.row_version+1 THEN
+    RAISE EXCEPTION 'GOODS_RECEIPT_INVALID_CONFIRMATION';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER trg_risto_goods_receipt_guard
+BEFORE UPDATE ON ristoairen.goods_receipts
+FOR EACH ROW EXECUTE FUNCTION ristoairen.guard_goods_receipt_update();
+
+CREATE OR REPLACE FUNCTION ristoairen.validate_receipt_stock_movement()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE v_receipt_status text;
+DECLARE v_line_ingredient uuid;
+DECLARE v_line_uom uuid;
+DECLARE v_line_quantity numeric(18,6);
+BEGIN
+  SELECT r.status,l.ingredient_id,l.uom_id,l.quantity_received
+    INTO v_receipt_status,v_line_ingredient,v_line_uom,v_line_quantity
+    FROM ristoairen.goods_receipt_lines l
+    JOIN ristoairen.goods_receipts r
+      ON r.tenant_id=l.tenant_id AND r.location_id=l.location_id AND r.id=l.goods_receipt_id
+   WHERE l.tenant_id=NEW.tenant_id AND l.location_id=NEW.location_id AND l.id=NEW.source_entity_id;
+  IF v_receipt_status IS DISTINCT FROM 'CONFIRMED' THEN
+    RAISE EXCEPTION 'STOCK_MOVEMENT_REQUIRES_CONFIRMED_RECEIPT';
+  END IF;
+  IF NEW.ingredient_id<>v_line_ingredient OR NEW.uom_id<>v_line_uom OR NEW.quantity_delta<>v_line_quantity
+     OR NEW.base_quantity_delta<>v_line_quantity THEN
+    RAISE EXCEPTION 'STOCK_MOVEMENT_SOURCE_MISMATCH';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER trg_risto_stock_movement_validate
+BEFORE INSERT ON ristoairen.stock_movements
+FOR EACH ROW EXECUTE FUNCTION ristoairen.validate_receipt_stock_movement();
+
 CREATE OR REPLACE FUNCTION ristoairen.project_stock_movement()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -163,25 +211,20 @@ BEGIN
   SELECT base_uom_id INTO v_base_uom
     FROM ristoairen.ingredients
    WHERE tenant_id=NEW.tenant_id AND id=NEW.ingredient_id;
-  IF v_base_uom IS NULL OR NEW.uom_id <> v_base_uom THEN
+  IF v_base_uom IS NULL OR NEW.uom_id<>v_base_uom THEN
     RAISE EXCEPTION 'STOCK_MOVEMENT_UOM_NOT_BASE_UOM';
   END IF;
-  IF NEW.base_quantity_delta <> NEW.quantity_delta THEN
-    RAISE EXCEPTION 'MAT027_RECEIPT_REQUIRES_BASE_QUANTITY';
-  END IF;
-
   INSERT INTO ristoairen.stock_items
     (tenant_id,location_id,ingredient_id,on_hand_quantity,reserved_quantity,base_uom_id,last_movement_at,active,environment_class,created_at,updated_at)
   VALUES
     (NEW.tenant_id,NEW.location_id,NEW.ingredient_id,NEW.base_quantity_delta,0,NEW.uom_id,NEW.occurred_at,true,NEW.environment_class,NEW.posted_at,NEW.posted_at)
   ON CONFLICT (tenant_id,location_id,ingredient_id) DO UPDATE
-    SET on_hand_quantity=ristoairen.stock_items.on_hand_quantity + EXCLUDED.on_hand_quantity,
+    SET on_hand_quantity=ristoairen.stock_items.on_hand_quantity+EXCLUDED.on_hand_quantity,
         last_movement_at=GREATEST(ristoairen.stock_items.last_movement_at,EXCLUDED.last_movement_at),
         updated_at=EXCLUDED.updated_at;
   RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION ristoairen.project_stock_movement() FROM PUBLIC;
-
 CREATE TRIGGER trg_risto_stock_movement_project
 AFTER INSERT ON ristoairen.stock_movements
 FOR EACH ROW EXECUTE FUNCTION ristoairen.project_stock_movement();
