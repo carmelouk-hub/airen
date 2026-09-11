@@ -116,7 +116,16 @@ export interface StellaProposalTransaction extends TransactionContext {
   }>): Promise<DecisionProposalRecord | null>;
 }
 
+export type AppliedProposalTargetEffect = Readonly<{
+  effectReference: string;
+  targetRowVersion?: number;
+}>;
+
 export interface GovernedProposalTargetService {
+  findAppliedEffect(context: SecurityContext, input: Readonly<{
+    proposal: DecisionProposalRecord;
+    idempotencyKey: string;
+  }>): Promise<AppliedProposalTargetEffect | null>;
   currentRowVersion(context: SecurityContext, proposal: DecisionProposalRecord): Promise<number | undefined>;
   applyApprovedProposal(context: SecurityContext, input: Readonly<{
     proposal: DecisionProposalRecord;
@@ -231,22 +240,31 @@ export async function applyDecisionProposal(context: SecurityContext, rawInput: 
   },context);
   if(snapshot.alreadyApplied)return Object.freeze({proposal:snapshot.proposal,targetReplayed:true,replayed:true});
 
-  const currentTargetVersion=await deps.targetService.currentRowVersion(context,snapshot.proposal);
-  if(snapshot.proposal.targetRowVersion!==undefined && currentTargetVersion!==snapshot.proposal.targetRowVersion){
-    const invalidatedAt=now(deps),reason=`STALE_TARGET_VERSION expected=${snapshot.proposal.targetRowVersion} actual=${currentTargetVersion===undefined?"none":currentTargetVersion}`;
-    const invalidated=await deps.unitOfWork.transaction(async tx=>{
-      const proposal=await tx.invalidateProposal(Object.freeze({proposalId,expectedRowVersion:snapshot.proposal.rowVersion,invalidatedAt,invalidationReason:reason}));if(!proposal)conflict("DECISION_PROPOSAL_VERSION_CONFLICT");
-      await tx.audit(audit(context,PROPOSAL_INVALIDATED_ACTION,proposal.id,Object.freeze({expectedTargetRowVersion:snapshot.proposal.targetRowVersion,currentTargetRowVersion:currentTargetVersion})));
-      return proposal;
-    },context);
-    if(invalidated.status!=="INVALIDATED")conflict("DECISION_PROPOSAL_INVALIDATION_FAILED");
-    conflict("DECISION_PROPOSAL_TARGET_STALE");
+  const targetApplyKey=stableTargetApplyKey(proposalId);
+  // The target service owns the effect ledger and MUST independently re-authorize this SecurityContext even for replay lookup.
+  // Looking up the stable proposal-derived key first lets a retry recover a target effect that committed before proposal persistence failed.
+  const recoveredTarget=await deps.targetService.findAppliedEffect(context,Object.freeze({proposal:snapshot.proposal,idempotencyKey:targetApplyKey}));
+  let target:Readonly<{effectReference:string;targetRowVersion?:number;replayed:boolean}>;
+  if(recoveredTarget){
+    target=Object.freeze({...recoveredTarget,replayed:true});
+  }else{
+    const currentTargetVersion=await deps.targetService.currentRowVersion(context,snapshot.proposal);
+    if(snapshot.proposal.targetRowVersion!==undefined && currentTargetVersion!==snapshot.proposal.targetRowVersion){
+      const invalidatedAt=now(deps),reason=`STALE_TARGET_VERSION expected=${snapshot.proposal.targetRowVersion} actual=${currentTargetVersion===undefined?"none":currentTargetVersion}`;
+      const invalidated=await deps.unitOfWork.transaction(async tx=>{
+        const proposal=await tx.invalidateProposal(Object.freeze({proposalId,expectedRowVersion:snapshot.proposal.rowVersion,invalidatedAt,invalidationReason:reason}));if(!proposal)conflict("DECISION_PROPOSAL_VERSION_CONFLICT");
+        await tx.audit(audit(context,PROPOSAL_INVALIDATED_ACTION,proposal.id,Object.freeze({expectedTargetRowVersion:snapshot.proposal.targetRowVersion,currentTargetRowVersion:currentTargetVersion})));
+        return proposal;
+      },context);
+      if(invalidated.status!=="INVALIDATED")conflict("DECISION_PROPOSAL_INVALIDATION_FAILED");
+      conflict("DECISION_PROPOSAL_TARGET_STALE");
+    }
+
+    // The target service is a separate authority boundary and applies with the same stable key used for recovery lookup.
+    target=await deps.targetService.applyApprovedProposal(context,Object.freeze({proposal:snapshot.proposal,evidence:snapshot.evidence,idempotencyKey:targetApplyKey}));
+    await deps.faultInjector?.("after_target_apply");
   }
 
-  // The target service is a separate authority boundary. It MUST independently re-authorize this SecurityContext.
-  // The stable proposal-derived key guarantees at-most-once target effect even if proposal persistence fails after the target call.
-  const target=await deps.targetService.applyApprovedProposal(context,Object.freeze({proposal:snapshot.proposal,evidence:snapshot.evidence,idempotencyKey:stableTargetApplyKey(proposalId)}));
-  await deps.faultInjector?.("after_target_apply");
   const appliedAt=now(deps),effectReference=text(target.effectReference,"target.effectReference",1000),appliedTargetRowVersion=nonNegativeInteger(target.targetRowVersion,"target.targetRowVersion");
   const proposal=await deps.unitOfWork.transaction(async tx=>{
     const replay=await tx.findProposalByApplyKey(applyKey);
