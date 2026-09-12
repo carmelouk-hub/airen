@@ -164,25 +164,54 @@ export async function startAirenOSSessionAuthorityStagingServer(
   const publicKeyring = JSON.parse(secrets.publicKeyringText) as Readonly<Record<string, unknown>>;
 
   const readiness = async () => {
-    const database = await pool.query<{
-      session_role: string;
-      rolsuper: boolean;
-      rolbypassrls: boolean;
-      auth_member: boolean;
-      identity_table: boolean;
-      session_table: boolean;
-      resolve_auth_function: boolean;
-    }>(`SELECT
-      session_user AS session_role,
-      r.rolsuper,
-      r.rolbypassrls,
-      pg_has_role(session_user,'airen_auth','MEMBER') AS auth_member,
-      to_regclass('identity.identities') IS NOT NULL AS identity_table,
-      to_regclass('identity.airenos_sessions') IS NOT NULL AS session_table,
-      to_regprocedure('security.resolve_authentication_identity(text,text)') IS NOT NULL AS resolve_auth_function
-    FROM pg_roles r WHERE r.rolname=session_user`);
-    const role = database.rows[0];
-    const databaseOk = Boolean(role && !role.rolsuper && !role.rolbypassrls && role.auth_member && role.identity_table && role.session_table && role.resolve_auth_function);
+    let databaseOk = false;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SET TRANSACTION READ ONLY");
+      const login = await client.query<{
+        session_role: string;
+        rolsuper: boolean;
+        rolbypassrls: boolean;
+        auth_member: boolean;
+      }>(`SELECT
+        session_user AS session_role,
+        r.rolsuper,
+        r.rolbypassrls,
+        pg_has_role(session_user,'airen_auth','MEMBER') AS auth_member
+      FROM pg_roles r WHERE r.rolname=session_user`);
+      const role = login.rows[0];
+      const loginOk = Boolean(role && !role.rolsuper && !role.rolbypassrls && role.auth_member);
+
+      if (loginOk) {
+        await client.query("SET LOCAL ROLE airen_auth");
+        const authorityDatabase = await client.query<{
+          effective_role: string;
+          identity_table: boolean;
+          session_table: boolean;
+          resolve_auth_function: boolean;
+        }>(`SELECT
+          current_user AS effective_role,
+          to_regclass('identity.identities') IS NOT NULL AS identity_table,
+          to_regclass('identity.airenos_sessions') IS NOT NULL AS session_table,
+          to_regprocedure('security.resolve_authentication_identity(text,text)') IS NOT NULL AS resolve_auth_function`);
+        const effective = authorityDatabase.rows[0];
+        databaseOk = Boolean(
+          effective
+          && effective.effective_role === "airen_auth"
+          && effective.identity_table
+          && effective.session_table
+          && effective.resolve_auth_function
+        );
+      }
+
+      await client.query("ROLLBACK");
+    } catch {
+      try { await client.query("ROLLBACK"); } catch {}
+      databaseOk = false;
+    } finally {
+      client.release();
+    }
 
     let upstreamOk = false;
     try {

@@ -65,3 +65,16 @@ test("F2.5E preserves F2.5D bootstrap safety and adds effective-authority checks
   assert.doesNotMatch(effectiveBinding, /\bPASSWORD\s+['"]/i);
   assert.doesNotMatch(effectiveBinding, /postgres(?:ql)?:\/\/[^\s:@]+:[^\s@]+@/i);
 });
+
+test("F2.5E Session Authority readiness explicitly assumes airen_auth without weakening NOINHERIT runtime", async () => {
+  const server = await readFile("apps/api/src/session-authority-staging-server.ts", "utf8");
+  const effectiveBinding = await readFile("db/identity/0003_bind_effective_runtime_authority.sql", "utf8");
+
+  assert.match(server, /SET TRANSACTION READ ONLY/);
+  assert.match(server, /SET LOCAL ROLE airen_auth/);
+  assert.match(server, /current_user AS effective_role/);
+  assert.match(server, /effective\.effective_role === "airen_auth"/);
+  assert.match(server, /pg_has_role\(session_user,'airen_auth','MEMBER'\)/);
+  assert.match(effectiveBinding, /WITH ADMIN FALSE, INHERIT FALSE, SET TRUE/);
+  assert.doesNotMatch(server, /ALTER ROLE[^\n]*INHERIT/i);
+});
