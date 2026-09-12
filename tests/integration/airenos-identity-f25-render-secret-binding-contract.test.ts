@@ -75,6 +75,10 @@ test("F2.5E Session Authority readiness explicitly assumes airen_auth without we
   assert.match(server, /current_user AS effective_role/);
   assert.match(server, /effective\.effective_role === "airen_auth"/);
   assert.match(server, /pg_has_role\(session_user,'airen_auth','MEMBER'\)/);
+  assert.match(server, /FROM security\.resolve_authentication_identity/);
+  assert.match(server, /has_function_privilege/);
+  assert.doesNotMatch(server, /to_regclass\('identity\./);
+  assert.doesNotMatch(server, /to_regclass\('authz\./);
   assert.match(server, /readiness_database_failed/);
   assert.match(server, /safeDatabaseErrorCode/);
   assert.doesNotMatch(server, /readiness_database_failed[^\\n]*(?:databaseUrl|connectionString|password)/i);
