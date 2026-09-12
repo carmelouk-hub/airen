@@ -194,21 +194,29 @@ export async function startAirenOSSessionAuthorityStagingServer(
         await client.query("SET LOCAL ROLE airen_auth");
         const authorityDatabase = await client.query<{
           effective_role: string;
-          identity_table: boolean;
-          session_table: boolean;
           resolve_auth_function: boolean;
+          resolve_auth_executable: boolean;
         }>(`SELECT
           current_user AS effective_role,
-          to_regclass('identity.identities') IS NOT NULL AS identity_table,
-          to_regclass('identity.airenos_sessions') IS NOT NULL AS session_table,
-          to_regprocedure('security.resolve_authentication_identity(text,text)') IS NOT NULL AS resolve_auth_function`);
+          to_regprocedure('security.resolve_authentication_identity(text,text)') IS NOT NULL AS resolve_auth_function,
+          has_function_privilege(
+            current_user,
+            'security.resolve_authentication_identity(text,text)',
+            'EXECUTE'
+          ) AS resolve_auth_executable
+        FROM (
+          SELECT count(*)
+          FROM security.resolve_authentication_identity(
+            '__airenos_readiness__',
+            '__airenos_readiness__'
+          )
+        ) AS authority_path_probe`);
         const effective = authorityDatabase.rows[0];
         databaseOk = Boolean(
           effective
           && effective.effective_role === "airen_auth"
-          && effective.identity_table
-          && effective.session_table
           && effective.resolve_auth_function
+          && effective.resolve_auth_executable
         );
       }
 
