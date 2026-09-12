@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { AppError } from "../../../packages/shared-contracts/src/index.ts";
 import { AirenOSIdentitySessionAuthority } from "../../../packages/identity/src/session-authority.ts";
 import { PersistentAirenOSSessionIssuer } from "../../../packages/identity/src/session-lifecycle.ts";
@@ -128,6 +128,12 @@ function statusForError(code: string): number {
   return 500;
 }
 
+function safeDatabaseErrorCode(error: unknown): string {
+  if (!error || typeof error !== "object" || !("code" in error)) return "UNKNOWN";
+  const code = (error as Readonly<{ code?: unknown }>).code;
+  return typeof code === "string" && /^[A-Z0-9_]{1,32}$/.test(code) ? code : "UNKNOWN";
+}
+
 export async function startAirenOSSessionAuthorityStagingServer(
   environment: EnvironmentInput = process.env,
   secrets: SessionAuthorityRuntimeSecrets,
@@ -165,8 +171,9 @@ export async function startAirenOSSessionAuthorityStagingServer(
 
   const readiness = async () => {
     let databaseOk = false;
-    const client = await pool.connect();
+    let client: PoolClient | undefined;
     try {
+      client = await pool.connect();
       await client.query("BEGIN");
       await client.query("SET TRANSACTION READ ONLY");
       const login = await client.query<{
@@ -206,11 +213,13 @@ export async function startAirenOSSessionAuthorityStagingServer(
       }
 
       await client.query("ROLLBACK");
-    } catch {
-      try { await client.query("ROLLBACK"); } catch {}
+    } catch (error) {
+      const databaseErrorCode = safeDatabaseErrorCode(error);
+      process.stderr.write(`${JSON.stringify({ event: "airenos.session_authority.readiness_database_failed", errorCode: databaseErrorCode })}\n`);
+      try { if (client) await client.query("ROLLBACK"); } catch {}
       databaseOk = false;
     } finally {
-      client.release();
+      client?.release();
     }
 
     let upstreamOk = false;
