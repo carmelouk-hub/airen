@@ -85,3 +85,26 @@ test("F2.5E Session Authority readiness explicitly assumes airen_auth without we
   assert.match(effectiveBinding, /WITH ADMIN FALSE, INHERIT FALSE, SET TRUE/);
   assert.doesNotMatch(server, /ALTER ROLE[^\n]*INHERIT/i);
 });
+
+test("F2.5E Session Authority provides a fail-closed same-origin OIDC callback client", async () => {
+  const server = await readFile("apps/api/src/session-authority-staging-server.ts", "utf8");
+
+  assert.match(server, /requestPath === "\/oidc\/start"/);
+  assert.match(server, /requestPath === "\/oidc\/callback"/);
+  assert.match(server, /requestPath === "\/oidc\/client\.js"/);
+  assert.match(server, /crypto\.subtle\.digest\("SHA-256"/);
+  assert.match(server, /sessionStorage\.setItem\(keys\.verifier/);
+  assert.match(server, /sessionStorage\.setItem\(keys\.nonce/);
+  assert.match(server, /sessionStorage\.setItem\(keys\.state/);
+  assert.match(server, /history\.replaceState\(null, "", "\/oidc\/callback"\)/);
+  assert.match(server, /body: JSON\.stringify\(\{ code, codeVerifier: verifier, expectedNonce: nonce \}\)/);
+  assert.match(server, /new URL\(config\.issuer\)\.origin/);
+  assert.match(server, /new Set\(\[config\.allowedOrigin, browserOrigin\]\)/);
+  assert.match(server, /access-control-allow-headers", "content-type,authorization"/);
+  assert.match(server, /requestPath === "\/v1\/session\/verify"/);
+  assert.match(server, /Ed25519AirenOSSessionVerifier/);
+  assert.match(server, /AIRenOS staging session established and verified\./);
+  assert.match(server, /script-src 'self'; connect-src 'self'/);
+  assert.doesNotMatch(server, /localStorage/);
+  assert.doesNotMatch(server, /console\.(?:log|info|debug)\(/);
+});
