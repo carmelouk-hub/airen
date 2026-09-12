@@ -3,7 +3,7 @@ import { Pool, type PoolClient } from "pg";
 import { AppError } from "../../../packages/shared-contracts/src/index.ts";
 import { AirenOSIdentitySessionAuthority } from "../../../packages/identity/src/session-authority.ts";
 import { PersistentAirenOSSessionIssuer } from "../../../packages/identity/src/session-lifecycle.ts";
-import { Ed25519AirenOSSessionIssuer } from "../../../packages/integrations/src/airenos-session-ed25519.ts";
+import { Ed25519AirenOSSessionIssuer, Ed25519AirenOSSessionVerifier } from "../../../packages/integrations/src/airenos-session-ed25519.ts";
 import { OidcAuthorizationCodeUpstreamVerifier } from "../../../packages/integrations/src/oidc-upstream-provider.ts";
 import { PostgresAuthenticationIdentityDirectory } from "../../../packages/persistence-postgres/src/index.ts";
 import { PostgresAirenOSSessionLifecycleStore } from "../../../packages/persistence-postgres/src/airenos-session-lifecycle.ts";
@@ -82,6 +82,13 @@ function applySecurityHeaders(response: ServerResponse): void {
   response.setHeader("content-security-policy", "default-src 'none'; frame-ancestors 'none'");
 }
 
+function applyBrowserSecurityHeaders(response: ServerResponse): void {
+  response.setHeader("cache-control", "no-store");
+  response.setHeader("x-content-type-options", "nosniff");
+  response.setHeader("referrer-policy", "no-referrer");
+  response.setHeader("content-security-policy", "default-src 'none'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+}
+
 function json(response: ServerResponse, statusCode: number, body: Readonly<Record<string, unknown>>): void {
   response.statusCode = statusCode;
   response.setHeader("content-type", "application/json; charset=utf-8");
@@ -89,11 +96,152 @@ function json(response: ServerResponse, statusCode: number, body: Readonly<Recor
   response.end(JSON.stringify(body));
 }
 
-function exactOriginAllowed(request: IncomingMessage, response: ServerResponse, allowedOrigin: string, requiredForRequest: boolean): boolean {
+function browserHtml(response: ServerResponse, mode: "start" | "callback"): void {
+  response.statusCode = 200;
+  response.setHeader("content-type", "text/html; charset=utf-8");
+  applyBrowserSecurityHeaders(response);
+  const message = mode === "start" ? "Redirecting to AIRenOS identity provider…" : "Completing AIRenOS staging authentication…";
+  response.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIRenOS staging authentication</title></head><body data-mode="${mode}"><main><h1>AIRenOS staging authentication</h1><p id="status">${message}</p></main><script src="/oidc/client.js" defer></script></body></html>`);
+}
+
+const OIDC_BROWSER_CLIENT = String.raw`(() => {
+  "use strict";
+  const status = document.getElementById("status");
+  const mode = document.body.dataset.mode;
+  const keys = Object.freeze({
+    state: "airenos.oidc.state",
+    verifier: "airenos.oidc.verifier",
+    nonce: "airenos.oidc.nonce"
+  });
+
+  const setStatus = (value) => { if (status) status.textContent = value; };
+  const clearTransient = () => {
+    try {
+      sessionStorage.removeItem(keys.state);
+      sessionStorage.removeItem(keys.verifier);
+      sessionStorage.removeItem(keys.nonce);
+    } catch {}
+  };
+  const fail = (message) => {
+    clearTransient();
+    document.title = "AIRenOS authentication failed";
+    setStatus(message);
+  };
+  const base64url = (bytes) => {
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  };
+  const randomToken = (size) => {
+    const bytes = new Uint8Array(size);
+    crypto.getRandomValues(bytes);
+    return base64url(bytes);
+  };
+  const pkceChallenge = async (verifier) => {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+    return base64url(new Uint8Array(digest));
+  };
+
+  const start = async () => {
+    if (!window.isSecureContext || !crypto?.subtle) return fail("Secure browser cryptography is required.");
+    const configResponse = await fetch("/v1/oidc/config", { headers: { accept: "application/json" }, cache: "no-store", credentials: "same-origin" });
+    if (!configResponse.ok) return fail("OIDC configuration is unavailable.");
+    const config = await configResponse.json();
+    if (config.pkceMethod !== "S256" || config.responseType !== "code" || typeof config.authorizationEndpoint !== "string" || typeof config.clientId !== "string" || typeof config.redirectUri !== "string") {
+      return fail("OIDC configuration is invalid.");
+    }
+
+    const verifier = randomToken(64);
+    const nonce = randomToken(32);
+    const state = randomToken(32);
+    const challenge = await pkceChallenge(verifier);
+    try {
+      sessionStorage.setItem(keys.verifier, verifier);
+      sessionStorage.setItem(keys.nonce, nonce);
+      sessionStorage.setItem(keys.state, state);
+    } catch {
+      return fail("Browser session storage is required.");
+    }
+
+    const authorizationUrl = new URL(config.authorizationEndpoint);
+    authorizationUrl.searchParams.set("client_id", config.clientId);
+    authorizationUrl.searchParams.set("redirect_uri", config.redirectUri);
+    authorizationUrl.searchParams.set("response_type", "code");
+    authorizationUrl.searchParams.set("scope", "openid");
+    authorizationUrl.searchParams.set("code_challenge", challenge);
+    authorizationUrl.searchParams.set("code_challenge_method", "S256");
+    authorizationUrl.searchParams.set("nonce", nonce);
+    authorizationUrl.searchParams.set("state", state);
+    window.location.assign(authorizationUrl.toString());
+  };
+
+  const callback = async () => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("error")) {
+      history.replaceState(null, "", "/oidc/callback");
+      return fail("The identity provider rejected authentication.");
+    }
+
+    const code = query.get("code");
+    const returnedState = query.get("state");
+    let expectedState = null;
+    let verifier = null;
+    let nonce = null;
+    try {
+      expectedState = sessionStorage.getItem(keys.state);
+      verifier = sessionStorage.getItem(keys.verifier);
+      nonce = sessionStorage.getItem(keys.nonce);
+    } catch {}
+
+    history.replaceState(null, "", "/oidc/callback");
+    if (!code || !returnedState || !expectedState || returnedState !== expectedState || !verifier || !nonce) {
+      return fail("OIDC callback state is invalid or expired.");
+    }
+    clearTransient();
+
+    const exchangeResponse = await fetch("/v1/session/exchange", {
+      method: "POST",
+      headers: { accept: "application/json", "content-type": "application/json" },
+      cache: "no-store",
+      credentials: "same-origin",
+      body: JSON.stringify({ code, codeVerifier: verifier, expectedNonce: nonce })
+    });
+    if (!exchangeResponse.ok) return fail("AIRenOS session exchange failed.");
+    const issued = await exchangeResponse.json();
+    if (issued.tokenType !== "Bearer" || typeof issued.accessToken !== "string" || !issued.accessToken || typeof issued.sessionId !== "string" || !issued.sessionId) {
+      return fail("AIRenOS session response is invalid.");
+    }
+
+    const verifyResponse = await fetch("/v1/session/verify", {
+      method: "POST",
+      headers: { accept: "application/json", authorization: "Bearer " + issued.accessToken },
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!verifyResponse.ok) return fail("AIRenOS session verification failed.");
+    const verification = await verifyResponse.json();
+    if (verification.valid !== true || verification.sessionId !== issued.sessionId) return fail("AIRenOS session verification failed.");
+
+    document.title = "AIRenOS staging session verified";
+    setStatus("AIRenOS staging session established and verified.");
+  };
+
+  Promise.resolve(mode === "start" ? start() : mode === "callback" ? callback() : fail("Invalid authentication page."))
+    .catch(() => fail("AIRenOS staging authentication failed."));
+})();`;
+
+function browserScript(response: ServerResponse): void {
+  response.statusCode = 200;
+  response.setHeader("content-type", "application/javascript; charset=utf-8");
+  applyBrowserSecurityHeaders(response);
+  response.end(OIDC_BROWSER_CLIENT);
+}
+
+function exactOriginAllowed(request: IncomingMessage, response: ServerResponse, allowedOrigins: readonly string[], requiredForRequest: boolean): boolean {
   const origin = header(request, "origin");
   if (!origin) return !requiredForRequest;
-  if (origin !== allowedOrigin) return false;
-  response.setHeader("access-control-allow-origin", allowedOrigin);
+  if (!allowedOrigins.includes(origin)) return false;
+  response.setHeader("access-control-allow-origin", origin);
   response.setHeader("vary", "Origin");
   return true;
 }
@@ -140,6 +288,8 @@ export async function startAirenOSSessionAuthorityStagingServer(
 ) {
   const deployment = parseDeploymentRuntimeOptions(environment);
   const config = loadConfig(environment);
+  const browserOrigin = new URL(config.issuer).origin;
+  const allowedOrigins = Object.freeze([...new Set([config.allowedOrigin, browserOrigin])]);
   const pool = new Pool({
     connectionString: secrets.databaseUrl,
     max: 5,
@@ -160,6 +310,11 @@ export async function startAirenOSSessionAuthorityStagingServer(
     keyId: config.keyId,
     privateKey: secrets.privateKeyPem,
     ttlSeconds: 300,
+  });
+  const sessionVerifier = new Ed25519AirenOSSessionVerifier({
+    issuer: config.issuer,
+    audience: config.audience,
+    publicKeysJson: secrets.publicKeyringText,
   });
   const authority = new AirenOSIdentitySessionAuthority(
     upstream,
@@ -243,12 +398,14 @@ export async function startAirenOSSessionAuthorityStagingServer(
 
   const server = createServer(async (request, response) => {
     try {
-      if (request.method === "GET" && request.url === "/health/live") {
+      const requestPath = (request.url ?? "").split("?", 1)[0];
+
+      if (request.method === "GET" && requestPath === "/health/live") {
         json(response, 200, { status: "LIVE", service: "airenos-session-authority-f23-staging", releaseRevision: deployment.releaseRevision });
         return;
       }
 
-      if (request.method === "GET" && request.url === "/health/ready") {
+      if (request.method === "GET" && requestPath === "/health/ready") {
         const probe = await readiness();
         json(response, probe.ok ? 200 : 503, {
           status: probe.ok ? "READY" : "NOT_READY",
@@ -262,22 +419,32 @@ export async function startAirenOSSessionAuthorityStagingServer(
         return;
       }
 
-      if (request.method === "OPTIONS" && request.url?.startsWith("/v1/")) {
-        if (!exactOriginAllowed(request, response, config.allowedOrigin, true)) {
+      if (request.method === "GET" && (requestPath === "/oidc/start" || requestPath === "/oidc/callback" || requestPath === "/oidc/client.js")) {
+        if (config.requireForwardedHttps && !forwardedHttps(request)) {
+          json(response, 400, { error: "https_required" });
+          return;
+        }
+        if (requestPath === "/oidc/client.js") browserScript(response);
+        else browserHtml(response, requestPath === "/oidc/start" ? "start" : "callback");
+        return;
+      }
+
+      if (request.method === "OPTIONS" && requestPath.startsWith("/v1/")) {
+        if (!exactOriginAllowed(request, response, allowedOrigins, true)) {
           json(response, 403, { error: "origin_denied" });
           return;
         }
         response.statusCode = 204;
         response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-        response.setHeader("access-control-allow-headers", "content-type");
+        response.setHeader("access-control-allow-headers", "content-type,authorization");
         response.setHeader("access-control-max-age", "300");
         applySecurityHeaders(response);
         response.end();
         return;
       }
 
-      if (request.method === "GET" && request.url === "/v1/oidc/config") {
-        if (!exactOriginAllowed(request, response, config.allowedOrigin, false)) {
+      if (request.method === "GET" && requestPath === "/v1/oidc/config") {
+        if (!exactOriginAllowed(request, response, allowedOrigins, false)) {
           json(response, 403, { error: "origin_denied" });
           return;
         }
@@ -293,8 +460,8 @@ export async function startAirenOSSessionAuthorityStagingServer(
         return;
       }
 
-      if (request.method === "GET" && request.url === "/v1/session/public-keyring") {
-        if (!exactOriginAllowed(request, response, config.allowedOrigin, false)) {
+      if (request.method === "GET" && requestPath === "/v1/session/public-keyring") {
+        if (!exactOriginAllowed(request, response, allowedOrigins, false)) {
           json(response, 403, { error: "origin_denied" });
           return;
         }
@@ -302,8 +469,8 @@ export async function startAirenOSSessionAuthorityStagingServer(
         return;
       }
 
-      if (request.method === "POST" && request.url === "/v1/session/exchange") {
-        if (!exactOriginAllowed(request, response, config.allowedOrigin, true)) {
+      if (request.method === "POST" && requestPath === "/v1/session/exchange") {
+        if (!exactOriginAllowed(request, response, allowedOrigins, true)) {
           json(response, 403, { error: "origin_denied" });
           return;
         }
@@ -320,6 +487,24 @@ export async function startAirenOSSessionAuthorityStagingServer(
           issuedAtIso: issued.issuedAtIso,
           expiresAtIso: issued.expiresAtIso,
         });
+        return;
+      }
+
+      if (request.method === "POST" && requestPath === "/v1/session/verify") {
+        if (!exactOriginAllowed(request, response, allowedOrigins, true)) {
+          json(response, 403, { error: "origin_denied" });
+          return;
+        }
+        if (config.requireForwardedHttps && !forwardedHttps(request)) {
+          json(response, 400, { error: "https_required" });
+          return;
+        }
+        const verified = await sessionVerifier.verify({ authorization: header(request, "authorization") });
+        if (!verified) {
+          json(response, 401, { valid: false });
+          return;
+        }
+        json(response, 200, { valid: true, sessionId: verified.sessionId, issuedAtIso: verified.issuedAtIso, expiresAtIso: verified.expiresAtIso });
         return;
       }
 
