@@ -1,0 +1,92 @@
+name: airenpay-runtime-036-stripe-test-saga-e2e
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-runtime-036-stripe-test-saga-e2e-20260913"
+
+permissions:
+  contents: read
+
+jobs:
+  stripe-test-durable-saga-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+      STRIPE_AIRENPAY_TEST_SECRET_KEY: ${{ secrets.STRIPE_AIRENPAY_TEST_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed Gate 036 delta and Carmelo MAT-037 exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="807f3c1e6ada14adf5f2b2b59f3d88903a0684d6"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/airenpay-runtime-036-stripe-test-saga-e2e.yml" \
+            "tests/postgres/airenpay-runtime-036-stripe-test-saga-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+          ! printf '%s\n' "${actual[@]}" | grep -Fx "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"
+          ! printf '%s\n' "${actual[@]}" | grep -Fx ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"
+
+      - name: Require governed Stripe TEST secret without exposing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${STRIPE_AIRENPAY_TEST_SECRET_KEY:-}" || { echo "STRIPE TEST secret unavailable; fail closed" >&2; exit 1; }
+          case "$STRIPE_AIRENPAY_TEST_SECRET_KEY" in
+            sk_test_*|rk_test_*) ;;
+            *) echo "Non-TEST Stripe credential rejected; fail closed" >&2; exit 1 ;;
+          esac
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and canonical migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: AIRenOS boundary and secret scan
+        run: npm run check:boundaries
+
+      - name: Regress Gate 035 autonomous AIRenPay runtime boundary
+        run: node --experimental-strip-types --test tests/integration/airenpay-runtime-boundary.test.ts
+
+      - name: Regress MAT-024 durable provider refund saga
+        run: node --experimental-strip-types --test tests/postgres/risto-provider-refund-saga-runtime.test.ts
+
+      - name: Regress MAT-025 Stripe TEST refund adapter
+        run: node --experimental-strip-types --test tests/integration/risto-stripe-test-refund-adapter.test.ts
+
+      - name: Prove fresh durable saga to real Stripe TEST settlement and trusted reconciliation
+        run: node --experimental-strip-types --test tests/postgres/airenpay-runtime-036-stripe-test-saga-e2e.test.ts
