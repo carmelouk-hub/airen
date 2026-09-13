@@ -1,0 +1,61 @@
+name: airenpay-runtime-034-composition
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-runtime-034-composition-20260913"
+
+permissions:
+  contents: read
+
+jobs:
+  autonomous-runtime-composition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed delta excludes Carmelo MAT-037 scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="4b87f8908cf268164866830e781bcaa4a135bd16"
+          git cat-file -e "${base}^{commit}"
+          if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"; then exit 1; fi
+          if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"; then exit 1; fi
+
+      - name: Verify AP-01 exact boundary survived composition
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object packages/airenpay/README.md)" = "2d283cba50961d57361a1e5f731fb1aab54be426"
+          test "$(git hash-object packages/airenpay/src/contracts.ts)" = "8527f35e7390d87876958d871fb4e228141c08f5"
+          test "$(git hash-object packages/airenpay/src/policy.ts)" = "60eb33ae60ecf9ec425609b0ef07d5d553f18073"
+          test "$(git hash-object packages/airenpay/src/persistence-contracts.ts)" = "69ebdbac30e237425d9e520a575c6847ae12cc04"
+          test "$(git hash-object packages/airenpay/src/authorization-expiry-policy.ts)" = "1bc0139ce8c6bf583800a1cfdf21eab0d6d8fcf4"
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Run AIRenOS runtime boundary check
+        run: npm run check:boundaries
+
+      - name: Prove AIRenPay default-OFF entitlement boundary
+        run: node --experimental-strip-types --test tests/integration/airenpay-runtime-boundary.test.ts
+
+      - name: Regress certified payment record boundary
+        run: node --experimental-strip-types --test tests/integration/risto-payment-record-boundary.test.ts
+
+      - name: Regress certified outbox recovery dispatcher
+        run: node --experimental-strip-types --test tests/integration/risto-outbox-delivery-recovery.test.ts
+
+      - name: Regress certified background job engine
+        run: node --experimental-strip-types --test tests/integration/risto-background-job-engine.test.ts
+
+      - name: Regress certified Stripe TEST refund adapter without provider LIVE
+        run: node --experimental-strip-types --test tests/integration/risto-stripe-test-refund-adapter.test.ts
