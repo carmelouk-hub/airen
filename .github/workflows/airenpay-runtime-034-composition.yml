@@ -29,7 +29,7 @@ jobs:
           if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"; then exit 1; fi
           if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"; then exit 1; fi
 
-      - name: Verify AP-01 exact boundary survived composition
+      - name: Verify AP-01 exact boundary and booking-core dependency survived composition
         shell: bash
         run: |
           set -euo pipefail
@@ -38,6 +38,7 @@ jobs:
           test "$(git hash-object packages/airenpay/src/policy.ts)" = "60eb33ae60ecf9ec425609b0ef07d5d553f18073"
           test "$(git hash-object packages/airenpay/src/persistence-contracts.ts)" = "69ebdbac30e237425d9e520a575c6847ae12cc04"
           test "$(git hash-object packages/airenpay/src/authorization-expiry-policy.ts)" = "1bc0139ce8c6bf583800a1cfdf21eab0d6d8fcf4"
+          test "$(git hash-object packages/booking-core/src/hold-contracts.ts)" = "5e4f653b4d230f313782a7e467de674ce736f954"
 
       - name: Install locked dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
