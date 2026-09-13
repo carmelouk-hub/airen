@@ -146,6 +146,32 @@ async function stableResourceId(client: PoolClient, scope: Scope): Promise<strin
   return (await existingResourceId(client, scope)) ?? randomUUID();
 }
 
+async function stableOrderIds(
+  client: PoolClient,
+  scope: Scope
+): Promise<Readonly<{ orderId: string; kitchenTicketId: string; barTicketId: string }>> {
+  const result = await client.query(
+    `SELECT resource_id::text AS "orderId",
+            payload->>'kitchenTicketId' AS "kitchenTicketId",
+            payload->>'barTicketId' AS "barTicketId"
+       FROM ristoairen.golden_dinner_runtime_events
+      WHERE tenant_id=$1::uuid AND location_id=$2::uuid AND idempotency_key=$3
+      LIMIT 1`,
+    [scope.tenantId, scope.locationId, scope.idempotencyKey]
+  );
+  const row = result.rows[0] as Record<string, unknown> | undefined;
+  if (row) {
+    const orderId = String(row.orderId ?? "");
+    const kitchenTicketId = String(row.kitchenTicketId ?? "");
+    const barTicketId = String(row.barTicketId ?? "");
+    if (!orderId || !kitchenTicketId || !barTicketId) {
+      throw new AppError("IDEMPOTENCY_CONFLICT", "Persisted ORDER_SUBMITTED evidence is incomplete");
+    }
+    return Object.freeze({ orderId, kitchenTicketId, barTicketId });
+  }
+  return Object.freeze({ orderId: randomUUID(), kitchenTicketId: randomUUID(), barTicketId: randomUUID() });
+}
+
 export class PostgresGoldenDinnerServices implements GoldenDinnerServices {
   private readonly pool: Pool;
   private readonly assumeRole: string;
@@ -225,9 +251,7 @@ export class PostgresGoldenDinnerServices implements GoldenDinnerServices {
       context: SecurityContext,
       input: Scope & Readonly<{ serviceSessionId: string; menuVersionId: string; kitchenItemId: string; barItemId: string; totalAmount: string; currency: string }>
     ) => withScopedTransaction(this.pool, this.assumeRole, context, async client => {
-      const orderId = await stableResourceId(client, input);
-      const kitchenTicketId = randomUUID();
-      const barTicketId = randomUUID();
+      const { orderId, kitchenTicketId, barTicketId } = await stableOrderIds(client, input);
       const stage = await writeStage(client, {
         step: "ORDER_SUBMITTED", sequence: 5, resourceType: "Order", resourceId: orderId,
         eventType: "risto.order.submitted", context, scope: input,
@@ -237,18 +261,11 @@ export class PostgresGoldenDinnerServices implements GoldenDinnerServices {
           kitchenTicketId, barTicketId, totalAmount: input.totalAmount, currency: input.currency
         }
       });
-      const persisted = await client.query(
-        `SELECT payload->>'kitchenTicketId' AS "kitchenTicketId",payload->>'barTicketId' AS "barTicketId"
-           FROM ristoairen.golden_dinner_runtime_events
-          WHERE tenant_id=$1::uuid AND location_id=$2::uuid AND idempotency_key=$3`,
-        [input.tenantId, input.locationId, input.idempotencyKey]
-      );
-      const row = persisted.rows[0] as Record<string, unknown>;
       return Object.freeze({
         ...stage,
         orderId: stage.resourceId,
-        kitchenTicketId: String(row.kitchenTicketId),
-        barTicketId: String(row.barTicketId)
+        kitchenTicketId,
+        barTicketId
       });
     })
   });
