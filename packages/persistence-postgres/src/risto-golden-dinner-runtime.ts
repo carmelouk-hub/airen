@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { Pool, type PoolClient } from "pg";
-import type { SecurityContext } from "../../shared-contracts/src/index.ts";
+import { AppError, type SecurityContext } from "../../shared-contracts/src/index.ts";
 import type {
   GoldenDinnerServices,
   GoldenDinnerStageResult,
@@ -66,6 +67,7 @@ async function withScopedTransaction<T>(
 
 async function writeStage(client: PoolClient, input: StageWrite): Promise<GoldenDinnerStageResult> {
   assertScope(input.context, input.scope);
+  const payload = input.payload ?? {};
   const result = await client.query(
     `INSERT INTO ristoairen.golden_dinner_runtime_events (
        journey_id,tenant_id,location_id,correlation_id,idempotency_key,step,sequence,
@@ -75,8 +77,11 @@ async function writeStage(client: PoolClient, input: StageWrite): Promise<Golden
      )
      ON CONFLICT (tenant_id,location_id,idempotency_key)
      DO UPDATE SET idempotency_key=EXCLUDED.idempotency_key
-     RETURNING step,sequence,resource_type AS "resourceType",resource_id::text AS "resourceId",
-               event_type AS "eventType",occurred_at AS "occurredAt",actor_identity_id::text AS "actorIdentityId"`,
+     RETURNING journey_id::text AS "journeyId",tenant_id::text AS "tenantId",location_id::text AS "locationId",
+               correlation_id AS "correlationId",idempotency_key AS "idempotencyKey",
+               step,sequence,resource_type AS "resourceType",resource_id::text AS "resourceId",
+               event_type AS "eventType",actor_identity_id::text AS "actorIdentityId",
+               environment_class AS "environmentClass",payload,occurred_at AS "occurredAt"`,
     [
       input.scope.journeyId,
       input.scope.tenantId,
@@ -90,11 +95,28 @@ async function writeStage(client: PoolClient, input: StageWrite): Promise<Golden
       input.eventType,
       input.context.actorIdentityId,
       ENVIRONMENT_CLASS,
-      JSON.stringify(input.payload ?? {})
+      JSON.stringify(payload)
     ]
   );
   const row = result.rows[0] as Record<string, unknown> | undefined;
   if (!row) throw new Error(`Golden Dinner persistence returned no row for ${input.step}`);
+  const sameEvidence =
+    String(row.journeyId) === input.scope.journeyId &&
+    String(row.tenantId) === input.scope.tenantId &&
+    String(row.locationId) === input.scope.locationId &&
+    String(row.correlationId) === input.scope.correlationId &&
+    String(row.idempotencyKey) === input.scope.idempotencyKey &&
+    String(row.step) === input.step &&
+    Number(row.sequence) === input.sequence &&
+    String(row.resourceType) === input.resourceType &&
+    String(row.resourceId) === input.resourceId &&
+    String(row.eventType) === input.eventType &&
+    String(row.actorIdentityId) === input.context.actorIdentityId &&
+    String(row.environmentClass) === ENVIRONMENT_CLASS &&
+    isDeepStrictEqual(row.payload ?? {}, payload);
+  if (!sameEvidence) {
+    throw new AppError("IDEMPOTENCY_CONFLICT", `Golden Dinner idempotency key conflicts with persisted ${input.step} evidence`);
+  }
   return Object.freeze({
     step: String(row.step) as GoldenDinnerStep,
     sequence: Number(row.sequence),
