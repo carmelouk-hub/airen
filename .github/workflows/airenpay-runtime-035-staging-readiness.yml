@@ -1,0 +1,85 @@
+name: airenpay-runtime-035-staging-readiness
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-runtime-035-staging-readiness-20260913"
+
+permissions:
+  contents: read
+
+jobs:
+  staging-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed delta excludes Carmelo MAT-037 scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="55e29dbc3553186768a5060571228faa5621ddfb"
+          git cat-file -e "${base}^{commit}"
+          if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"; then exit 1; fi
+          if git diff --name-only "$base" "$GITHUB_SHA" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"; then exit 1; fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Run AIRenOS boundary scan
+        run: npm run check:boundaries
+
+      - name: Regress Gate 034 AIRenPay entitlement boundary
+        run: node --experimental-strip-types --test tests/integration/airenpay-runtime-boundary.test.ts
+
+      - name: Prove staging runtime default OFF
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=18035 AIRENPAY_PROVIDER_MODE=TEST AIRENPAY_STAGING_PROOF_MODE=true \
+            node --experimental-strip-types apps/airenpay-runtime/server.ts >/tmp/airenpay-035-off.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:18035/health/live && break || sleep 0.25; done
+          curl -fsS http://127.0.0.1:18035/v1/airenpay/readiness | tee /tmp/readiness-off.json
+          grep -q '"enabled":false' /tmp/readiness-off.json
+          grep -q '"ready":false' /tmp/readiness-off.json
+          code=$(curl -sS -o /tmp/access-off.json -w '%{http_code}' 'http://127.0.0.1:18035/v1/airenpay/access?proof=entitled')
+          test "$code" = "403"
+          grep -q 'PERMISSION_DENIED' /tmp/access-off.json
+
+      - name: Prove explicit TEST enable still denies missing entitlement and allows airen.pay
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=18036 AIRENPAY_RUNTIME_ENABLED=true AIRENPAY_PROVIDER_MODE=TEST AIRENPAY_STAGING_PROOF_MODE=true \
+            node --experimental-strip-types apps/airenpay-runtime/server.ts >/tmp/airenpay-035-on.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:18036/health/live && break || sleep 0.25; done
+          denied=$(curl -sS -o /tmp/access-denied.json -w '%{http_code}' http://127.0.0.1:18036/v1/airenpay/access)
+          test "$denied" = "403"
+          grep -q 'ENTITLEMENT_REQUIRED' /tmp/access-denied.json
+          curl -fsS 'http://127.0.0.1:18036/v1/airenpay/access?proof=entitled' | tee /tmp/access-allowed.json
+          grep -q '"access":"allowed"' /tmp/access-allowed.json
+          grep -q '"providerMode":"TEST"' /tmp/access-allowed.json
+          grep -q '"providerCallsEnabled":false' /tmp/access-allowed.json
+
+      - name: Prove LIVE mode fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=18037 AIRENPAY_RUNTIME_ENABLED=true AIRENPAY_PROVIDER_MODE=LIVE AIRENPAY_STAGING_PROOF_MODE=true \
+            node --experimental-strip-types apps/airenpay-runtime/server.ts >/tmp/airenpay-035-live.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:18037/health/live && break || sleep 0.25; done
+          code=$(curl -sS -o /tmp/live-denied.json -w '%{http_code}' 'http://127.0.0.1:18037/v1/airenpay/readiness?proof=entitled')
+          test "$code" = "503"
+          grep -q 'RUNTIME_CONFIGURATION_INVALID' /tmp/live-denied.json
