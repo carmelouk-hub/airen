@@ -17,10 +17,7 @@ function runtimeConfig() {
   } as const;
 }
 
-function proofContext(url: URL): SecurityContext {
-  const proofMode = boolEnv("AIRENPAY_STAGING_PROOF_MODE");
-  const requestedEntitled = url.searchParams.get("proof") === "entitled";
-  const entitlements = proofMode && requestedEntitled ? [AIREN_PAY_ENTITLEMENT] : [];
+function context(entitled: boolean): SecurityContext {
   return Object.freeze({
     correlationId: "airenpay-runtime-035-staging",
     actorIdentityId: "staging-proof-actor",
@@ -29,8 +26,47 @@ function proofContext(url: URL): SecurityContext {
     tenantId: "staging-proof-tenant",
     locationId: "staging-proof-location",
     permissions: [],
-    entitlements
+    entitlements: entitled ? [AIREN_PAY_ENTITLEMENT] : []
   });
+}
+
+function proofContext(url: URL): SecurityContext {
+  const proofMode = boolEnv("AIRENPAY_STAGING_PROOF_MODE");
+  return context(proofMode && url.searchParams.get("proof") === "entitled");
+}
+
+function accessOutcome(securityContext: SecurityContext) {
+  try {
+    const readiness = assertAirenPayRuntimeAccess(securityContext, runtimeConfig());
+    return Object.freeze({ access: "allowed", code: null, readiness });
+  } catch (error) {
+    return Object.freeze({
+      access: "denied",
+      code: error instanceof AppError ? error.code : "INTERNAL_ERROR"
+    });
+  }
+}
+
+function emitStartupProof() {
+  if (!boolEnv("AIRENPAY_STAGING_PROOF_MODE")) return;
+  let unentitledReadiness: unknown;
+  let entitledReadiness: unknown;
+  try {
+    unentitledReadiness = resolveAirenPayRuntimeReadiness(context(false), runtimeConfig());
+    entitledReadiness = resolveAirenPayRuntimeReadiness(context(true), runtimeConfig());
+  } catch (error) {
+    unentitledReadiness = { error: error instanceof AppError ? error.code : "INTERNAL_ERROR" };
+    entitledReadiness = unentitledReadiness;
+  }
+  console.log("AIRENPAY_STAGING_STARTUP_PROOF " + JSON.stringify({
+    environment: "staging",
+    config: runtimeConfig(),
+    unentitledReadiness,
+    entitledReadiness,
+    unentitledAccess: accessOutcome(context(false)),
+    entitledAccess: accessOutcome(context(true)),
+    providerCallsEnabled: false
+  }));
 }
 
 function json(res: ServerResponse, status: number, body: Readonly<Record<string, unknown>>) {
@@ -80,5 +116,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const port = Number.parseInt(process.env.PORT ?? "10000", 10);
   createServer(handleAirenPayRuntimeRequest).listen(port, "0.0.0.0", () => {
     console.log(`AIRenPay staging runtime listening on ${port}`);
+    emitStartupProof();
   });
 }
