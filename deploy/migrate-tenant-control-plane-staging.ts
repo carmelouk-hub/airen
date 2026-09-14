@@ -23,6 +23,10 @@ const MIGRATIONS = Object.freeze([
   "0036_aos_nova_tenant_read_claim_bridge.sql",
 ]);
 
+function emitPhase(phase: string, detail?: string): void {
+  process.stdout.write(`${JSON.stringify({ event: "airenos.tenant_control_plane.migration_phase", phase, ...(detail ? { detail } : {}) })}\n`);
+}
+
 function required(environment: NodeJS.ProcessEnv, key: string): string {
   const value = environment[key]?.trim();
   if (!value) throw new AppError("RUNTIME_CONFIGURATION_INVALID", `Missing required Tenant Control Plane migration field: ${key}`, { field: key });
@@ -55,6 +59,7 @@ async function ensureLedger(client: Client): Promise<void> {
 }
 
 async function applyMigration(client: Client, filename: string): Promise<void> {
+  emitPhase("migration", filename);
   const path = resolve("db/migrations", filename);
   const source = await readFile(path, "utf8");
   const digest = checksum(source);
@@ -78,6 +83,7 @@ async function applyMigration(client: Client, filename: string): Promise<void> {
 }
 
 async function provisionRuntimePrincipal(client: Client, adminUrl: string): Promise<void> {
+  emitPhase("runtime_principal");
   const password = randomBytes(36).toString("base64url");
   const exists = await client.query<{ exists: boolean }>("SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname=$1) AS exists", [RUNTIME_LOGIN]);
   if (exists.rows[0]?.exists) {
@@ -103,10 +109,14 @@ async function provisionRuntimePrincipal(client: Client, adminUrl: string): Prom
 export async function migrateTenantControlPlaneStaging(environment: NodeJS.ProcessEnv = process.env): Promise<void> {
   const adminUrl = required(environment, "CONTROL_PLANE_ADMIN_DATABASE_URL");
   const bootstrap = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
+  emitPhase("connect");
   const client = new Client({ connectionString: adminUrl });
   await client.connect();
+  emitPhase("connected");
   try {
+    emitPhase("bootstrap_roles");
     await client.query(bootstrap);
+    emitPhase("migration_ledger");
     await ensureLedger(client);
     for (const filename of MIGRATIONS) await applyMigration(client, filename);
     await provisionRuntimePrincipal(client, adminUrl);
