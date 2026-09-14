@@ -26,4 +26,4 @@ jobs:
       - name: Gate 054 Tenant read-only regression
         run: node --experimental-strip-types --test tests/integration/aos-nova-ctrlplane-054-readonly.test.ts
       - name: Session Authority regression
-        run: node --experimental-strip-types --test tests/integration/airenos-session-authority-staging-runtime.test.ts
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
