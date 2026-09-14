@@ -1,0 +1,66 @@
+name: airenpay-connect-source-041-contracts
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-connect-source-041-contracts-20260914"
+
+permissions:
+  contents: read
+
+jobs:
+  connect-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed file scope and exclude Carmelo MAT-037
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="807f3c1e6ada14adf5f2b2b59f3d88903a0684d6"
+          allowed='^(packages/airenpay/src/provider-connection-contracts\.ts|packages/airenpay/src/reconciliation-contracts\.ts|packages/airenpay/src/index\.ts|tests/integration/airenpay-connect-contracts\.test\.ts|\.github/workflows/airenpay-connect-source-041-contracts\.yml)$'
+          git cat-file -e "${base}^{commit}"
+          changed="$(git diff --name-only "$base" "$GITHUB_SHA")"
+          printf '%s\n' "$changed"
+          if printf '%s\n' "$changed" | grep -Ev "$allowed" | grep -q .; then
+            echo "Unexpected governed-scope file detected" >&2
+            exit 1
+          fi
+          if printf '%s\n' "$changed" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"; then exit 1; fi
+          if printf '%s\n' "$changed" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"; then exit 1; fi
+
+      - name: Verify no provider execution or secret surface introduced
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            packages/airenpay/src/provider-connection-contracts.ts
+            packages/airenpay/src/reconciliation-contracts.ts
+            tests/integration/airenpay-connect-contracts.test.ts
+          )
+          if grep -En 'sk_live_|rk_live_|STRIPE_AIRENPAY_TEST_SECRET_KEY|api\.stripe\.com|fetch\(|https://' "${files[@]}"; then
+            echo "Provider execution or secret material detected" >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Run AIRenOS boundary checks
+        run: npm run check:boundaries
+
+      - name: Prove provider-neutral Connect contracts
+        run: node --experimental-strip-types --test tests/integration/airenpay-connect-contracts.test.ts
+
+      - name: Regress AIRenPay runtime boundary
+        run: node --experimental-strip-types --test tests/integration/airenpay-runtime-boundary.test.ts
+
+      - name: Regress certified Stripe TEST adapter without provider call
+        run: node --experimental-strip-types --test tests/integration/risto-stripe-test-refund-adapter.test.ts
