@@ -1,0 +1,31 @@
+name: AOS-NOVA Control Plane 054 Tenant Read-Only
+
+on:
+  push:
+    branches:
+      - governance/aos-nova-ctrlplane-054-readonly-wiring-20260914
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tenant-readonly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: AIRenOS boundaries
+        run: npm run check:boundaries
+      - name: Gate 055 identity role resolver regression
+        run: node --experimental-strip-types --test tests/integration/aos-nova-identity-role-resolution-055.test.ts
+      - name: Gate 054 Tenant read-only API proof
+        run: node --experimental-strip-types --test tests/integration/aos-nova-ctrlplane-054-readonly.test.ts
+      - name: Session Authority regression
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
+      - name: R3 Tenant admin API regression
+        run: npm run test:r3i-admin-api-contract
