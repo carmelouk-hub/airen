@@ -1,0 +1,29 @@
+name: AOS-NOVA Identity Role Resolution 055
+
+on:
+  push:
+    branches:
+      - governance/aos-nova-identity-role-resolution-055-20260914
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-role-resolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: AIRenOS boundaries
+        run: npm run check:boundaries
+      - name: Gate 055 least-privilege resolver proof
+        run: node --experimental-strip-types --test tests/integration/aos-nova-identity-role-resolution-055.test.ts
+      - name: Session Authority regression
+        run: node --experimental-strip-types --test tests/integration/airenos-identity-session-authority.test.ts
+      - name: Authentication adapter regression
+        run: npm run test:identity-adapter
