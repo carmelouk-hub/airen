@@ -27,6 +27,13 @@ function emitPhase(phase: string, detail?: string): void {
   process.stdout.write(`${JSON.stringify({ event: "airenos.tenant_control_plane.migration_phase", phase, ...(detail ? { detail } : {}) })}\n`);
 }
 
+function sqlState(error: unknown): string {
+  if (typeof error === "object" && error !== null && "code" in error && typeof (error as { code?: unknown }).code === "string") {
+    return (error as { code: string }).code;
+  }
+  return "UNKNOWN";
+}
+
 function required(environment: NodeJS.ProcessEnv, key: string): string {
   const value = environment[key]?.trim();
   if (!value) throw new AppError("RUNTIME_CONFIGURATION_INVALID", `Missing required Tenant Control Plane migration field: ${key}`, { field: key });
@@ -128,7 +135,12 @@ export async function migrateTenantControlPlaneStaging(environment: NodeJS.Proce
   emitPhase("connected");
   try {
     emitPhase("bootstrap_roles");
-    await client.query(bootstrap);
+    try {
+      await client.query(bootstrap);
+    } catch (error) {
+      emitPhase("postgres_error", `phase=bootstrap_roles;sqlstate=${sqlState(error)}`);
+      throw error;
+    }
     emitPhase("migration_ledger");
     await ensureLedger(client);
     for (const filename of MIGRATIONS) await applyMigration(client, filename);
