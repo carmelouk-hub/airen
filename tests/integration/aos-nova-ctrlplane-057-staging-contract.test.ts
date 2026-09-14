@@ -7,6 +7,8 @@ const branchFiles = {
   sql: "db/migrations/0036_aos_nova_tenant_read_claim_bridge.sql",
   principal: "apps/api/src/session-authority-principal-http.ts",
   server: "apps/api/src/tenant-control-plane-staging-server.ts",
+  migrator: "deploy/migrate-tenant-control-plane-staging.ts",
+  runtimeEntry: "deploy/tenant-control-plane-runtime-entry.ts",
 };
 
 test("Gate 057 SQL bridge is read-only and permission-gated", async () => {
@@ -63,4 +65,24 @@ test("principal adapter fails closed and accepts roles only from canonical respo
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("Gate 057 migrator uses an explicit Control Plane allowlist and excludes later product migrations", async () => {
+  const source = await readFile(branchFiles.migrator, "utf8");
+  for (let n = 1; n <= 13; n += 1) assert.match(source, new RegExp(`\\"${String(n).padStart(4, "0")}_`));
+  assert.match(source, /0036_aos_nova_tenant_read_claim_bridge\.sql/);
+  for (let n = 14; n <= 35; n += 1) assert.doesNotMatch(source, new RegExp(`\\"${String(n).padStart(4, "0")}_`));
+  assert.doesNotMatch(source, /migrateFoundationDatabase/);
+});
+
+test("Gate 057 runtime principal is least privilege and admin credential is not retained", async () => {
+  const migrator = await readFile(branchFiles.migrator, "utf8");
+  const entry = await readFile(branchFiles.runtimeEntry, "utf8");
+  assert.match(migrator, /airenos_tenant_runtime_f57/);
+  assert.match(migrator, /NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS/);
+  assert.match(migrator, /GRANT airen_control_plane TO/);
+  assert.match(migrator, /REVOKE airen_control_plane_owner, airen_app, airen_auth FROM/);
+  assert.match(migrator, /mode: 0o600/);
+  assert.match(entry, /delete process\.env\.CONTROL_PLANE_ADMIN_DATABASE_URL/);
+  assert.match(entry, /await rm\(RUNTIME_URL_FILE/);
 });
