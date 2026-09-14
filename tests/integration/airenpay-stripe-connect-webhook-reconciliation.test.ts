@@ -50,7 +50,11 @@ function connection(
 }
 
 class Resolver implements AirenPayStripeConnectTenantResolver {
-  constructor(private readonly map: Readonly<Record<string, AirenPayTrustedProviderConnectionV1>>) {}
+  private readonly map: Readonly<Record<string, AirenPayTrustedProviderConnectionV1>>;
+
+  constructor(map: Readonly<Record<string, AirenPayTrustedProviderConnectionV1>>) {
+    this.map = map;
+  }
 
   async resolveByProviderAccountReference(account: string): Promise<AirenPayTrustedProviderConnectionV1 | null> {
     return this.map[account] ?? null;
