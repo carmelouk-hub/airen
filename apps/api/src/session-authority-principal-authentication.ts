@@ -64,9 +64,9 @@ export class SessionAuthorityPrincipalAuthenticationAdapter implements Authentic
         signal: controller.signal,
       });
       if (response.status === 401 || response.status === 403) return null;
-      if (!response.ok) throw new AppError("UPSTREAM_IDP_UNAVAILABLE", "Session Authority principal endpoint is unavailable");
+      if (!response.ok) throw new AppError("INTERNAL_ERROR", "Session Authority principal endpoint is unavailable");
       const payload: unknown = await response.json();
-      if (!validPrincipal(payload)) throw new AppError("UPSTREAM_IDP_UNAVAILABLE", "Session Authority principal response is invalid");
+      if (!validPrincipal(payload)) throw new AppError("INTERNAL_ERROR", "Session Authority principal response is invalid");
       return {
         identityId: payload.identityId,
         providerKey: "airenos_session_authority",
@@ -78,7 +78,7 @@ export class SessionAuthorityPrincipalAuthenticationAdapter implements Authentic
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError("UPSTREAM_IDP_UNAVAILABLE", "Session Authority principal endpoint is unavailable");
+      throw new AppError("INTERNAL_ERROR", "Session Authority principal endpoint is unavailable");
     } finally {
       clearTimeout(timer);
     }
