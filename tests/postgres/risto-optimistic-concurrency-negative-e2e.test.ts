@@ -98,9 +98,11 @@ async function seed(): Promise<void> {
       ('${SESSION_ORDER}','${TENANT}','${LOCATION}','${TABLE_ORDER}','OPEN',1,'TEST_TEMPORARY','2026-09-14T11:02:00Z');
 
     INSERT INTO ristoairen.orders
-      (id,tenant_id,location_id,service_session_id,request_key,channel,status,row_version,environment_class,submitted_at)
+      (id,tenant_id,location_id,service_session_id,channel,status,currency,
+       subtotal,discount_total,tax_total,total,opened_at,created_by_identity_id,version,environment_class)
     VALUES
-      ('${ORDER}','${TENANT}','${LOCATION}','${SESSION_ORDER}','mat039-order','FOH','SUBMITTED',1,'TEST_TEMPORARY','2026-09-14T11:03:00Z');
+      ('${ORDER}','${TENANT}','${LOCATION}','${SESSION_ORDER}','FOH','SUBMITTED','EUR',
+       100,0,0,100,'2026-09-14T11:03:00Z','${ACTOR}',1,'TEST_TEMPORARY');
   `);
 }
 
@@ -275,7 +277,7 @@ test("MAT-039 / GJ2-034 optimistic concurrency negative E2E", async (t) => {
   await t.test("C011 Order: first amendment wins; stale second command cannot silently last-write-win", async () => {
     const before = await row("orders", ORDER);
     assert.equal(before.status,"SUBMITTED");
-    assert.equal(Number(before.row_version),1);
+    assert.equal(Number(before.version),1);
 
     const first = await amendOrder(
       context("mat039-order-first","order.manage"),
@@ -296,7 +298,7 @@ test("MAT-039 / GJ2-034 optimistic concurrency negative E2E", async (t) => {
 
     const final = await row("orders", ORDER);
     assert.equal(final.status,"AMENDED");
-    assert.equal(Number(final.row_version),2);
+    assert.equal(Number(final.version),2);
     assert.deepEqual(await evidenceCounts("Order",ORDER,"OrderChanged"),{ audits:1,outbox:1 });
   });
 
@@ -306,7 +308,7 @@ test("MAT-039 / GJ2-034 optimistic concurrency negative E2E", async (t) => {
        UNION ALL SELECT 'GuestQueueEntry',row_version FROM ristoairen.guest_queue_entries WHERE id=$2::uuid
        UNION ALL SELECT 'SeatingServiceSession',row_version FROM ristoairen.service_sessions WHERE id=$3::uuid
        UNION ALL SELECT 'ClosedServiceSession',row_version FROM ristoairen.service_sessions WHERE id=$4::uuid
-       UNION ALL SELECT 'Order',row_version FROM ristoairen.orders WHERE id=$5::uuid
+       UNION ALL SELECT 'Order',version FROM ristoairen.orders WHERE id=$5::uuid
        ORDER BY aggregate`,
       [BOOKING,QUEUE,SESSION_SEATING,SESSION_CLOSE,ORDER]
     );
