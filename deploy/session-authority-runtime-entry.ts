@@ -7,6 +7,7 @@ import { EnvironmentSecretProvider } from "../packages/integrations/src/index.ts
 import { classifyError } from "../packages/observability/src/index.ts";
 import { startAirenOSSessionAuthorityStagingServer } from "../apps/api/src/session-authority-staging-server.ts";
 import { installAirenOSSessionHandoffHttp } from "../apps/api/src/session-authority-handoff-http.ts";
+import { installAirenOSSessionPrincipalHttp } from "../apps/api/src/session-authority-principal-http.ts";
 import { bootstrapAirenOSSessionSigningKey } from "../scripts/bootstrap-airenos-session-signing-key.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
@@ -146,7 +147,9 @@ async function main(): Promise<void> {
     publicKeyringText: signing.publicKeyringText,
   });
   const handoff = installAirenOSSessionHandoffHttp(service.server, process.env, signing.publicKeyringText);
+  installAirenOSSessionPrincipalHttp(service.server, service.pool, process.env, signing.publicKeyringText);
   process.stdout.write(`${JSON.stringify({ event: "airenos.session_authority.handoff_bridge", enabled: handoff.enabled, handoffOriginConfigured: Boolean(handoff.handoffOrigin) })}\n`);
+  process.stdout.write(`${JSON.stringify({ event: "airenos.session_authority.principal_bridge", enabled: true, browserOriginAllowed: false })}\n`);
   const shutdown = (signal: string) => {
     void service.stop(signal).then(() => { process.exitCode = 0; });
   };
