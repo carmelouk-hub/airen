@@ -7,22 +7,21 @@ export const RISTOAIREN_ENTITLEMENT = "vertical.ristoairen";
 export const ORDERING_ENTITLEMENT = "ordering.enabled";
 export const ORDER_CHANGED_ACTION = "ORDER_CHANGED";
 
-export type OrderStatus = "DRAFT" | "SUBMITTED" | "AMENDED" | "CANCELLED" | "COMPLETED";
-export type OrderChannel = "FOH" | "POS" | "QR" | "SELF" | "FAST";
 export type OrderEnvironmentClass = "PRODUCTION" | "DEMO" | "SANDBOX" | "TEST_TEMPORARY";
 
+// Canonical Order is materialized by MAT-014. The application contract exposes its
+// existing `version` column as rowVersion, matching the shared optimistic-concurrency
+// vocabulary without introducing a second persistence token.
 export type OrderRecord = Readonly<{
   id: string;
   tenantId: string;
   locationId: string;
-  serviceSessionId: string;
-  requestKey: string;
-  channel: OrderChannel;
-  status: OrderStatus;
+  serviceSessionId?: string;
+  channel: string;
+  status: string;
   rowVersion: number;
   environmentClass: OrderEnvironmentClass;
   createdAt: string;
-  submittedAt?: string;
   updatedAt: string;
 }>;
 
@@ -49,14 +48,6 @@ export type OrderIntakeDependencies = Readonly<{
   unitOfWork: UnitOfWork<OrderIntakeTransaction>;
   now?: () => string;
 }>;
-
-const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly OrderStatus[]>> = Object.freeze({
-  DRAFT: Object.freeze([]),
-  SUBMITTED: Object.freeze(["AMENDED", "CANCELLED", "COMPLETED"]),
-  AMENDED: Object.freeze(["AMENDED", "CANCELLED", "COMPLETED"]),
-  CANCELLED: Object.freeze([]),
-  COMPLETED: Object.freeze([])
-});
 
 function validation(message: string): never {
   throw new AppError("VALIDATION_FAILED", message);
@@ -144,16 +135,15 @@ export async function amendOrder(
   const orderId = normalizeId(rawInput.orderId, "orderId");
   const version = expectedVersion(rawInput.expectedRowVersion);
   const nextStatus = rawInput.nextStatus ?? "AMENDED";
-  if (!["AMENDED", "CANCELLED", "COMPLETED"].includes(nextStatus)) validation("nextStatus is invalid");
   const updatedAt = serverNow(dependencies.now);
 
   return dependencies.unitOfWork.transaction(async tx => {
     const current = await tx.getOrderForTransition(orderId);
     if (!current) notFound("Order not found");
     assertScope(context, current);
-    if (current.rowVersion !== version) conflict("Order row_version is stale");
-    if (!ORDER_TRANSITIONS[current.status].includes(nextStatus)) {
-      conflict(`Order transition ${current.status} -> ${nextStatus} is not allowed`);
+    if (current.rowVersion !== version) conflict("Order version is stale");
+    if (current.status !== "SUBMITTED" && current.status !== "AMENDED") {
+      conflict(`Order status ${current.status} is not amendable`);
     }
 
     const updated = await tx.transitionOrder(Object.freeze({
@@ -164,7 +154,7 @@ export async function amendOrder(
     }));
 
     await tx.audit(audit(context, updated.id, Object.freeze({
-      serviceSessionId: updated.serviceSessionId,
+      ...(updated.serviceSessionId ? { serviceSessionId: updated.serviceSessionId } : {}),
       previousStatus: current.status,
       status: updated.status,
       previousRowVersion: current.rowVersion,
@@ -178,7 +168,7 @@ export async function amendOrder(
       payload: Object.freeze({
         tenantId: context.tenantId,
         locationId: context.locationId,
-        serviceSessionId: updated.serviceSessionId,
+        ...(updated.serviceSessionId ? { serviceSessionId: updated.serviceSessionId } : {}),
         previousStatus: current.status,
         status: updated.status,
         previousRowVersion: current.rowVersion,
