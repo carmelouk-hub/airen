@@ -91,6 +91,16 @@ async function stripeRequest(path: string, method: "GET" | "POST", body?: URLSea
       const providerError = parsed && typeof parsed === "object" && "error" in parsed
         ? (parsed as { error?: { type?: unknown; code?: unknown } }).error
         : undefined;
+      console.error(JSON.stringify({
+        event: "airenpay.stripe.test.request_failed",
+        mode: "TEST",
+        method,
+        path,
+        httpStatus: response.status,
+        providerErrorType: typeof providerError?.type === "string" ? providerError.type : null,
+        providerErrorCode: typeof providerError?.code === "string" ? providerError.code : null,
+        secretMaterialLogged: false
+      }));
       throw new AppError("INTERNAL_ERROR", "Stripe TEST request failed", {
         provider: "stripe",
         mode: "TEST",
