@@ -1,0 +1,76 @@
+name: airenpay-connect-source-046-internal-e2e
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-connect-source-046-internal-e2e-20260914"
+
+permissions:
+  contents: read
+
+jobs:
+  two-tenant-internal-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed Phase 6 scope and concurrent exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="3c8f0a12ae4dfe2547aedf3cc8f2fa3d6c315c8d"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/airenpay-connect-source-046-internal-e2e.yml" \
+            "packages/integrations/src/airenpay-stripe-connect-internal-e2e.ts" \
+            "tests/integration/airenpay-stripe-connect-internal-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+          ! printf '%s\n' "${actual[@]}" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"
+          ! printf '%s\n' "${actual[@]}" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"
+
+      - name: Prove no provider execution primitive or raw credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            packages/integrations/src/airenpay-stripe-connect-internal-e2e.ts
+            tests/integration/airenpay-stripe-connect-internal-e2e.test.ts
+          )
+          if grep -En 'sk_live_|rk_live_|sk_test_[A-Za-z0-9]+|rk_test_[A-Za-z0-9]+|api\.stripe\.com|fetch\(|https?://' "${files[@]}"; then
+            echo "Provider execution primitive or raw credential detected" >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Run AIRenOS boundary checks
+        run: npm run check:boundaries
+
+      - name: Regress provider-neutral Connect contracts
+        run: node --experimental-strip-types --test tests/integration/airenpay-connect-contracts.test.ts
+
+      - name: Regress Accounts v2 adapter mocks
+        run: node --experimental-strip-types --test tests/integration/airenpay-stripe-connect-accounts-v2.test.ts
+
+      - name: Regress Direct Charge trusted-account scoping
+        run: node --experimental-strip-types --test tests/integration/airenpay-stripe-connect-direct-charge.test.ts
+
+      - name: Regress webhook tenant routing and reconciliation
+        run: node --experimental-strip-types --test tests/integration/airenpay-stripe-connect-webhook-reconciliation.test.ts
+
+      - name: Prove two-tenant internal Connect E2E orchestration with mocks
+        run: node --experimental-strip-types --test tests/integration/airenpay-stripe-connect-internal-e2e.test.ts
+
+      - name: Regress AIRenPay runtime boundary
+        run: node --experimental-strip-types --test tests/integration/airenpay-runtime-boundary.test.ts
+
+      - name: Regress certified Stripe TEST refund adapter without provider call
+        run: node --experimental-strip-types --test tests/integration/risto-stripe-test-refund-adapter.test.ts
