@@ -83,10 +83,13 @@ const SELECT_COLUMNS = `
   updated_at AS "updatedAt"`;
 
 export class PostgresAirenPayProviderConnectionStore {
-  constructor(
-    private readonly pool: Pool,
-    private readonly assumeRole = "airen_app"
-  ) {}
+  private readonly pool: Pool;
+  private readonly assumeRole: string;
+
+  constructor(pool: Pool, assumeRole = "airen_app") {
+    this.pool = pool;
+    this.assumeRole = assumeRole;
+  }
 
   private async scoped<T>(context: SecurityContext, fn: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
