@@ -2,6 +2,10 @@
 -- Scope is intentionally limited to C001 Reservations/Queue, C009 Floor/Seating,
 -- C010 ServiceSession and C011 Order amendments. Golden Dinner remains evidence-only
 -- and is not promoted into mutable business truth.
+--
+-- Canonical Order already exists from MAT-014 / migration 0030. MAT-039 MUST reuse
+-- that business truth and its existing tenant/location RLS + version column rather
+-- than creating a second ristoairen.orders relation or a parallel concurrency token.
 BEGIN;
 
 CREATE TABLE ristoairen.bookings (
@@ -96,39 +100,12 @@ CREATE UNIQUE INDEX uq_risto_service_session_open_table
   ON ristoairen.service_sessions(tenant_id,location_id,table_id)
   WHERE status='OPEN';
 
-CREATE TABLE ristoairen.orders (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id uuid NOT NULL REFERENCES platform.tenants(id),
-  location_id uuid NOT NULL,
-  service_session_id uuid NOT NULL,
-  request_key text NOT NULL CHECK (length(btrim(request_key)) BETWEEN 1 AND 200),
-  channel text NOT NULL CHECK (channel IN ('FOH','POS','QR','SELF','FAST')),
-  status text NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SUBMITTED','AMENDED','CANCELLED','COMPLETED')),
-  row_version integer NOT NULL DEFAULT 1 CHECK (row_version >= 1),
-  environment_class text NOT NULL CHECK (environment_class IN ('PRODUCTION','DEMO','SANDBOX','TEST_TEMPORARY')),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  submitted_at timestamptz,
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT ck_risto_order_submitted_at CHECK (
-    (status='DRAFT' AND submitted_at IS NULL)
-    OR (status IN ('SUBMITTED','AMENDED','CANCELLED','COMPLETED') AND submitted_at IS NOT NULL)
-  ),
-  CONSTRAINT fk_risto_order_location FOREIGN KEY (tenant_id,location_id)
-    REFERENCES platform.locations(tenant_id,id),
-  CONSTRAINT fk_risto_order_service_session FOREIGN KEY (tenant_id,location_id,service_session_id)
-    REFERENCES ristoairen.service_sessions(tenant_id,location_id,id),
-  CONSTRAINT uq_risto_order_scope_id UNIQUE (tenant_id,location_id,id),
-  CONSTRAINT uq_risto_order_request UNIQUE (tenant_id,location_id,request_key)
-);
-
 CREATE INDEX idx_risto_booking_location_status
   ON ristoairen.bookings(tenant_id,location_id,status,updated_at,id);
 CREATE INDEX idx_risto_guest_queue_location_status
   ON ristoairen.guest_queue_entries(tenant_id,location_id,status,updated_at,id);
 CREATE INDEX idx_risto_service_session_location_status
   ON ristoairen.service_sessions(tenant_id,location_id,status,updated_at,id);
-CREATE INDEX idx_risto_order_location_status
-  ON ristoairen.orders(tenant_id,location_id,status,updated_at,id);
 
 ALTER TABLE ristoairen.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ristoairen.bookings FORCE ROW LEVEL SECURITY;
@@ -138,8 +115,6 @@ ALTER TABLE ristoairen.dining_tables ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ristoairen.dining_tables FORCE ROW LEVEL SECURITY;
 ALTER TABLE ristoairen.service_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ristoairen.service_sessions FORCE ROW LEVEL SECURITY;
-ALTER TABLE ristoairen.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ristoairen.orders FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY risto_booking_location_scope
 ON ristoairen.bookings FOR ALL TO airen_app
@@ -185,27 +160,20 @@ WITH CHECK (
   AND location_id = security.current_location_id()
 );
 
-CREATE POLICY risto_order_location_scope
-ON ristoairen.orders FOR ALL TO airen_app
-USING (
-  tenant_id = security.current_tenant_id()
-  AND location_id = security.current_location_id()
-)
-WITH CHECK (
-  tenant_id = security.current_tenant_id()
-  AND location_id = security.current_location_id()
-);
-
 REVOKE ALL ON ristoairen.bookings FROM airen_app;
 REVOKE ALL ON ristoairen.guest_queue_entries FROM airen_app;
 REVOKE ALL ON ristoairen.dining_tables FROM airen_app;
 REVOKE ALL ON ristoairen.service_sessions FROM airen_app;
-REVOKE ALL ON ristoairen.orders FROM airen_app;
 
 GRANT SELECT,INSERT,UPDATE ON ristoairen.bookings TO airen_app;
 GRANT SELECT,INSERT,UPDATE ON ristoairen.guest_queue_entries TO airen_app;
 GRANT SELECT,INSERT,UPDATE ON ristoairen.dining_tables TO airen_app;
 GRANT SELECT,INSERT,UPDATE ON ristoairen.service_sessions TO airen_app;
-GRANT SELECT,INSERT,UPDATE ON ristoairen.orders TO airen_app;
+
+-- MAT-014 deliberately granted only SELECT on canonical Order because payment.record
+-- must not mutate it. MAT-039 adds the minimum column-level mutation authority for
+-- the separately authorized C011 amendment command while preserving all MAT-014
+-- columns, RLS, monetary invariants and the existing version concurrency token.
+GRANT UPDATE(status,version,updated_at) ON ristoairen.orders TO airen_app;
 
 COMMIT;
