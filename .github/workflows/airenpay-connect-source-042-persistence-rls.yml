@@ -1,0 +1,91 @@
+name: airenpay-connect-source-042-persistence-rls
+
+on:
+  push:
+    branches:
+      - "governance/airenpay-connect-source-042-persistence-20260914"
+
+permissions:
+  contents: read
+
+jobs:
+  provider-connection-persistence:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify governed Phase 2 scope and Carmelo exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="87cdad2e399a4657dfc50c596c5b684ddae02b6f"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/airenpay-connect-source-042-persistence-rls.yml" \
+            "db/migrations/0044_airenpay_provider_connection_persistence.sql" \
+            "packages/persistence-postgres/src/airenpay-provider-connection.ts" \
+            "tests/postgres/airenpay-provider-connection-rls.test.ts" | sort)
+          test "${#actual[@]}" -eq "${#expected[@]}"
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+          ! printf '%s\n' "${actual[@]}" | grep -Fxq "tests/postgres/risto-cross-tenant-isolation-negative-e2e.test.ts"
+          ! printf '%s\n' "${actual[@]}" | grep -Fxq ".github/workflows/risto-mat-037-cross-tenant-isolation-negative-e2e.yml"
+
+      - name: Verify no provider execution or raw Stripe secret material
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            db/migrations/0044_airenpay_provider_connection_persistence.sql
+            packages/persistence-postgres/src/airenpay-provider-connection.ts
+            tests/postgres/airenpay-provider-connection-rls.test.ts
+          )
+          if grep -En 'sk_live_|rk_live_|sk_test_[A-Za-z0-9]+|rk_test_[A-Za-z0-9]+|api\.stripe\.com' "${files[@]}"; then
+            echo "Provider execution or raw credential material detected" >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and canonical migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: Run AIRenOS boundary checks
+        run: npm run check:boundaries
+
+      - name: Regress Phase 1 Connect contracts
+        run: node --experimental-strip-types --test tests/integration/airenpay-connect-contracts.test.ts
+
+      - name: Prove provider connection persistence and RLS
+        run: node --experimental-strip-types --test tests/postgres/airenpay-provider-connection-rls.test.ts
