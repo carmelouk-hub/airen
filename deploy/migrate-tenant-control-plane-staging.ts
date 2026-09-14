@@ -34,6 +34,12 @@ function required(environment: NodeJS.ProcessEnv, key: string): string {
 }
 
 function requireTls(databaseUrl: string): string {
+  const hasSupportedScheme = databaseUrl.startsWith("postgres://") || databaseUrl.startsWith("postgresql://");
+  const hasAuthority = databaseUrl.includes("@");
+  emitPhase("database_url_shape", `supportedScheme=${hasSupportedScheme};authority=${hasAuthority};length=${databaseUrl.length}`);
+  if (!hasSupportedScheme || !hasAuthority) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Tenant Control Plane database URL binding is not a valid PostgreSQL URL");
+  }
   const url = new URL(databaseUrl);
   url.searchParams.set("sslmode", "require");
   return url.toString();
