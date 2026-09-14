@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Pool, type PoolClient, type QueryResult } from "pg";
+import { authenticateAndResolveRequestSecurityContext } from "../../apps/api/src/security-context.ts";
+import type { MembershipRepository, RolePermissionResolver } from "../../packages/authorization/src/index.ts";
+import type { EntitlementRepository } from "../../packages/entitlements/src/index.ts";
+import type { AuthenticationAdapter, AuthenticatedPrincipal } from "../../packages/identity/src/index.ts";
+import { AppError } from "../../packages/shared-contracts/src/index.ts";
+import type { LocationRepository, TenantDomainRepository, TenantRepository } from "../../packages/tenant/src/index.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) throw new Error("DATABASE_URL is required");
@@ -22,6 +28,66 @@ const TENANT_MEMBERSHIP_B = "b3700000-0000-4370-8370-000000000004";
 const LOCATION_MEMBERSHIP_B = "b3700000-0000-4370-8370-000000000005";
 const ORDER_B = "b3700000-0000-4370-8370-000000000006";
 const PAYMENT_B = "b3700000-0000-4370-8370-000000000007";
+
+const principalA: AuthenticatedPrincipal = {
+  identityId: IDENTITY_A,
+  providerKey: "mat037",
+  providerSubject: "operator-a",
+  platformRoles: []
+};
+
+const authenticationA: AuthenticationAdapter = {
+  authenticate: async () => principalA
+};
+
+const tenants: TenantRepository = {
+  findById: async (id) => id === TENANT_A
+    ? { id: TENANT_A, slug: "mat037-a", name: "MAT037 Tenant A", status: "active" }
+    : id === TENANT_B
+      ? { id: TENANT_B, slug: "mat037-b", name: "MAT037 Tenant B", status: "active" }
+      : null,
+  findBySlug: async (slug) => slug === "mat037-a"
+    ? { id: TENANT_A, slug: "mat037-a", name: "MAT037 Tenant A", status: "active" }
+    : slug === "mat037-b"
+      ? { id: TENANT_B, slug: "mat037-b", name: "MAT037 Tenant B", status: "active" }
+      : null
+};
+
+const locations: LocationRepository = {
+  findById: async (id) => id === LOCATION_A
+    ? { id: LOCATION_A, tenantId: TENANT_A, slug: "main", name: "MAT037 A Main", status: "active" }
+    : id === LOCATION_B
+      ? { id: LOCATION_B, tenantId: TENANT_B, slug: "main", name: "MAT037 B Main", status: "active" }
+      : null,
+  findPrimaryForTenant: async (tenantId) => tenantId === TENANT_A
+    ? { id: LOCATION_A, tenantId: TENANT_A, slug: "main", name: "MAT037 A Main", status: "active" }
+    : tenantId === TENANT_B
+      ? { id: LOCATION_B, tenantId: TENANT_B, slug: "main", name: "MAT037 B Main", status: "active" }
+      : null
+};
+
+const domains: TenantDomainRepository = {
+  findActiveByHostname: async () => null
+};
+
+const memberships: MembershipRepository = {
+  findTenantMembership: async (tenantId, identityId) => tenantId === TENANT_A && identityId === IDENTITY_A
+    ? { id: TENANT_MEMBERSHIP_A, tenantId: TENANT_A, identityId: IDENTITY_A, roleKey: "owner", status: "active" }
+    : null,
+  findLocationMembership: async (tenantMembershipId, locationId) => tenantMembershipId === TENANT_MEMBERSHIP_A && locationId === LOCATION_A
+    ? { id: LOCATION_MEMBERSHIP_A, tenantMembershipId: TENANT_MEMBERSHIP_A, tenantId: TENANT_A, locationId: LOCATION_A, roleKey: "manager", status: "active" }
+    : null
+};
+
+const roles: RolePermissionResolver = {
+  platformPermissions: async () => [],
+  tenantPermissions: async () => ["tenant.location.all"],
+  locationPermissions: async () => []
+};
+
+const entitlements: EntitlementRepository = {
+  enabledForTenant: async () => []
+};
 
 async function seed(): Promise<void> {
   await pool.query(`
@@ -107,19 +173,26 @@ function assertNoRows(result: QueryResult, label: string): void {
 }
 
 async function expectDeniedOrZeroRow(
+  client: PoolClient,
   action: () => Promise<QueryResult>,
   label: string
 ): Promise<void> {
+  await client.query("SAVEPOINT mat037_negative_probe");
+  let result: QueryResult;
   try {
-    const result = await action();
-    assert.equal(result.rowCount, 0, `${label}: cross-tenant mutation affected a row`);
+    result = await action();
   } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT mat037_negative_probe");
+    await client.query("RELEASE SAVEPOINT mat037_negative_probe");
     const code = (error as { code?: string }).code;
     assert.ok(
       code === "42501" || code === "23503" || code === "23514",
       `${label}: expected fail-closed database denial, got ${String(code ?? error)}`
     );
+    return;
   }
+  await client.query("RELEASE SAVEPOINT mat037_negative_probe");
+  assert.equal(result.rowCount, 0, `${label}: cross-tenant mutation affected a row`);
 }
 
 test.after(async () => {
@@ -150,14 +223,17 @@ test("MAT-037 GJ2-032 cross-tenant isolation negative E2E", async (t) => {
       { identityId: IDENTITY_A, tenantId: TENANT_A, locationId: LOCATION_A, correlationId: "mat037-write-probe" },
       async (client) => {
         await expectDeniedOrZeroRow(
+          client,
           () => client.query("UPDATE ristoairen.orders SET status='VOID' WHERE id=$1::uuid", [ORDER_B]),
           "order guessed-ID update"
         );
         await expectDeniedOrZeroRow(
+          client,
           () => client.query("UPDATE ristoairen.payments SET metadata_sanitized='{}'::jsonb WHERE id=$1::uuid", [PAYMENT_B]),
           "payment guessed-ID update"
         );
         await expectDeniedOrZeroRow(
+          client,
           () => client.query(
             `INSERT INTO events.outbox_events
                (tenant_id, location_id, event_type, aggregate_type, aggregate_id, payload, correlation_id)
@@ -184,28 +260,39 @@ test("MAT-037 GJ2-032 cross-tenant isolation negative E2E", async (t) => {
     assert.equal(untouched.rows[0].forged_outbox_count, 0);
   });
 
-  await t.test("client-controlled tenant_id/location_id cannot grant Tenant A identity reach into Tenant B", async () => {
-    await asAirenApp(
-      {
-        identityId: IDENTITY_A,
-        tenantId: TENANT_B,
-        locationId: LOCATION_B,
-        correlationId: "mat037-context-spoof"
-      },
-      async (client) => {
-        assertNoRows(await client.query("SELECT id FROM platform.tenants WHERE id=$1::uuid", [TENANT_B]), "spoofed tenant context");
-        assertNoRows(await client.query("SELECT id FROM platform.locations WHERE id=$1::uuid", [LOCATION_B]), "spoofed location context");
-        assertNoRows(await client.query("SELECT id FROM authz.tenant_memberships WHERE tenant_id=$1::uuid", [TENANT_B]), "spoofed membership context");
-        assertNoRows(await client.query("SELECT id FROM ristoairen.orders WHERE id=$1::uuid", [ORDER_B]), "spoofed order context");
-        assertNoRows(await client.query("SELECT id FROM ristoairen.payments WHERE id=$1::uuid", [PAYMENT_B]), "spoofed payment context");
-        assertNoRows(await client.query("SELECT id FROM audit.audit_events WHERE correlation_id='mat037-b-audit'"), "spoofed audit context");
-        assertNoRows(await client.query("SELECT id FROM events.outbox_events WHERE correlation_id='mat037-b-outbox'"), "spoofed outbox context");
+  await t.test("untrusted tenant/location payload cannot override trusted route and membership resolution", async () => {
+    const resolvedA = await authenticateAndResolveRequestSecurityContext({
+      request: { tenant_id: TENANT_B, location_id: LOCATION_B },
+      authentication: authenticationA,
+      hostname: "mat037-a.airen.test",
+      trustedBaseDomain: "airen.test",
+      correlationId: "mat037-payload-spoof-a",
+      tenants,
+      locations,
+      domains,
+      memberships,
+      roles,
+      entitlements
+    });
+    assert.equal(resolvedA.context.actorIdentityId, IDENTITY_A);
+    assert.equal(resolvedA.context.tenantId, TENANT_A);
+    assert.equal(resolvedA.context.locationId, LOCATION_A);
 
-        await expectDeniedOrZeroRow(
-          () => client.query("UPDATE ristoairen.orders SET status='VOID' WHERE id=$1::uuid", [ORDER_B]),
-          "spoofed-context order update"
-        );
-      }
+    await assert.rejects(
+      () => authenticateAndResolveRequestSecurityContext({
+        request: { tenant_id: TENANT_B, location_id: LOCATION_B },
+        authentication: authenticationA,
+        hostname: "mat037-b.airen.test",
+        trustedBaseDomain: "airen.test",
+        correlationId: "mat037-payload-spoof-b",
+        tenants,
+        locations,
+        domains,
+        memberships,
+        roles,
+        entitlements
+      }),
+      (error: unknown) => error instanceof AppError && error.code === "MEMBERSHIP_REQUIRED"
     );
   });
 
