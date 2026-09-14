@@ -33,6 +33,12 @@ function required(environment: NodeJS.ProcessEnv, key: string): string {
   return value;
 }
 
+function requireTls(databaseUrl: string): string {
+  const url = new URL(databaseUrl);
+  url.searchParams.set("sslmode", "require");
+  return url.toString();
+}
+
 function migrationBody(source: string): string {
   const trimmed = source.trim();
   const withoutBegin = trimmed.replace(/^BEGIN;\s*/i, "");
@@ -44,7 +50,7 @@ function checksum(source: string): string {
 }
 
 function runtimeUrl(adminUrl: string, password: string): string {
-  const url = new URL(adminUrl);
+  const url = new URL(requireTls(adminUrl));
   url.username = RUNTIME_LOGIN;
   url.password = password;
   return url.toString();
@@ -107,7 +113,7 @@ async function provisionRuntimePrincipal(client: Client, adminUrl: string): Prom
 }
 
 export async function migrateTenantControlPlaneStaging(environment: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const adminUrl = required(environment, "CONTROL_PLANE_ADMIN_DATABASE_URL");
+  const adminUrl = requireTls(required(environment, "CONTROL_PLANE_ADMIN_DATABASE_URL"));
   const bootstrap = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
   emitPhase("connect");
   const client = new Client({ connectionString: adminUrl });
