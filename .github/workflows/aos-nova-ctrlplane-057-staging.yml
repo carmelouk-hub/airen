@@ -1,0 +1,29 @@
+name: AOS-NOVA Control Plane 057 staging contract
+
+on:
+  push:
+    branches:
+      - governance/aos-nova-ctrlplane-057-staging-infra-20260914
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Boundary checks
+        run: npm run check:boundaries
+      - name: Gate 057 authority bridge contract
+        run: node --experimental-strip-types --test tests/integration/aos-nova-ctrlplane-057-staging-contract.test.ts
+      - name: Gate 054 Tenant read-only regression
+        run: node --experimental-strip-types --test tests/integration/aos-nova-ctrlplane-054-readonly.test.ts
+      - name: Session Authority regression
+        run: node --experimental-strip-types --test tests/integration/airenos-session-authority-staging-runtime.test.ts
