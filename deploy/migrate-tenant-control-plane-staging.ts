@@ -41,6 +41,7 @@ function requireTls(databaseUrl: string): string {
     throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Tenant Control Plane database URL binding is not a valid PostgreSQL URL");
   }
   const url = new URL(databaseUrl);
+  url.searchParams.set("uselibpqcompat", "true");
   url.searchParams.set("sslmode", "require");
   return url.toString();
 }
