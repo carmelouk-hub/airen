@@ -82,12 +82,11 @@ function sessionFromRow(row: Record<string, unknown>): ServiceSessionRecord {
 function orderFromRow(row: Record<string, unknown>): OrderRecord {
   return Object.freeze({
     id: String(row.id), tenantId: String(row.tenantId), locationId: String(row.locationId),
-    serviceSessionId: String(row.serviceSessionId), requestKey: String(row.requestKey),
-    channel: String(row.channel) as OrderRecord["channel"], status: String(row.status) as OrderRecord["status"],
-    rowVersion: Number(row.rowVersion), environmentClass: String(row.environmentClass) as OrderRecord["environmentClass"],
-    createdAt: iso(row.createdAt),
-    ...(row.submittedAt == null ? {} : { submittedAt: iso(row.submittedAt) }),
-    updatedAt: iso(row.updatedAt)
+    ...(row.serviceSessionId == null ? {} : { serviceSessionId: String(row.serviceSessionId) }),
+    channel: String(row.channel), status: String(row.status),
+    rowVersion: Number(row.rowVersion),
+    environmentClass: String(row.environmentClass) as OrderRecord["environmentClass"],
+    createdAt: iso(row.createdAt), updatedAt: iso(row.updatedAt)
   });
 }
 
@@ -112,8 +111,8 @@ const SESSION_SELECT = `SELECT id::text AS id,tenant_id::text AS "tenantId",loca
  created_at AS "createdAt",updated_at AS "updatedAt" FROM ristoairen.service_sessions`;
 
 const ORDER_SELECT = `SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
- service_session_id::text AS "serviceSessionId",request_key AS "requestKey",channel,status,row_version AS "rowVersion",
- environment_class AS "environmentClass",created_at AS "createdAt",submitted_at AS "submittedAt",updated_at AS "updatedAt"
+ service_session_id::text AS "serviceSessionId",channel,status,version AS "rowVersion",
+ environment_class AS "environmentClass",created_at AS "createdAt",updated_at AS "updatedAt"
  FROM ristoairen.orders`;
 
 export class PostgresGuestServiceOrderTransaction
@@ -267,14 +266,14 @@ implements ReservationQueueTransaction, FloorSeatingTransaction, ServiceSessionT
     updatedAt: string;
   }>): Promise<OrderRecord> {
     const result = await this.client.query(
-      `UPDATE ristoairen.orders SET status=$3,row_version=row_version+1,updated_at=$4::timestamptz
-        WHERE id=$1::uuid AND row_version=$2 AND status IN ('SUBMITTED','AMENDED')
+      `UPDATE ristoairen.orders SET status=$3,version=version+1,updated_at=$4::timestamptz
+        WHERE id=$1::uuid AND version=$2 AND status IN ('SUBMITTED','AMENDED')
         RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
-         service_session_id::text AS "serviceSessionId",request_key AS "requestKey",channel,status,row_version AS "rowVersion",
-         environment_class AS "environmentClass",created_at AS "createdAt",submitted_at AS "submittedAt",updated_at AS "updatedAt"`,
+         service_session_id::text AS "serviceSessionId",channel,status,version AS "rowVersion",
+         environment_class AS "environmentClass",created_at AS "createdAt",updated_at AS "updatedAt"`,
       [input.orderId, input.expectedRowVersion, input.nextStatus, input.updatedAt]
     );
-    if (!result.rows[0]) throw new AppError("CONFLICT", "Order row_version is stale or state changed");
+    if (!result.rows[0]) throw new AppError("CONFLICT", "Order version is stale or state changed");
     return orderFromRow(result.rows[0] as Record<string, unknown>);
   }
 
