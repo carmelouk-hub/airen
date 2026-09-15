@@ -12,6 +12,8 @@ import {
   PostgresAuthenticationIdentityDirectory, PostgresFoundationReadStore,
   PostgresLocationRepositoryAdapter, PostgresTenantRepositoryAdapter
 } from "../../../packages/persistence-postgres/src/index.ts";
+import { PostgresPublicContentRepository } from "../../../packages/persistence-postgres/src/risto-public-content.ts";
+import { RistoAirenPublicContentService } from "../../../packages/ristoairen/src/public-content/application-service.ts";
 import { PostgresTenantProvisioningUnitOfWork } from "../../../packages/persistence-postgres/src/tenant-provisioning.ts";
 import { PostgresTenantControlPlaneStore } from "../../../packages/persistence-postgres/src/tenant-control-plane.ts";
 import { PostgresLocationControlPlaneStore } from "../../../packages/persistence-postgres/src/location-control-plane.ts";
@@ -24,6 +26,11 @@ import { PostgresPlatformAuditQueryStore } from "../../../packages/persistence-p
 import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import { dispatchAdminApiRequest, isAdminApiRequest, type AdminApiDependencies } from "./admin-api.ts";
+import {
+  AirenOsPublicTenantResolver,
+  dispatchPublicContentApiRequest,
+  isPublicContentApiRequest,
+} from "./public-content-api.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
 
@@ -129,6 +136,16 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
   );
   const tenantRepository = new PostgresTenantRepositoryAdapter(foundationReads);
   const locationRepository = new PostgresLocationRepositoryAdapter(foundationReads);
+  const publicContent = new RistoAirenPublicContentService(
+    new AirenOsPublicTenantResolver(Object.freeze({
+      trustedBaseDomain: runtime.config.appBaseDomain,
+      tenants: tenantRepository,
+      locations: locationRepository,
+      domains: foundationReads,
+      publicRoutes: foundationReads,
+    })),
+    new PostgresPublicContentRepository(pool),
+  );
 
   const adminDeps: AdminApiDependencies = Object.freeze({
     authentication,
@@ -208,6 +225,24 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
         const outcome = readiness.status === "READY" ? "success" : "degraded";
         await runtime.observability.metrics.request("health.ready", outcome, Date.now() - started);
         await runtime.observability.logger.emit(readiness.status === "READY" ? "info" : "warn", "http.health_ready", context, { operation: "health.ready", outcome, durationMs: Date.now() - started, attributes: { readiness: readiness.status } });
+        return;
+      }
+
+      if (isPublicContentApiRequest(request.url)) {
+        const result = await dispatchPublicContentApiRequest({
+          method: request.method ?? "GET",
+          url: request.url ?? "",
+          headers: Object.freeze({ host: header(request, "host") }),
+        }, publicContent);
+        json(response, result.status, result.body, result.headers);
+        const outcome = result.status < 400 ? "success" : result.status >= 500 ? "failed" : "denied";
+        await runtime.observability.metrics.request("public-content.api", outcome, Date.now() - started);
+        await runtime.observability.logger.emit(result.status >= 500 ? "error" : result.status >= 400 ? "warn" : "info", "http.public_content_api", context, {
+          operation: "public-content.api",
+          outcome,
+          durationMs: Date.now() - started,
+          attributes: { method: request.method, statusCode: result.status }
+        });
         return;
       }
 
