@@ -2,7 +2,6 @@ import { Pool, type PoolClient } from "pg";
 import type { AuditRecord, UnitOfWork } from "../../audit-events/src/index.ts";
 import { AppError, type DomainEvent, type SecurityContext } from "../../shared-contracts/src/index.ts";
 import type {
-  BookingRecord,
   GuestQueueEntryRecord,
   ReservationQueueOutboxEvent,
   ReservationQueueTransaction
@@ -31,16 +30,6 @@ function assertRoleIdentifier(role: string): string {
 
 function iso(value: unknown): string {
   return new Date(String(value)).toISOString();
-}
-
-function bookingFromRow(row: Record<string, unknown>): BookingRecord {
-  return Object.freeze({
-    id: String(row.id), tenantId: String(row.tenantId), locationId: String(row.locationId),
-    requestKey: String(row.requestKey), status: String(row.status) as BookingRecord["status"],
-    partySize: Number(row.partySize), rowVersion: Number(row.rowVersion),
-    environmentClass: String(row.environmentClass) as BookingRecord["environmentClass"],
-    createdAt: iso(row.createdAt), updatedAt: iso(row.updatedAt)
-  });
 }
 
 function queueFromRow(row: Record<string, unknown>): GuestQueueEntryRecord {
@@ -90,11 +79,6 @@ function orderFromRow(row: Record<string, unknown>): OrderRecord {
   });
 }
 
-const BOOKING_SELECT = `SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
- request_key AS "requestKey",status,party_size AS "partySize",row_version AS "rowVersion",
- environment_class AS "environmentClass",created_at AS "createdAt",updated_at AS "updatedAt"
- FROM ristoairen.bookings`;
-
 const QUEUE_SELECT = `SELECT id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
  request_key AS "requestKey",booking_id::text AS "bookingId",status,party_size AS "partySize",
  row_version AS "rowVersion",environment_class AS "environmentClass",created_at AS "createdAt",updated_at AS "updatedAt"
@@ -123,26 +107,6 @@ implements ReservationQueueTransaction, FloorSeatingTransaction, ServiceSessionT
   constructor(client: PoolClient, context: SecurityContext) {
     this.client = client;
     this.context = context;
-  }
-
-  async getBookingForTransition(bookingId: string): Promise<BookingRecord | null> {
-    const result = await this.client.query(`${BOOKING_SELECT} WHERE id=$1::uuid FOR UPDATE`, [bookingId]);
-    return result.rows[0] ? bookingFromRow(result.rows[0] as Record<string, unknown>) : null;
-  }
-
-  async transitionBooking(input: Readonly<{
-    bookingId: string; expectedRowVersion: number; nextStatus: BookingRecord["status"]; updatedAt: string;
-  }>): Promise<BookingRecord> {
-    const result = await this.client.query(
-      `UPDATE ristoairen.bookings SET status=$3,row_version=row_version+1,updated_at=$4::timestamptz
-        WHERE id=$1::uuid AND row_version=$2
-        RETURNING id::text AS id,tenant_id::text AS "tenantId",location_id::text AS "locationId",
-         request_key AS "requestKey",status,party_size AS "partySize",row_version AS "rowVersion",
-         environment_class AS "environmentClass",created_at AS "createdAt",updated_at AS "updatedAt"`,
-      [input.bookingId, input.expectedRowVersion, input.nextStatus, input.updatedAt]
-    );
-    if (!result.rows[0]) throw new AppError("CONFLICT", "Booking row_version is stale");
-    return bookingFromRow(result.rows[0] as Record<string, unknown>);
   }
 
   async getQueueEntryForTransition(queueEntryId: string): Promise<GuestQueueEntryRecord | null> {

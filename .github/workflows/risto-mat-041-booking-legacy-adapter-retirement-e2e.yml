@@ -1,0 +1,86 @@
+name: risto-mat-041-booking-legacy-adapter-retirement-e2e
+
+on:
+  push:
+    branches:
+      - "risto/mat-041-booking-legacy-adapter-retirement-20260915"
+
+permissions:
+  contents: read
+
+jobs:
+  booking-legacy-adapter-retirement-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify MAT-041 Phase B exact frozen four-path delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="cab1e037ec18311f36e1b8ffa6c705629f6a4dc0"
+          git cat-file -e "${base}^{commit}"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$base"
+
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/risto-mat-041-booking-legacy-adapter-retirement-e2e.yml" \
+            "packages/persistence-postgres/src/risto-guest-service-order-runtime.ts" \
+            "packages/ristoairen/src/reservations/reservation-queue-service.ts" \
+            "tests/postgres/risto-booking-legacy-adapter-retirement-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq 4
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0044_risto_guest_service_order_aggregates.sql")" = "a79a58b7b34d2768c5d5dbd434fd55e653db9579"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0046_risto_booking_canonical_authority.sql")" = "a0797fc2117fe6bc5bdedabada997afb56073849"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0047_risto_booking_product_neutral_idempotency.sql")" = "02cb5f48fe71f3a709c42903cb3c1a46998ae5bb"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0048_risto_booking_authority_reconciliation.sql")" = "c6e6713b4598ff49300f4e0c1586bfc27404886d"
+          test "$(git rev-parse "$GITHUB_SHA:tests/postgres/risto-booking-authority-reconciliation-e2e.test.ts")" = "ef8921aa4715b6ed47947c2f395a46230014cfb2"
+          test "$(git rev-parse "$GITHUB_SHA:.github/workflows/risto-mat-041-booking-authority-reconciliation-e2e.yml")" = "33c9e3977f7b98a923d60bb60fabfc1fb04ccd01"
+          test "$(git rev-parse "$GITHUB_SHA:tests/postgres/risto-optimistic-concurrency-negative-e2e.test.ts")" = "36db2195090934307d7752102030492fd7e3466b"
+          test "$(git rev-parse "$GITHUB_SHA:.github/workflows/risto-mat-039-optimistic-concurrency-negative-e2e.yml")" = "cafead950cfb6597293272a7a86e6ce2d12800b0"
+
+          if grep -Fq "ristoairen.bookings" packages/persistence-postgres/src/risto-guest-service-order-runtime.ts; then
+            echo "legacy Booking ledger SQL remains in active guest/service/order runtime" >&2
+            exit 1
+          fi
+
+      - name: Install locked Node PostgreSQL dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and canonical migrations through MAT-041 Phase A
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: Run MAT-041 Booking legacy adapter retirement PostgreSQL E2E
+        run: node --experimental-strip-types --test tests/postgres/risto-booking-legacy-adapter-retirement-e2e.test.ts
