@@ -124,7 +124,11 @@ function decodeRouteSegment(value: string): string {
 }
 
 export class AirenOsPublicTenantResolver implements PublicTenantResolverPort {
-  constructor(private readonly dependencies: AirenOsPublicTenantResolverDependencies) {}
+  private readonly dependencies: AirenOsPublicTenantResolverDependencies;
+
+  constructor(dependencies: AirenOsPublicTenantResolverDependencies) {
+    this.dependencies = dependencies;
+  }
 
   async resolveFromHostname(hostname: string): Promise<ResolvedPublicTenantV1 | null> {
     try {

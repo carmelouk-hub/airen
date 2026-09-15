@@ -23,11 +23,19 @@ import {
 } from "./policy.ts";
 
 export class RistoAirenPublicContentService {
+  private readonly resolver: PublicTenantResolverPort;
+  private readonly repository: PublicContentRepository;
+  private readonly accessGuard?: PublicContentProductAccessGuard;
+
   constructor(
-    private readonly resolver: PublicTenantResolverPort,
-    private readonly repository: PublicContentRepository,
-    private readonly accessGuard?: PublicContentProductAccessGuard,
-  ) {}
+    resolver: PublicTenantResolverPort,
+    repository: PublicContentRepository,
+    accessGuard?: PublicContentProductAccessGuard,
+  ) {
+    this.resolver = resolver;
+    this.repository = repository;
+    this.accessGuard = accessGuard;
+  }
 
   private async resolvePublicScope(hostname: string): Promise<ResolvedPublicTenantV1> {
     const normalizedHostname = normalizeHostname(hostname);
