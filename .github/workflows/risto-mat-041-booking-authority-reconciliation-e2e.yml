@@ -1,0 +1,93 @@
+name: risto-mat-041-booking-authority-reconciliation-e2e
+
+on:
+  push:
+    branches:
+      - "risto/mat-041-booking-authority-reconciliation-20260915"
+
+permissions:
+  contents: read
+
+jobs:
+  booking-authority-reconciliation-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify MAT-041 exact frozen 13-path delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="af0301d4de70a2a8f138375454f4ae55218c3033"
+          git cat-file -e "${base}^{commit}"
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/risto-mat-041-booking-authority-reconciliation-e2e.yml" \
+            "db/migrations/0046_risto_booking_canonical_authority.sql" \
+            "db/migrations/0047_risto_booking_product_neutral_idempotency.sql" \
+            "db/migrations/0048_risto_booking_authority_reconciliation.sql" \
+            "packages/booking-core/src/application-service.ts" \
+            "packages/booking-core/src/contracts.ts" \
+            "packages/booking-core/src/policy.ts" \
+            "packages/persistence-postgres/src/idempotency-control-plane.ts" \
+            "packages/persistence-postgres/src/risto-booking-repository.ts" \
+            "packages/ristoairen/src/booking/application-service.ts" \
+            "packages/ristoairen/src/booking/contracts.ts" \
+            "packages/ristoairen/src/booking/policy.ts" \
+            "tests/postgres/risto-booking-authority-reconciliation-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq 13
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+
+          test "$(git rev-parse "$base:db/migrations/0044_risto_guest_service_order_aggregates.sql")" = "a79a58b7b34d2768c5d5dbd434fd55e653db9579"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0044_risto_guest_service_order_aggregates.sql")" = "a79a58b7b34d2768c5d5dbd434fd55e653db9579"
+
+          test "$(git rev-parse "$GITHUB_SHA:packages/booking-core/src/contracts.ts")" = "578a44e7456eb1a28aeda965b334ed969c9f375d"
+          test "$(git rev-parse "$GITHUB_SHA:packages/booking-core/src/policy.ts")" = "dfac44db4a405f09dc3fc80f1db54cf781a1e0d3"
+          test "$(git rev-parse "$GITHUB_SHA:packages/booking-core/src/application-service.ts")" = "5825dabe453dee91cc5776630ed9cc6d74bbf048"
+          test "$(git rev-parse "$GITHUB_SHA:packages/ristoairen/src/booking/contracts.ts")" = "67f20b8cf2c0c40287d845462cff2b523d57858f"
+          test "$(git rev-parse "$GITHUB_SHA:packages/ristoairen/src/booking/policy.ts")" = "da02e1822485f4d7f138ffa9dd089c90ee19fd6d"
+          test "$(git rev-parse "$GITHUB_SHA:packages/ristoairen/src/booking/application-service.ts")" = "4c22f429874640a5c5a530222f56595d5a553de1"
+          test "$(git rev-parse "$GITHUB_SHA:packages/persistence-postgres/src/idempotency-control-plane.ts")" = "a2dba21847bae71b3c07680f7582f559f3db3697"
+          test "$(git rev-parse "$GITHUB_SHA:packages/persistence-postgres/src/risto-booking-repository.ts")" = "468232abf7621039de744fe6822053b1843781f8"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0046_risto_booking_canonical_authority.sql")" = "a0797fc2117fe6bc5bdedabada997afb56073849"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0047_risto_booking_product_neutral_idempotency.sql")" = "02cb5f48fe71f3a709c42903cb3c1a46998ae5bb"
+
+      - name: Install locked Node PostgreSQL dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and canonical migrations through MAT-041
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: Run MAT-041 Booking authority reconciliation PostgreSQL E2E
+        run: node --experimental-strip-types --test tests/postgres/risto-booking-authority-reconciliation-e2e.test.ts
