@@ -1,0 +1,97 @@
+name: risto-mat-041-c003-loyalty-voucher-e2e
+
+on:
+  push:
+    branches:
+      - "risto/mat-041-c003-loyalty-voucher-self-service-20260916"
+
+permissions:
+  contents: read
+
+jobs:
+  c003-loyalty-voucher-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify MAT-041 C003 exact frozen eight-path delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="0ad9a6af15d3f7ca2e5ca909042dfa96d7daf836"
+          git cat-file -e "${base}^{commit}"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$base"
+
+          mapfile -t actual < <(git diff --name-only "$base" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/risto-mat-041-c003-loyalty-voucher-e2e.yml" \
+            "apps/api/src/public-loyalty-voucher-api.ts" \
+            "apps/api/src/server.ts" \
+            "db/migrations/0050_risto_c003_loyalty_voucher.sql" \
+            "packages/persistence-postgres/src/risto-loyalty-voucher.ts" \
+            "packages/ristoairen/src/loyalty-voucher/application-service.ts" \
+            "packages/ristoairen/src/loyalty-voucher/contracts.ts" \
+            "tests/postgres/risto-c003-loyalty-voucher-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq 8
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0044_risto_guest_service_order_aggregates.sql")" = "a79a58b7b34d2768c5d5dbd434fd55e653db9579"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0046_risto_booking_canonical_authority.sql")" = "a0797fc2117fe6bc5bdedabada997afb56073849"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0047_risto_booking_product_neutral_idempotency.sql")" = "02cb5f48fe71f3a709c42903cb3c1a46998ae5bb"
+          test "$(git rev-parse "$GITHUB_SHA:db/migrations/0048_risto_booking_authority_reconciliation.sql")" = "c6e6713b4598ff49300f4e0c1586bfc27404886d"
+
+          if grep -Eq 'tenantId|locationId|actorIdentityId' apps/api/src/public-loyalty-voucher-api.ts; then
+            echo "C003 public API must not expose internal scope/audit identities" >&2
+            exit 1
+          fi
+          if grep -Eq 'UPDATE[[:space:]]+ristoairen\.(loyalty_ledger|voucher_ledger)' packages/persistence-postgres/src/risto-loyalty-voucher.ts; then
+            echo "C003 ledgers must remain append-only" >&2
+            exit 1
+          fi
+          if grep -Eq 'airen\.(booking|pay|billing)|tenant_entitlements|entitlement_catalog' db/migrations/0050_risto_c003_loyalty_voucher.sql packages/ristoairen/src/loyalty-voucher/*.ts; then
+            echo "C003 guest value must remain separate from AIRenOS commercial entitlement" >&2
+            exit 1
+          fi
+
+      - name: Install locked Node PostgreSQL dependency
+        run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply AIRenOS bootstrap and migrations through MAT-041 C003
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            echo "Applying $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -regextype posix-extended -regex '.*/[0-9]{4}_[A-Za-z0-9_.-]+\.sql' | sort)
+
+      - name: Load C003 server module
+        run: node --experimental-strip-types -e "import('./apps/api/src/server.ts')"
+
+      - name: Run MAT-041 C003 Loyalty/Voucher PostgreSQL E2E
+        run: node --experimental-strip-types --test tests/postgres/risto-c003-loyalty-voucher-e2e.test.ts

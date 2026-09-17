@@ -17,8 +17,10 @@ import {
 import { PostgresPublicContentRepository } from "../../../packages/persistence-postgres/src/risto-public-content.ts";
 import { PostgresRistoBookingUnitOfWork } from "../../../packages/persistence-postgres/src/risto-booking-repository.ts";
 import { PostgresRistoPublicSelfServiceRepository } from "../../../packages/persistence-postgres/src/risto-public-self-service.ts";
+import { PostgresRistoLoyaltyVoucherRepository } from "../../../packages/persistence-postgres/src/risto-loyalty-voucher.ts";
 import { RistoAirenPublicContentService } from "../../../packages/ristoairen/src/public-content/application-service.ts";
 import { RistoPublicSelfServiceApplicationService } from "../../../packages/ristoairen/src/public-self-service/application-service.ts";
+import { LoyaltyVoucherApplicationService } from "../../../packages/ristoairen/src/loyalty-voucher/application-service.ts";
 import { PostgresTenantProvisioningUnitOfWork } from "../../../packages/persistence-postgres/src/tenant-provisioning.ts";
 import { PostgresTenantControlPlaneStore } from "../../../packages/persistence-postgres/src/tenant-control-plane.ts";
 import { PostgresLocationControlPlaneStore } from "../../../packages/persistence-postgres/src/location-control-plane.ts";
@@ -32,6 +34,7 @@ import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import { dispatchAdminApiRequest, isAdminApiRequest, type AdminApiDependencies } from "./admin-api.ts";
 import { dispatchPublicBookingApiRequest, isPublicBookingApiRequest } from "./public-booking-api.ts";
+import { dispatchPublicLoyaltyVoucherApiRequest, isPublicLoyaltyVoucherApiRequest } from "./public-loyalty-voucher-api.ts";
 import {
   AirenOsPublicTenantResolver,
   dispatchPublicContentApiRequest,
@@ -130,6 +133,10 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
     Object.freeze({ tenantResolver: publicTenantResolver, entitlements: foundationReads, ownership: new PostgresRistoPublicSelfServiceRepository(pool) }),
     publicBookingCore,
   );
+  const publicLoyaltyVoucher = new LoyaltyVoucherApplicationService(Object.freeze({
+    tenantResolver: publicTenantResolver,
+    repository: new PostgresRistoLoyaltyVoucherRepository(pool),
+  }));
 
   const adminDeps: AdminApiDependencies = Object.freeze({
     authentication, roles: foundationReads, appBaseDomain: runtime.config.appBaseDomain,
@@ -170,6 +177,13 @@ export async function startFoundationHttpServer(environment: EnvironmentInput = 
         const outcome = readiness.status === "READY" ? "success" : "degraded";
         await runtime.observability.metrics.request("health.ready", outcome, Date.now()-started);
         await runtime.observability.logger.emit(readiness.status === "READY" ? "info" : "warn", "http.health_ready", context, { operation:"health.ready", outcome, durationMs:Date.now()-started, attributes:{ readiness:readiness.status } }); return;
+      }
+      if (isPublicLoyaltyVoucherApiRequest(request.url)) {
+        const result = await dispatchPublicLoyaltyVoucherApiRequest({ method:request.method ?? "GET", url:request.url ?? "", headers:Object.freeze({ host:header(request,"host"), "x-self-service-credential":header(request,"x-self-service-credential"), "x-correlation-id":context.correlationId }) }, publicLoyaltyVoucher);
+        json(response, result.status, result.body, result.headers);
+        const outcome = result.status < 400 ? "success" : result.status >= 500 ? "failed" : "denied";
+        await runtime.observability.metrics.request("public-loyalty-voucher.api", outcome, Date.now()-started);
+        await runtime.observability.logger.emit(result.status >= 500 ? "error" : result.status >= 400 ? "warn" : "info", "http.public_loyalty_voucher_api", context, { operation:"public-loyalty-voucher.api", outcome, durationMs:Date.now()-started, attributes:{ method:request.method, statusCode:result.status } }); return;
       }
       if (isPublicBookingApiRequest(request.url)) {
         let body: unknown;
