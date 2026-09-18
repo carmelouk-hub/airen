@@ -1,0 +1,67 @@
+name: RISTO R1 Vertical Availability E2E 099
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/src/risto-vertical-api.ts"
+      - "tests/integration/risto-vertical-http-fixture.ts"
+      - "tests/postgres/risto-vertical-http-availability-e2e.test.ts"
+      - ".github/workflows/risto-r1-vertical-availability-e2e-099.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  availability-http-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
+      GATE098_PARENT: fb7e381c07dd51a9d5a120d75f96e38a88e98a6e
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify frozen RISTOAIREN Gate099 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t actual < <(git diff --name-only "$GATE098_PARENT" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n'             ".github/workflows/risto-r1-vertical-availability-e2e-099.yml"             "apps/api/src/risto-vertical-api.ts"             "tests/integration/risto-vertical-http-fixture.ts"             "tests/postgres/risto-vertical-http-availability-e2e.test.ts" | sort)
+          test "${#actual[@]}" -eq 4
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+      - run: npm ci --ignore-scripts --no-audit --no-fund --workspaces=false
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply governed bootstrap and existing migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/bootstrap/0000_runtime_roles.sql
+          while IFS= read -r migration; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done < <(find db/migrations -maxdepth 1 -type f -name '*.sql' | sort)
+      - name: Run Availability source regression
+        run: node --experimental-strip-types --test tests/integration/risto-availability-source.test.ts
+      - name: Run Availability HTTP E2E
+        run: node --experimental-strip-types --test tests/postgres/risto-vertical-http-availability-e2e.test.ts
+      - run: npm run check:boundaries
