@@ -1,0 +1,29 @@
+name: AOS SA Fresh Auth 122
+
+on:
+  push:
+    branches:
+      - foundation/aos-sa-fresh-auth-122-20260918
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - run: npm ci
+      - name: Gate122 fresh-auth regression
+        run: node --experimental-strip-types --test tests/integration/aos-sa-fresh-auth-122.test.ts
+      - name: Existing OIDC upstream regression
+        run: node --experimental-strip-types --test tests/integration/airenos-oidc-upstream-provider.test.ts
