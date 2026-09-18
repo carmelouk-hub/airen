@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign as cryptoSign } from "node:crypto";
 import { buildRistoVerticalRequestBinding } from "../../apps/api/src/risto-vertical-trusted-context.ts";
+import { PostgresRistoBookingReadRepository } from "../../packages/persistence-postgres/src/risto-booking-repository.ts";
+import { CanonicalBookingOccupancyReader } from "../../packages/ristoairen/src/availability/booking-occupancy-reader.ts";
+import type { SecurityContext } from "../../packages/shared-contracts/src/index.ts";
 import { startGate093FixtureServer, SYNTHETIC } from "../integration/risto-vertical-http-fixture.ts";
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -112,6 +115,26 @@ test.after(async () => { await runtime.close(); });
 test("Gate099 Availability HTTP adapter is deterministic, occupancy-aware and side-effect-free", async () => {
   const created = await createBooking({ key: "gate099-overlap", time: "19:00", duration: 60, partySize: 5 });
   assert.equal(created.status, 201);
+
+  const debugContext: SecurityContext = Object.freeze({
+    correlationId: "gate099-debug-reader",
+    actorIdentityId: SYNTHETIC.allowedActorId,
+    platformRoles: ["pilot_operator"],
+    platformPermissions: ["platform.vertical.use"],
+    tenantId: SYNTHETIC.tenantId,
+    locationId: SYNTHETIC.locationId,
+    permissions: ["availability.read"],
+    entitlements: ["availability.enabled", "airen.booking"],
+  });
+  const debugReader = new CanonicalBookingOccupancyReader(new PostgresRistoBookingReadRepository(
+    runtime.pool,
+    "gate099-debug-cursor-hmac-key-000000000000000000000000",
+    "airen_app",
+  ));
+  const debugOccupancy = await debugReader.listConsumingBookings(debugContext, "2026-09-27");
+  assert.equal(debugOccupancy.length, 1);
+  assert.equal(debugOccupancy[0].bookingTimeLocal, "19:00");
+  assert.equal(debugOccupancy[0].partySize, 5);
 
   const before = {
     bookings: Number((await runtime.pool.query("SELECT count(*)::int AS n FROM risto_bookings")).rows[0].n),
