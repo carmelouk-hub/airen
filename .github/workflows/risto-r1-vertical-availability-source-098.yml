@@ -1,0 +1,25 @@
+name: RISTO R1 Vertical Availability Source 098
+
+on:
+  pull_request:
+    paths:
+      - "packages/ristoairen/src/availability/**"
+      - "tests/integration/risto-availability-source.test.ts"
+      - ".github/workflows/risto-r1-vertical-availability-source-098.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --experimental-strip-types --test tests/integration/risto-availability-source.test.ts
+      - run: npm run check:boundaries
