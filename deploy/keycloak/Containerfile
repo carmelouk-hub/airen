@@ -1,8 +1,3 @@
-FROM golang:1.24-alpine AS recovery-health-builder
-WORKDIR /src
-COPY deploy/keycloak/recovery-health.go ./recovery-health.go
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/airenos-recovery-health ./recovery-health.go
-
 FROM quay.io/keycloak/keycloak:26.7.2 AS builder
 
 ENV KC_HEALTH_ENABLED=true \
@@ -25,16 +20,6 @@ ENV KC_HEALTH_ENABLED=true \
     KC_HTTP_MANAGEMENT_HEALTH_ENABLED=false
 
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
-COPY --from=recovery-health-builder /out/airenos-recovery-health /opt/keycloak/bin/airenos-recovery-health
-COPY deploy/keycloak/recovery-wrapper.sh /opt/keycloak/bin/airenos-recovery-wrapper.sh
 
-USER 0
-RUN mkdir -p /opt/keycloak/.ssh \
-    && chmod 0700 /opt/keycloak/.ssh \
-    && chown 1000:0 /opt/keycloak/.ssh \
-    && chmod 0755 /opt/keycloak/bin/airenos-recovery-wrapper.sh \
-    && chmod 0755 /opt/keycloak/bin/airenos-recovery-health \
-    && sed -i 's#^keycloak:x:1000:0:keycloak user:/opt/keycloak:/sbin/nologin$#keycloak:x:1000:0:keycloak user:/opt/keycloak:/bin/sh#' /etc/passwd
-USER 1000
-
-ENTRYPOINT ["/opt/keycloak/bin/airenos-recovery-wrapper.sh"]
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start", "--optimized"]
