@@ -1,6 +1,7 @@
 import http from "node:http";
 import { Buffer } from "node:buffer";
 import { createPublicKey } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 import { AppError, type SecurityContext } from "../../packages/shared-contracts/src/index.ts";
 import { AIREN_BOOKING_ENTITLEMENT, type BookingReadRepository } from "../../packages/booking-core/src/contracts.ts";
@@ -161,7 +162,7 @@ export async function startGate093FixtureServer(input: Readonly<{
   });
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const databaseUrl = process.env.DATABASE_URL;
   const publicKeyB64 = process.env.RISTO_VPC_PUBLIC_KEY_PEM_B64;
   if (!databaseUrl || !publicKeyB64) throw new Error("DATABASE_URL and RISTO_VPC_PUBLIC_KEY_PEM_B64 are required");
