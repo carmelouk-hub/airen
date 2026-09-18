@@ -31,7 +31,7 @@ jobs:
           --health-retries 12
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airen_test
-      GATE098_PARENT: dbc3a1ae1fdb88260f7fc32f57abedcbf14de860
+      GATE098_PARENT: fb7e381c07dd51a9d5a120d75f96e38a88e98a6e
 
     steps:
       - uses: actions/checkout@v4
