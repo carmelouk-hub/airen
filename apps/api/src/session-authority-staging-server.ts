@@ -168,6 +168,7 @@ const OIDC_BROWSER_CLIENT = String.raw`(() => {
     authorizationUrl.searchParams.set("redirect_uri", config.redirectUri);
     authorizationUrl.searchParams.set("response_type", "code");
     authorizationUrl.searchParams.set("scope", "openid");
+    authorizationUrl.searchParams.set("prompt", "login");
     authorizationUrl.searchParams.set("code_challenge", challenge);
     authorizationUrl.searchParams.set("code_challenge_method", "S256");
     authorizationUrl.searchParams.set("nonce", nonce);
