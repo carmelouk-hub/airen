@@ -21,5 +21,16 @@ ENV KC_HEALTH_ENABLED=true \
 
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
+# Render SSH requires a writable ~/.ssh for the runtime user and a real shell.
+# The upstream Keycloak image runs as uid 1000 with HOME=/opt/keycloak and
+# /sbin/nologin. Change only those SSH compatibility properties, then restore
+# the original non-root runtime uid.
+USER 0
+RUN mkdir -p /opt/keycloak/.ssh \
+    && chmod 0700 /opt/keycloak/.ssh \
+    && chown 1000:0 /opt/keycloak/.ssh \
+    && sed -i 's#^keycloak:x:1000:0:keycloak user:/opt/keycloak:/sbin/nologin$#keycloak:x:1000:0:keycloak user:/opt/keycloak:/bin/sh#' /etc/passwd
+USER 1000
+
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 CMD ["start", "--optimized"]
