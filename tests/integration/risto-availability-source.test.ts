@@ -60,7 +60,8 @@ function booking(
 
 class InMemoryBookingRepository implements BookingReadRepository {
   readonly queries: BookingQueryInputV1[] = [];
-  constructor(private readonly rows: readonly BookingPrivateProjectionV1[]) {}
+  private readonly rows: readonly BookingPrivateProjectionV1[];
+  constructor(rows: readonly BookingPrivateProjectionV1[]) { this.rows = rows; }
   async query(_context: SecurityContext, input: BookingQueryInputV1): Promise<BookingPrivateListResultV1> {
     this.queries.push(input);
     const allowed = new Set(input.statuses ?? []);
