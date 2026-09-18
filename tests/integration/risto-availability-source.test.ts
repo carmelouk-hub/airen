@@ -203,3 +203,33 @@ test("candidate result count is capped at 100 after filtering", async () => {
   assert.equal(result.candidates[0].startsAtLocal, "00:00");
   assert.equal(result.candidates[99].startsAtLocal, "08:15");
 });
+
+
+test("Gate098C occupancy reader trusts canonical repository date scope instead of re-parsing projected date", async () => {
+  const repository = Object.freeze({
+    async query() {
+      return Object.freeze({
+        items: Object.freeze([Object.freeze({
+          id: "a0000000-0000-4000-8000-000000000099",
+          status: "REQUESTED",
+          partySize: 3,
+          bookingDate: "Sun Sep 27",
+          bookingTimeLocal: "19:00:00",
+          startsAt: "2026-09-27T17:00:00.000Z",
+          expectedDurationMinutes: 60,
+          source: "SYNTHETIC",
+          customerNameSnapshot: "Projection Date Regression",
+          createdAt: "2026-09-18T00:00:00Z",
+          updatedAt: "2026-09-18T00:00:00Z",
+          rowVersion: 1
+        })])
+      });
+    },
+    async findVisibleById() { return null; }
+  });
+  const reader = new CanonicalBookingOccupancyReader(repository);
+  const rows = await reader.listConsumingBookings(context(), "2026-09-27");
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bookingDate, "2026-09-27");
+  assert.equal(rows[0].bookingTimeLocal, "19:00");
+});
