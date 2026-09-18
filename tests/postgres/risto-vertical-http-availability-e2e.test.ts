@@ -126,11 +126,27 @@ test("Gate099 Availability HTTP adapter is deterministic, occupancy-aware and si
     permissions: ["availability.read"],
     entitlements: ["availability.enabled", "airen.booking"],
   });
-  const debugReader = new CanonicalBookingOccupancyReader(new PostgresRistoBookingReadRepository(
+  const rawBookingRows = await runtime.pool.query(
+    "SELECT status, party_size, booking_date::text AS booking_date, booking_time_local::text AS booking_time_local FROM risto_bookings WHERE tenant_id=$1 AND location_id=$2",
+    [SYNTHETIC.tenantId, SYNTHETIC.locationId],
+  );
+  assert.equal(rawBookingRows.rows.length, 1);
+  assert.equal(rawBookingRows.rows[0].status, "REQUESTED");
+
+  const debugRepository = new PostgresRistoBookingReadRepository(
     runtime.pool,
     "gate099-debug-cursor-hmac-key-000000000000000000000000",
     "airen_app",
-  ));
+  );
+  const scopedPage = await debugRepository.query(debugContext, {
+    fromDate: "2026-09-27",
+    toDate: "2026-09-27",
+    limit: 100,
+    order: "starts_at.asc",
+  });
+  assert.equal(scopedPage.items.length, 1);
+
+  const debugReader = new CanonicalBookingOccupancyReader(debugRepository);
   const debugOccupancy = await debugReader.listConsumingBookings(debugContext, "2026-09-27");
   assert.equal(debugOccupancy.length, 1);
   assert.equal(debugOccupancy[0].bookingTimeLocal, "19:00");
