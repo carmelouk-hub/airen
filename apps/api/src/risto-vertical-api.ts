@@ -1,6 +1,8 @@
 import { AppError, type AppErrorCode } from "../../../packages/shared-contracts/src/index.ts";
 import type { BookingCreateInputV1 } from "../../../packages/booking-core/src/contracts.ts";
 import { BookingApplicationService } from "../../../packages/booking-core/src/application-service.ts";
+import type { AvailabilityQueryInputV1 } from "../../../packages/ristoairen/src/availability/contracts.ts";
+import { AvailabilityApplicationService } from "../../../packages/ristoairen/src/availability/application-service.ts";
 import type { MembershipRepository, RolePermissionResolver } from "../../../packages/authorization/src/index.ts";
 import type { LocationRepository, TenantRepository } from "../../../packages/tenant/src/index.ts";
 import { buildRistoVerticalSecurityContext } from "./risto-vertical-security-context.ts";
@@ -71,14 +73,29 @@ function requiredHeader(request: RistoVerticalApiRequest, name: string): string 
   return value;
 }
 
-function bookingCreateInput(body: unknown): BookingCreateInputV1 {
+function authorityFreeBody(body: unknown): Record<string, unknown> {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    throw new AppError("VALIDATION_FAILED", "INVALID_BOOKING_BODY");
+    throw new AppError("VALIDATION_FAILED", "INVALID_REQUEST_BODY");
   }
   const value = body as Record<string, unknown>;
   for (const key of ["tenantId", "tenant_id", "locationId", "location_id", "actorId", "actor_id", "permissions", "entitlements"]) {
     if (Object.hasOwn(value, key)) throw new AppError("TENANT_SCOPE_VIOLATION", "CLIENT_AUTHORITY_FIELD_FORBIDDEN");
   }
+  return value;
+}
+
+function availabilityQueryInput(body: unknown): AvailabilityQueryInputV1 {
+  const value = authorityFreeBody(body);
+  return Object.freeze({
+    bookingDate: value.bookingDate as string,
+    partySize: value.partySize as number,
+    expectedDurationMinutes: value.expectedDurationMinutes as number,
+    ...(value.preferredTimeLocal === undefined ? {} : { preferredTimeLocal: value.preferredTimeLocal as string }),
+  });
+}
+
+function bookingCreateInput(body: unknown): BookingCreateInputV1 {
+  const value = authorityFreeBody(body);
   return Object.freeze({
     source: (value.source ?? "VERTICAL_PILOT") as string,
     partySize: value.partySize as number,
@@ -107,6 +124,7 @@ export function createRistoVerticalApi(input: Readonly<{
   memberships: MembershipRepository;
   roles: RolePermissionResolver;
   booking: BookingApplicationService;
+  availability?: AvailabilityApplicationService;
   now?: () => number;
 }>): (request: RistoVerticalApiRequest) => Promise<RistoVerticalApiResponse> {
   return async (request) => {
@@ -116,6 +134,37 @@ export function createRistoVerticalApi(input: Readonly<{
 
       if (method === "GET" && url.pathname === "/health/ready") {
         return response(200, Object.freeze({ ok: true, service: "ristoairen-vertical-fixture" }));
+      }
+
+      if (method === "POST" && url.pathname === "/v1/availability/query") {
+        if (!input.availability) return response(503, Object.freeze({ ok: false, code: "AVAILABILITY_NOT_CONFIGURED" }));
+        const token = requiredHeader(request, "x-airenos-trusted-context");
+        const expectedRequestBinding = buildRistoVerticalRequestBinding({
+          method,
+          operation: "availability.read",
+          idempotencyKey: null,
+        });
+        const trusted = verifyAirenOsVerticalTrustedContext({
+          token,
+          publicKey: input.publicKey,
+          issuer: input.issuer,
+          audience: input.audience,
+          expectedRequestBinding,
+          ...(input.now ? { now: input.now() } : {}),
+        });
+        const context = await buildRistoVerticalSecurityContext({
+          trusted,
+          tenants: input.tenants,
+          locations: input.locations,
+          memberships: input.memberships,
+          roles: input.roles,
+        });
+        const result = await input.availability.query(context, availabilityQueryInput(request.body));
+        return response(200, Object.freeze({
+          ok: true,
+          data: result,
+          correlation_id: context.correlationId,
+        }), context.correlationId);
       }
 
       if (method !== "POST" || url.pathname !== "/v1/bookings") {
