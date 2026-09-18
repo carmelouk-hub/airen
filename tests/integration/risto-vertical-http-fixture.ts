@@ -6,12 +6,21 @@ import { Pool } from "pg";
 import { AppError, type SecurityContext } from "../../packages/shared-contracts/src/index.ts";
 import { AIREN_BOOKING_ENTITLEMENT, type BookingReadRepository } from "../../packages/booking-core/src/contracts.ts";
 import { BookingApplicationService } from "../../packages/booking-core/src/application-service.ts";
+import { AvailabilityApplicationService } from "../../packages/ristoairen/src/availability/application-service.ts";
+import type {
+  CanonicalLocationTimeZoneProvider,
+  LocationAvailabilityPolicyProvider,
+} from "../../packages/ristoairen/src/availability/contracts.ts";
+import { CanonicalBookingOccupancyReader } from "../../packages/ristoairen/src/availability/booking-occupancy-reader.ts";
 import {
   PostgresFoundationReadStore,
   PostgresLocationRepositoryAdapter,
   PostgresTenantRepositoryAdapter,
 } from "../../packages/persistence-postgres/src/index.ts";
-import { PostgresRistoBookingUnitOfWork } from "../../packages/persistence-postgres/src/risto-booking-repository.ts";
+import {
+  PostgresRistoBookingReadRepository,
+  PostgresRistoBookingUnitOfWork,
+} from "../../packages/persistence-postgres/src/risto-booking-repository.ts";
 import { createRistoVerticalApi } from "../../apps/api/src/risto-vertical-api.ts";
 
 export const SYNTHETIC = Object.freeze({
@@ -68,11 +77,15 @@ export async function seedGate093(pool: Pool): Promise<void> {
       ON CONFLICT (id) DO NOTHING;
 
     INSERT INTO authz.permission_registry (permission_key, description)
-      VALUES ('booking.create', 'Create Booking')
+      VALUES
+        ('booking.create', 'Create Booking'),
+        ('availability.read', 'Read Availability')
       ON CONFLICT (permission_key) DO NOTHING;
 
     INSERT INTO authz.role_permission_grants (scope_kind, role_key, permission_key, effect)
-      VALUES ('tenant', 'gate093_booking_operator', 'booking.create', 'allow')
+      VALUES
+        ('tenant', 'gate093_booking_operator', 'booking.create', 'allow'),
+        ('tenant', 'gate093_booking_operator', 'availability.read', 'allow')
       ON CONFLICT DO NOTHING;
   `);
 }
@@ -86,11 +99,45 @@ export function createGate093Fixture(input: Readonly<{
 }>): Readonly<{ pool: Pool; handler: ReturnType<typeof createRistoVerticalApi> }> {
   const pool = new Pool({ connectionString: input.databaseUrl, max: 10 });
   const foundation = new PostgresFoundationReadStore(pool);
+  const bookingReads = new PostgresRistoBookingReadRepository(
+    pool,
+    "gate099-availability-cursor-hmac-key-000000000000000000000000",
+    "airen_app",
+  );
   const booking = new BookingApplicationService(
     reads,
     new PostgresRistoBookingUnitOfWork(pool, "airen_app", "user"),
     guard,
   );
+  const policyProvider: LocationAvailabilityPolicyProvider = Object.freeze({
+    async getPolicyForDate(context, serviceDate) {
+      return Object.freeze({
+        tenantId: context.tenantId,
+        locationId: context.locationId,
+        windows: Object.freeze([Object.freeze({
+          serviceDate,
+          startsAtLocal: "18:00",
+          endsAtLocal: "22:00",
+          reservableCapacityCovers: 6,
+          slotStepMinutes: 30,
+        })]),
+      });
+    },
+  });
+  const timeZoneProvider: CanonicalLocationTimeZoneProvider = Object.freeze({
+    async getCanonicalTimeZone(context) {
+      const result = await pool.query(
+        "SELECT timezone FROM platform.locations WHERE id=$1 AND tenant_id=$2 AND status='active'",
+        [context.locationId, context.tenantId],
+      );
+      return result.rows[0]?.timezone ? String(result.rows[0].timezone) : null;
+    },
+  });
+  const availability = new AvailabilityApplicationService({
+    policyProvider,
+    timeZoneProvider,
+    occupancyReader: new CanonicalBookingOccupancyReader(bookingReads),
+  });
   const handler = createRistoVerticalApi({
     publicKey: createPublicKey(input.publicKeyPem),
     issuer: input.issuer ?? "airenos-gate093",
@@ -100,6 +147,7 @@ export function createGate093Fixture(input: Readonly<{
     memberships: foundation,
     roles: foundation,
     booking,
+    availability,
     ...(input.now ? { now: input.now } : {}),
   });
   return Object.freeze({ pool, handler });
