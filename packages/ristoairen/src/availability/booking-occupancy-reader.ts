@@ -29,14 +29,11 @@ export class CanonicalBookingOccupancyReader implements AvailabilityBookingOccup
         order: "starts_at.asc"
       });
       for (const booking of page.items) {
-        if (
-          booking.bookingDate === bookingDate &&
-          AVAILABILITY_CONSUMING_BOOKING_STATUSES.includes(booking.status as (typeof AVAILABILITY_CONSUMING_BOOKING_STATUSES)[number])
-        ) {
+        if (AVAILABILITY_CONSUMING_BOOKING_STATUSES.includes(booking.status as (typeof AVAILABILITY_CONSUMING_BOOKING_STATUSES)[number])) {
           items.push(Object.freeze({
             status: booking.status,
             partySize: booking.partySize,
-            bookingDate: booking.bookingDate,
+            bookingDate,
             bookingTimeLocal: booking.bookingTimeLocal.slice(0, 5),
             expectedDurationMinutes: booking.expectedDurationMinutes
           }));
