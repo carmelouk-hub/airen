@@ -136,8 +136,9 @@ jobs:
               FROM pg_auth_members m
               JOIN pg_roles target ON target.oid = m.roleid
               WHERE target.rolname = 'airen_control_plane_owner'
+                AND (m.set_option OR m.inherit_option)
             ) THEN
-              RAISE EXCEPTION 'GATE153_OWNER_MEMBERSHIP_NOT_REVOKED';
+              RAISE EXCEPTION 'GATE153_OWNER_OPERATIONAL_MEMBERSHIP_NOT_REVOKED';
             END IF;
           END
           $$;
