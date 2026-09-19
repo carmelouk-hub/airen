@@ -150,7 +150,7 @@ async function grantBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
   const roleName = current.rows[0]?.role_name;
   if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
   await client.query(
-    `GRANT airen_control_plane_owner TO ${quotePostgresIdentifier(roleName)} WITH INHERIT FALSE, SET TRUE`,
+    `GRANT airen_control_plane_owner TO ${quotePostgresIdentifier(roleName)} WITH INHERIT TRUE, SET TRUE`,
   );
   const proof = await client.query<{ can_set_owner: boolean }>(
     "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
