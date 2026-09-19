@@ -1,7 +1,7 @@
 AIRenClub — Backend & Integration Contracts
 v0.1 — AIRC-PB-005
 
-STATUS: CANONICAL DESIGN CONTRACT — PB-005 IN PROGRESS. This contract freezes provider-independent backend boundaries and integration semantics before any baseline, Base44, runtime, persistent schema, migration, LIVE or production implementation.
+STATUS: CANONICAL DESIGN CONTRACT — PB-005 CLOSED / DESIGN PASS WITH OPEN DEPENDENCIES. This contract freezes provider-independent backend boundaries and integration semantics before any baseline, Base44, runtime, persistent schema, migration, LIVE or production implementation.
 
 0. Authority and lineage
 AIRenClub is a native AIRenOS vertical. AIRenOS remains Control Plane and owns Identity, Session, Organization, ProductAccess, Tenant/Location membership, ProductSubscription, Entitlements, Purpose Authorization, Jurisdiction and platform governance. AIRenClub owns only the Nightlife Operational Domain.
@@ -305,5 +305,5 @@ T-AIRC-BE-023 jurisdiction-required operation fails closed when jurisdiction res
 T-AIRC-BE-024 AuditEvent contains correlation/scope/state transition but no secret-bearing payload.
 
 36. PB-005 design closure condition
-PB-005 may close as DESIGN PASS WITH OPEN DEPENDENCIES when this contract is mirrored exactly to an isolated GitHub PB-005 branch, normalized Drive/GitHub content MATCH is verified, Program Control is updated, and protected boundaries remain unchanged.
+PB-005 closes as DESIGN PASS WITH OPEN DEPENDENCIES after exact isolated GitHub mirroring, normalized Drive/GitHub content MATCH, Program Control closure and protected-boundary verification.
 PB-005 closure does not authorize Base44 creation, baseline selection, runtime implementation, persistent schema, migration, LIVE or production changes.
