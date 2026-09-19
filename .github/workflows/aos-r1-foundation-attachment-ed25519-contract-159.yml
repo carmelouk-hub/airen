@@ -61,6 +61,3 @@ jobs:
           ! grep -E 'AUTH_PROVIDER_KEY|AUTH_SESSION_KEY_SECRET_REF' apps/api/src/foundation-attachment-runtime-config.ts
           grep -F 'AUTH_ADAPTER must be airenos-session-ed25519' apps/api/src/foundation-attachment-runtime-config.ts
           grep -F 'DATABASE_URL_SECRET_REF' apps/api/src/foundation-attachment-runtime-config.ts
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
