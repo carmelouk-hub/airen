@@ -23,8 +23,12 @@ const RUNTIME_ROLE_EXPECTATIONS: readonly RuntimeRoleExpectation[] = [
   { rolname: "airen_app", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
   { rolname: "airen_auth", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
   { rolname: "airen_control_plane", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
-  { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: true },
+  { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
 ] as const;
+
+function quotePostgresIdentifier(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
+}
 
 function required(input: EnvironmentInput, key: string): string {
   const value = input[key]?.trim();
@@ -99,7 +103,7 @@ function transactionBody(sql: string, migrationId: string): string {
   return trimmed.slice(bodyStart, commit.index).trim();
 }
 
-async function assertExternallyProvisionedRuntimeRoles(client: PoolClient): Promise<void> {
+async function assertCanonicalRuntimeRoles(client: PoolClient, provisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const expectedNames = RUNTIME_ROLE_EXPECTATIONS.map((role) => role.rolname);
   const result = await client.query<RuntimeRoleExpectation>(`
     SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolinherit, rolbypassrls
@@ -119,33 +123,111 @@ async function assertExternallyProvisionedRuntimeRoles(client: PoolClient): Prom
   }
 
   if (missing.length || mismatched.length) {
-    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Canonical PostgreSQL runtime roles must be provisioned by the database provider/operator before schema migration", {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Canonical PostgreSQL runtime roles do not match the governed safe attributes", {
       field: "AIREN_RUNTIME_ROLE_PROVISIONING_MODE",
-      provisioningMode: "external",
+      provisioningMode,
       missingRoles: missing,
       mismatchedAttributes: mismatched,
     });
   }
 
-  process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.verified", provisioningMode: "external", roles: expectedNames })}\n`);
+  process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.verified", provisioningMode, roles: expectedNames })}\n`);
 }
 
 async function provisionOrVerifyRuntimeRoles(client: PoolClient, mode: RuntimeRoleProvisioningMode): Promise<void> {
   if (mode === "bootstrap") {
     const bootstrapSql = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
     await client.query(bootstrapSql);
+    await assertCanonicalRuntimeRoles(client, "bootstrap");
     process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.provisioned", provisioningMode: "bootstrap" })}\n`);
     return;
   }
-  await assertExternallyProvisionedRuntimeRoles(client);
+  await assertCanonicalRuntimeRoles(client, "external");
+}
+
+async function grantBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
+  const current = await client.query<{ role_name: string }>("SELECT current_user::text AS role_name");
+  const roleName = current.rows[0]?.role_name;
+  if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
+  await client.query(
+    `GRANT airen_control_plane_owner TO ${quotePostgresIdentifier(roleName)} WITH INHERIT TRUE, SET TRUE`,
+  );
+  const proof = await client.query<{ can_set_owner: boolean }>(
+    "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
+  );
+  if (proof.rows[0]?.can_set_owner !== true) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal cannot SET ROLE to the canonical control-plane owner");
+  }
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.granted", provisioningMode: "bootstrap" })}\n`);
+}
+
+async function revokeBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
+  const current = await client.query<{ role_name: string }>("SELECT current_user::text AS role_name");
+  const roleName = current.rows[0]?.role_name;
+  if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
+  await client.query(`REVOKE airen_control_plane_owner FROM ${quotePostgresIdentifier(roleName)}`);
+  const proof = await client.query<{ operational_memberships: number }>(`
+    SELECT count(*)::int AS operational_memberships
+    FROM pg_catalog.pg_auth_members m
+    JOIN pg_catalog.pg_roles target ON target.oid = m.roleid
+    JOIN pg_catalog.pg_roles member ON member.oid = m.member
+    WHERE target.rolname = 'airen_control_plane_owner'
+      AND member.rolname = current_user
+      AND (m.set_option OR m.inherit_option)
+  `);
+  if ((proof.rows[0]?.operational_memberships ?? 0) !== 0) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal retained unexpected operational membership in the canonical control-plane owner");
+  }
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.revoked", provisioningMode: "bootstrap" })}\n`);
+}
+
+async function grantBootstrapOwnerMigrationDdlPrivileges(client: PoolClient): Promise<void> {
+  const current = await client.query<{ database_name: string }>("SELECT current_database()::text AS database_name");
+  const databaseName = current.rows[0]?.database_name;
+  if (!databaseName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration database identity is unavailable");
+  await client.query(
+    `GRANT CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} TO airen_control_plane_owner`,
+  );
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_ddl.database_create_granted", provisioningMode: "bootstrap" })}\n`);
+}
+
+async function ensureBootstrapOwnerSecuritySchemaCreate(client: PoolClient): Promise<void> {
+  const result = await client.query<{ exists: boolean }>(
+    "SELECT to_regnamespace('security') IS NOT NULL AS exists",
+  );
+  if (result.rows[0]?.exists === true) {
+    await client.query("GRANT CREATE ON SCHEMA security TO airen_control_plane_owner");
+  }
+}
+
+async function revokeBootstrapOwnerMigrationDdlPrivileges(client: PoolClient): Promise<void> {
+  const current = await client.query<{ database_name: string }>("SELECT current_database()::text AS database_name");
+  const databaseName = current.rows[0]?.database_name;
+  if (!databaseName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration database identity is unavailable");
+  const schema = await client.query<{ exists: boolean }>(
+    "SELECT to_regnamespace('security') IS NOT NULL AS exists",
+  );
+  if (schema.rows[0]?.exists === true) {
+    await client.query("REVOKE CREATE ON SCHEMA security FROM airen_control_plane_owner");
+  }
+  await client.query(
+    `REVOKE CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} FROM airen_control_plane_owner`,
+  );
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_ddl.revoked", provisioningMode: "bootstrap" })}\n`);
 }
 
 async function runMigrations(connectionString: string, roleProvisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const pool = new Pool({ connectionString, max: 1, application_name: "airenos-migration" });
   const client = await pool.connect();
+  let bootstrapOwnerSetRoleGranted = false;
   try {
     await client.query("SELECT pg_advisory_lock(hashtext('airenos-foundation-migrations'))");
     await provisionOrVerifyRuntimeRoles(client, roleProvisioningMode);
+    if (roleProvisioningMode === "bootstrap") {
+      await grantBootstrapOwnerSetRole(client);
+      bootstrapOwnerSetRoleGranted = true;
+      await grantBootstrapOwnerMigrationDdlPrivileges(client);
+    }
     await client.query(`
       CREATE TABLE IF NOT EXISTS public.airen_schema_migrations (
         migration_id text PRIMARY KEY,
@@ -160,6 +242,9 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
     );
 
     for (const migrationId of migrationFiles) {
+      if (roleProvisioningMode === "bootstrap") {
+        await ensureBootstrapOwnerSecuritySchemaCreate(client);
+      }
       const sql = await readFile(resolve("db/migrations", migrationId), "utf8");
       const sha256 = checksum(sql);
       const existing = await client.query<{ sha256: string }>("SELECT sha256 FROM public.airen_schema_migrations WHERE migration_id=$1", [migrationId]);
@@ -182,9 +267,20 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
       process.stdout.write(`${JSON.stringify({ event: "migration.applied", migrationId })}\n`);
     }
   } finally {
+    let cleanupError: unknown;
+    if (bootstrapOwnerSetRoleGranted) {
+      try {
+        await revokeBootstrapOwnerMigrationDdlPrivileges(client);
+        await revokeBootstrapOwnerSetRole(client);
+      } catch (error) {
+        cleanupError = error;
+        process.stderr.write(`${JSON.stringify({ event: "migration.owner_privilege_cleanup_failed" })}\n`);
+      }
+    }
     try { await client.query("SELECT pg_advisory_unlock(hashtext('airenos-foundation-migrations'))"); } catch {}
     client.release();
     await pool.end();
+    if (cleanupError) throw cleanupError;
   }
 }
 

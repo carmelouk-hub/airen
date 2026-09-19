@@ -3,15 +3,15 @@ import test from "node:test";
 import { readdir, readFile } from "node:fs/promises";
 import { validateCanonicalMigrationSequence } from "../../deploy/migrate.ts";
 
-test("Gate149 canonical migration census is exactly contiguous 0001..0039", async () => {
+test("Gate149/153 canonical migration census is exactly contiguous 0001..0040", async () => {
   const entries = await readdir(new URL("../../db/migrations/", import.meta.url));
   const files = validateCanonicalMigrationSequence(entries);
-  assert.equal(files.length, 39);
+  assert.equal(files.length, 40);
   assert.equal(files[0], "0001_foundation_runtime_core.sql");
-  assert.equal(files.at(-1), "0039_ra01_ristoairen_experience_handoff.sql");
+  assert.equal(files.at(-1), "0040_render_managed_control_plane_owner_rls_compat.sql");
   assert.deepEqual(
     files.map((name) => Number(name.slice(0, 4))),
-    Array.from({ length: 39 }, (_, index) => index + 1),
+    Array.from({ length: 40 }, (_, index) => index + 1),
   );
 });
 
