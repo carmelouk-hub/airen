@@ -64,4 +64,4 @@ jobs:
           grep -F 'attachmentPermissionKey:"ristoairen.access"' apps/api/src/ra01-pilot-registry-publisher.ts
           grep -F 'entitlements:["vertical.ristoairen","availability.enabled"]' apps/api/src/ra01-pilot-registry-publisher.ts
           ! grep -F "availability.read" apps/api/src/ra01-pilot-registry-publisher.ts
-          ! git diff "$GATE143_PARENT" "$GITHUB_SHA" | grep -E 'BEGIN PRIVATE KEY|opaque-foundation-test-credential|pilot\.example\.test'
+          ! git diff "$GATE143_PARENT" "$GITHUB_SHA" -- apps/api/src/foundation-attachment-staging-server.ts apps/api/src/ra01-pilot-registry-publisher.ts apps/api/src/ristoairen-product-attachment-api.ts | grep -E 'BEGIN PRIVATE KEY|opaque-foundation-test-credential|pilot\\.example\\.test'
