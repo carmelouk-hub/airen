@@ -35,7 +35,7 @@ test("Gate149 sequence validator fails closed on gaps, duplicates, and malformed
   assert.throws(
     () => validateCanonicalMigrationSequence([
       "0001_one.sql",
-      "0002 bad.sql",
+      "0002_bad name.sql",
     ]),
     /noncanonical numbered filenames/,
   );
