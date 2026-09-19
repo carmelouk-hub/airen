@@ -23,7 +23,7 @@ const RUNTIME_ROLE_EXPECTATIONS: readonly RuntimeRoleExpectation[] = [
   { rolname: "airen_app", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
   { rolname: "airen_auth", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
   { rolname: "airen_control_plane", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
-  { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: true },
+  { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
 ] as const;
 
 function required(input: EnvironmentInput, key: string): string {
@@ -99,7 +99,7 @@ function transactionBody(sql: string, migrationId: string): string {
   return trimmed.slice(bodyStart, commit.index).trim();
 }
 
-async function assertExternallyProvisionedRuntimeRoles(client: PoolClient): Promise<void> {
+async function assertCanonicalRuntimeRoles(client: PoolClient, provisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const expectedNames = RUNTIME_ROLE_EXPECTATIONS.map((role) => role.rolname);
   const result = await client.query<RuntimeRoleExpectation>(`
     SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolinherit, rolbypassrls
@@ -119,25 +119,26 @@ async function assertExternallyProvisionedRuntimeRoles(client: PoolClient): Prom
   }
 
   if (missing.length || mismatched.length) {
-    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Canonical PostgreSQL runtime roles must be provisioned by the database provider/operator before schema migration", {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Canonical PostgreSQL runtime roles do not match the governed safe attributes", {
       field: "AIREN_RUNTIME_ROLE_PROVISIONING_MODE",
-      provisioningMode: "external",
+      provisioningMode,
       missingRoles: missing,
       mismatchedAttributes: mismatched,
     });
   }
 
-  process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.verified", provisioningMode: "external", roles: expectedNames })}\n`);
+  process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.verified", provisioningMode, roles: expectedNames })}\n`);
 }
 
 async function provisionOrVerifyRuntimeRoles(client: PoolClient, mode: RuntimeRoleProvisioningMode): Promise<void> {
   if (mode === "bootstrap") {
     const bootstrapSql = await readFile(resolve("db/bootstrap/0000_runtime_roles.sql"), "utf8");
     await client.query(bootstrapSql);
+    await assertCanonicalRuntimeRoles(client, "bootstrap");
     process.stdout.write(`${JSON.stringify({ event: "migration.runtime_roles.provisioned", provisioningMode: "bootstrap" })}\n`);
     return;
   }
-  await assertExternallyProvisionedRuntimeRoles(client);
+  await assertCanonicalRuntimeRoles(client, "external");
 }
 
 async function runMigrations(connectionString: string, roleProvisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
