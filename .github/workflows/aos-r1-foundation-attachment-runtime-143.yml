@@ -1,0 +1,67 @@
+name: AOS R1 Foundation Attachment Runtime Source 143
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-b44-foundation-attachment-runtime-143-20260919
+  pull_request:
+    branches:
+      - foundation/aos-r1-b44-ra01-authority-142-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GATE143_PARENT: 8d4ca2c8e04d9522b807b102b7a5a0f709387a2a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify frozen Gate143 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "${GATE143_PARENT}^{commit}"
+          test "$(git merge-base "$GATE143_PARENT" "$GITHUB_SHA")" = "$GATE143_PARENT"
+          mapfile -t actual < <(git diff --name-only "$GATE143_PARENT" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/aos-r1-foundation-attachment-runtime-143.yml" \
+            "apps/api/src/foundation-attachment-staging-server.ts" \
+            "apps/api/src/ra01-pilot-registry-publisher.ts" \
+            "apps/api/src/ristoairen-product-attachment-api.ts" \
+            "tests/integration/foundation-attachment-runtime-contract.test.ts" \
+            "tests/integration/ra01-pilot-registry-publisher.test.ts" | sort)
+          test "${#actual[@]}" -eq 6
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+          ! git diff "$GATE143_PARENT" "$GITHUB_SHA" --name-only | grep -E '^db/migrations/|^deploy/|^render\.|session-authority-staging-server'
+      - run: npm ci
+      - name: Gate143 Foundation Attachment runtime regressions
+        run: |
+          node --experimental-strip-types --test tests/integration/ra01-pilot-registry-publisher.test.ts
+          node --experimental-strip-types --test tests/integration/foundation-attachment-runtime-contract.test.ts
+          node --experimental-strip-types --test tests/integration/ra01-ristoairen-experience-handoff.test.ts
+          node --experimental-strip-types --test tests/integration/ra01-ristoairen-product-attachment-contract.test.ts
+      - name: Existing Foundation boundary regression
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
+      - name: Prove corrected authority and secret-safe runtime source
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "AIRENOS_PILOT_ATTACHMENT_REGISTRY_URL" apps/api/src/ra01-pilot-registry-publisher.ts
+          grep -F "AIRENOS_FOUNDATION_REGISTRY_SERVICE_CREDENTIAL" apps/api/src/ra01-pilot-registry-publisher.ts
+          grep -F 'attachmentPermissionKey:"ristoairen.access"' apps/api/src/ra01-pilot-registry-publisher.ts
+          grep -F 'entitlements:["vertical.ristoairen","availability.enabled"]' apps/api/src/ra01-pilot-registry-publisher.ts
+          ! grep -F "availability.read" apps/api/src/ra01-pilot-registry-publisher.ts
+          ! git diff "$GATE143_PARENT" "$GITHUB_SHA" | grep -E 'BEGIN PRIVATE KEY|opaque-foundation-test-credential|pilot\.example\.test'
