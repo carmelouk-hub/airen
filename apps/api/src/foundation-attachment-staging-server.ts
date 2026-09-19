@@ -1,8 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { Pool } from "pg";
 import { AppError } from "../../../packages/shared-contracts/src/index.ts";
-import { loadFoundationRuntimeEnvironment } from "../../../packages/platform-core/src/index.ts";
-import { EnvironmentSecretProvider, type SecretProvider } from "../../../packages/integrations/src/index.ts";
+import { EnvironmentSecretProvider } from "../../../packages/integrations/src/index.ts";
 import { Ed25519AirenOSSessionVerifier } from "../../../packages/integrations/src/airenos-session-ed25519.ts";
 import { AirenOSSessionAuthenticationAdapter } from "../../../packages/identity/src/session-authority.ts";
 import type { AuthenticationAdapter } from "../../../packages/identity/src/index.ts";
@@ -17,14 +16,14 @@ import { PostgresOrganizationContextRepository } from "../../../packages/persist
 import { PostgresProductAccessStore } from "../../../packages/persistence-postgres/src/product-access.ts";
 import { PostgresEntitlementControlPlaneStore } from "../../../packages/persistence-postgres/src/entitlement-control-plane.ts";
 import { PostgresRistoairenExperienceHandoffStore } from "../../../packages/persistence-postgres/src/ristoairen-experience-handoff.ts";
-import { bootstrapFoundationRuntime } from "./runtime-bootstrap.ts";
+import { loadFoundationAttachmentRuntimeEnvironment, type FoundationAttachmentRuntimeEnvironment } from "./foundation-attachment-runtime-config.ts";
 import { parseDeploymentRuntimeOptions } from "./deployment-config.ts";
 import {
   dispatchRistoairenProductAttachmentApiRequest,
   isRistoairenProductAttachmentApiRequest,
   type RistoairenProductAttachmentApiDependencies,
 } from "./ristoairen-product-attachment-api.ts";
-import { classifyError, formatTraceparent, type LogSink, type MetricPoint, type MetricSink, type StructuredLogRecord } from "../../../packages/observability/src/index.ts";
+import { classifyError, createFoundationObservabilityRuntime, formatTraceparent, type LogSink, type MetricPoint, type MetricSink, type StructuredLogRecord } from "../../../packages/observability/src/index.ts";
 import { createPilotAttachmentProjectionPublisher } from "./ra01-pilot-registry-publisher.ts";
 
 type EnvironmentInput = Readonly<Record<string, string | undefined>>;
@@ -43,12 +42,11 @@ function required(environment: EnvironmentInput, key: string): string {
   return value;
 }
 
-function referenceSecretProvider(environment: EnvironmentInput): SecretProvider {
-  const config = loadFoundationRuntimeEnvironment(environment);
-  if (config.secretManagerAdapter !== "env") {
-    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Foundation Attachment staging currently requires the env SecretProvider adapter", { provider: config.secretManagerAdapter });
-  }
-  return new EnvironmentSecretProvider(environment, [config.databaseUrlRef.key, config.authSessionKeyRef.key]);
+function referenceSecretProvider(
+  environment: EnvironmentInput,
+  config: FoundationAttachmentRuntimeEnvironment,
+): EnvironmentSecretProvider {
+  return new EnvironmentSecretProvider(environment, [config.databaseUrlRef.key]);
 }
 
 function header(request: IncomingMessage, name: string): string | undefined {
@@ -116,10 +114,21 @@ export function createRa01AirenOSAuthentication(
 
 export async function startFoundationAttachmentHttpServer(environment: EnvironmentInput = process.env) {
   const deployment = parseDeploymentRuntimeOptions(environment);
-  const secretProvider = referenceSecretProvider(environment);
-  const runtime = await bootstrapFoundationRuntime(environment, secretProvider, {
+  const config = loadFoundationAttachmentRuntimeEnvironment(environment);
+  const secretProvider = referenceSecretProvider(environment, config);
+  const databaseUrl = await secretProvider.resolve(config.databaseUrlRef);
+  const observability = createFoundationObservabilityRuntime({
+    service: "airenos-foundation-attachment-staging",
+    environment: config.nodeEnv,
     logSink: new StdoutJsonLogSink(),
     metricSink: new StdoutJsonMetricSink(),
+  });
+  const runtime = Object.freeze({
+    config,
+    observability,
+    withDatabaseConnectionString<T>(consumer: (connectionString: string) => T): T {
+      return databaseUrl.use(consumer);
+    },
   });
   const pool = runtime.withDatabaseConnectionString((connectionString) => new Pool({
     connectionString,
