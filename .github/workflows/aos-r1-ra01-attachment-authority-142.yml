@@ -1,0 +1,58 @@
+name: AOS R1 RA01 Attachment Authority Convergence 142
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-b44-ra01-authority-142-20260919
+  pull_request:
+    branches:
+      - foundation/aos-r1-b44-foundation-controlplane-convergence-141-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GATE142_PARENT: 27d42969d392e58772ead7bb4bbd50a909eceb9b
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify frozen RA01 authority delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "${GATE142_PARENT}^{commit}"
+          test "$(git merge-base "$GATE142_PARENT" "$GITHUB_SHA")" = "$GATE142_PARENT"
+          test -f db/migrations/0038_ra01_ristoairen_product_attachment.sql
+          test -f db/migrations/0039_ra01_ristoairen_experience_handoff.sql
+          test -f apps/api/src/ristoairen-product-attachment-api.ts
+          test ! -e apps/api/src/ra01-staging-server.ts
+          ! git diff "$GATE142_PARENT" "$GITHUB_SHA" --name-only | grep -E '^deploy/|^render\.|^apps/api/src/session-authority'
+      - run: npm ci
+      - name: RA01 authority contract regressions
+        run: |
+          node --experimental-strip-types --test tests/integration/ra01-ristoairen-product-attachment-contract.test.ts
+          node --experimental-strip-types --test tests/integration/ra01-ristoairen-experience-handoff.test.ts
+      - name: Existing Foundation boundary regression
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
+      - name: Prove authority-only semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "ristoairen.access" db/migrations/0038_ra01_ristoairen_product_attachment.sql
+          grep -F "sha256_only" packages/platform-core/src/ristoairen-experience-handoff.ts
+          grep -F "sourceCorrelationId" packages/platform-core/src/ristoairen-experience-handoff.ts
+          grep -F "authoritativeForMutations: false" apps/api/src/ristoairen-product-attachment-api.ts
+          ! git diff "$GATE142_PARENT" "$GITHUB_SHA" --name-only | grep -E 'ra01-staging-server|render\.ra01|Dockerfile\.ra01|migrate-ra01'
