@@ -1,0 +1,63 @@
+name: AOS R1 Foundation Attachment Entrypoint Source 146
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-b44-foundation-attachment-entrypoint-146-20260919
+  pull_request:
+    branches:
+      - foundation/aos-r1-b44-foundation-attachment-runtime-143-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GATE146_PARENT: 4c3a27b9b180aae3a0c772790136db582d16f03b
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify frozen Gate146 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "${GATE146_PARENT}^{commit}"
+          test "$(git merge-base "$GATE146_PARENT" "$GITHUB_SHA")" = "$GATE146_PARENT"
+          mapfile -t actual < <(git diff --name-only "$GATE146_PARENT" "$GITHUB_SHA" | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            ".github/workflows/aos-r1-foundation-attachment-entrypoint-146.yml" \
+            "deploy/Dockerfile.foundation-attachment" \
+            "deploy/foundation-attachment-runtime-entry.ts" \
+            "tests/integration/foundation-attachment-runtime-entrypoint.test.ts" | sort)
+          test "${#actual[@]}" -eq 4
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected[@]}")"
+          ! git diff "$GATE146_PARENT" "$GITHUB_SHA" --name-only | grep -E '^db/migrations/|session-authority-staging-server|^render\.ya?ml$|^apps/api/src/foundation-attachment-staging-server\.ts$'
+      - run: npm ci
+      - name: Gate146 executable/deployment contract regressions
+        run: |
+          node --experimental-strip-types --test tests/integration/foundation-attachment-runtime-entrypoint.test.ts
+          node --experimental-strip-types --test tests/integration/foundation-attachment-runtime-contract.test.ts
+          node --experimental-strip-types --test tests/integration/ra01-pilot-registry-publisher.test.ts
+      - name: Existing Foundation boundary regression
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
+      - name: Prove future start command is separate, secret-safe and source-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'startFoundationAttachmentHttpServer(process.env)' deploy/foundation-attachment-runtime-entry.ts
+          grep -F 'CMD ["node","--experimental-strip-types","deploy/foundation-attachment-runtime-entry.ts"]' deploy/Dockerfile.foundation-attachment
+          grep -F 'HEALTHCHECK' deploy/Dockerfile.foundation-attachment
+          ! grep -F 'startAirenOSSessionAuthorityStagingServer' deploy/foundation-attachment-runtime-entry.ts
+          ! grep -E 'AIRENOS_FOUNDATION_REGISTRY_SERVICE_CREDENTIAL=|DATABASE_URL=|BEGIN PRIVATE KEY' deploy/foundation-attachment-runtime-entry.ts deploy/Dockerfile.foundation-attachment
