@@ -50,10 +50,10 @@ function checksum(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
-const MIGRATION_FILENAME_PATTERN = /^(\\d{4})_[A-Za-z0-9_.-]+\\.sql$/;
+const MIGRATION_FILENAME_PATTERN = /^(\d{4})_[A-Za-z0-9_.-]+\.sql$/;
 
 export function validateCanonicalMigrationSequence(entries: readonly string[]): readonly string[] {
-  const numbered = entries.filter((name) => /^\\d{4}_/.test(name));
+  const numbered = entries.filter((name) => /^\d{4}_/.test(name));
   const invalid = numbered.filter((name) => !MIGRATION_FILENAME_PATTERN.test(name));
   if (invalid.length) {
     throw new AppError("VALIDATION_FAILED", "Migration directory contains noncanonical numbered filenames", {
