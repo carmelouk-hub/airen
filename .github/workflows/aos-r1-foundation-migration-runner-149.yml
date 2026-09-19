@@ -1,0 +1,114 @@
+name: AOS R1 Foundation Migration Runner 149
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-foundation-migration-runner-149-20260919
+  pull_request:
+    branches:
+      - foundation/aos-r1-b44-foundation-attachment-entrypoint-146-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  empty-db-migration-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airenos_gate149
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airenos_gate149"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      GATE149_PARENT: be6f34ca9285d829d822322ae03502dba2d80c5c
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/GATE149_DATABASE_URL
+      GATE149_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_gate149
+      AIREN_RUNTIME_ROLE_PROVISIONING_MODE: bootstrap
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify exact source-only Gate149 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base "$GATE149_PARENT" "$GITHUB_SHA")" = "$GATE149_PARENT"
+          mapfile -t actual < <(git diff --name-only "$GATE149_PARENT" "$GITHUB_SHA" | sort)
+          expected=(
+            ".github/workflows/aos-r1-foundation-migration-runner-149.yml"
+            "deploy/migrate.ts"
+            "tests/integration/foundation-migration-runner-149.test.ts"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          test "$(printf '%s\n' "${actual[@]}")" = "$(printf '%s\n' "${expected_sorted[@]}")"
+          ! printf '%s\n' "${actual[@]}" | grep -E '^db/migrations/|^db/bootstrap/|^apps/|^packages/|^render\.|^deploy/Dockerfile'
+      - run: npm ci
+      - name: Gate149 migration-runner source regressions
+        run: node --experimental-strip-types --test tests/integration/foundation-migration-runner-149.test.ts
+      - name: Apply canonical empty-database chain through current tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types deploy/migrate.ts | tee "$RUNNER_TEMP/gate149-first.log"
+          applied="$(grep -c '"event":"migration.applied"' "$RUNNER_TEMP/gate149-first.log" || true)"
+          test "$applied" -eq 39
+      - name: Prove checksum-verified idempotent second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types deploy/migrate.ts | tee "$RUNNER_TEMP/gate149-second.log"
+          skips="$(grep -c '"event":"migration.skip"' "$RUNNER_TEMP/gate149-second.log" || true)"
+          applied="$(grep -c '"event":"migration.applied"' "$RUNNER_TEMP/gate149-second.log" || true)"
+          test "$skips" -eq 39
+          test "$applied" -eq 0
+      - name: Verify terminal schema census
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "pg";
+          const pool = new pg.Pool({ connectionString: process.env.GATE149_DATABASE_URL });
+          const result = await pool.query(`
+            SELECT
+              (SELECT count(*)::int FROM public.airen_schema_migrations) AS migration_count,
+              to_regclass('platform.organizations')::text AS organizations,
+              to_regclass('platform.product_subscription_bindings')::text AS subscriptions,
+              to_regclass('platform.ristoairen_experience_handoffs')::text AS handoffs,
+              to_regclass('identity.airenos_sessions')::text AS sessions,
+              EXISTS (
+                SELECT 1 FROM authz.permission_registry
+                WHERE permission_key='ristoairen.access'
+              ) AS ristoairen_access_registered
+          `);
+          const row = result.rows[0];
+          if (
+            row.migration_count !== 39 ||
+            row.organizations !== "platform.organizations" ||
+            row.subscriptions !== "platform.product_subscription_bindings" ||
+            row.handoffs !== "platform.ristoairen_experience_handoffs" ||
+            row.sessions !== "identity.airenos_sessions" ||
+            row.ristoairen_access_registered !== true
+          ) {
+            throw new Error("GATE149_TERMINAL_SCHEMA_CENSUS_FAILED");
+          }
+          await pool.end();
+          console.log("GATE149_TERMINAL_SCHEMA_CENSUS=PASS");
+          NODE
+      - name: Existing Foundation contract regressions
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
