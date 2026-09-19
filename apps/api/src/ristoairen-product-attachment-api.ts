@@ -60,6 +60,7 @@ export type RistoairenProductAttachmentApiDependencies = Readonly<{
       correlationId: string;
     }>): Promise<TrustedProductAccessScope>;
   }>;
+  attachmentProjectionPublisher?: Readonly<{ publish(projection: Awaited<ReturnType<RistoairenExperienceHandoffStore["consume"]>>): Promise<void> }>;
 }>;
 
 const CORRELATION_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
@@ -204,6 +205,7 @@ export async function dispatchRistoairenProductAttachmentApiRequest(
         return response(405, { error: "METHOD_NOT_ALLOWED", correlationId: correlation }, correlation, { allow: "POST" });
       }
       const projection = await deps.handoffs.consume(launchCode(request.body));
+      if (deps.attachmentProjectionPublisher) await deps.attachmentProjectionPublisher.publish(projection);
       return response(200, {
         gateId: RISTOAIREN_PRODUCT_ATTACHMENT_GATE.gateId,
         gateState: RISTOAIREN_PRODUCT_ATTACHMENT_GATE.gateState,
