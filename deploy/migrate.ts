@@ -166,11 +166,17 @@ async function revokeBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
   const roleName = current.rows[0]?.role_name;
   if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
   await client.query(`REVOKE airen_control_plane_owner FROM ${quotePostgresIdentifier(roleName)}`);
-  const proof = await client.query<{ can_set_owner: boolean }>(
-    "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
-  );
-  if (proof.rows[0]?.can_set_owner === true) {
-    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal retained unexpected SET ROLE access to the canonical control-plane owner");
+  const proof = await client.query<{ operational_memberships: number }>(`
+    SELECT count(*)::int AS operational_memberships
+    FROM pg_catalog.pg_auth_members m
+    JOIN pg_catalog.pg_roles target ON target.oid = m.roleid
+    JOIN pg_catalog.pg_roles member ON member.oid = m.member
+    WHERE target.rolname = 'airen_control_plane_owner'
+      AND member.rolname = current_user
+      AND (m.set_option OR m.inherit_option)
+  `);
+  if ((proof.rows[0]?.operational_memberships ?? 0) !== 0) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal retained unexpected operational membership in the canonical control-plane owner");
   }
   process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.revoked", provisioningMode: "bootstrap" })}\n`);
 }
@@ -261,18 +267,20 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
       process.stdout.write(`${JSON.stringify({ event: "migration.applied", migrationId })}\n`);
     }
   } finally {
+    let cleanupError: unknown;
     if (bootstrapOwnerSetRoleGranted) {
       try {
         await revokeBootstrapOwnerMigrationDdlPrivileges(client);
         await revokeBootstrapOwnerSetRole(client);
       } catch (error) {
+        cleanupError = error;
         process.stderr.write(`${JSON.stringify({ event: "migration.owner_privilege_cleanup_failed" })}\n`);
-        throw error;
       }
     }
     try { await client.query("SELECT pg_advisory_unlock(hashtext('airenos-foundation-migrations'))"); } catch {}
     client.release();
     await pool.end();
+    if (cleanupError) throw cleanupError;
   }
 }
 
