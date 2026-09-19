@@ -26,6 +26,10 @@ const RUNTIME_ROLE_EXPECTATIONS: readonly RuntimeRoleExpectation[] = [
   { rolname: "airen_control_plane_owner", rolcanlogin: false, rolsuper: false, rolcreatedb: false, rolcreaterole: false, rolinherit: false, rolbypassrls: false },
 ] as const;
 
+function quotePostgresIdentifier(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
 function required(input: EnvironmentInput, key: string): string {
   const value = input[key]?.trim();
   if (!value) throw new AppError("RUNTIME_CONFIGURATION_INVALID", `Missing required migration environment field: ${key}`, { field: key });
@@ -142,16 +146,12 @@ async function provisionOrVerifyRuntimeRoles(client: PoolClient, mode: RuntimeRo
 }
 
 async function grantBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
-  await client.query(`
-    DO $
-    BEGIN
-      EXECUTE format(
-        'GRANT airen_control_plane_owner TO %I WITH INHERIT FALSE, SET TRUE',
-        current_user
-      );
-    END
-    $
-  `);
+  const current = await client.query<{ role_name: string }>("SELECT current_user::text AS role_name");
+  const roleName = current.rows[0]?.role_name;
+  if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
+  await client.query(
+    `GRANT airen_control_plane_owner TO ${quotePostgresIdentifier(roleName)} WITH INHERIT FALSE, SET TRUE`,
+  );
   const proof = await client.query<{ can_set_owner: boolean }>(
     "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
   );
@@ -162,13 +162,10 @@ async function grantBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
 }
 
 async function revokeBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
-  await client.query(`
-    DO $
-    BEGIN
-      EXECUTE format('REVOKE airen_control_plane_owner FROM %I', current_user);
-    END
-    $
-  `);
+  const current = await client.query<{ role_name: string }>("SELECT current_user::text AS role_name");
+  const roleName = current.rows[0]?.role_name;
+  if (!roleName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal identity is unavailable");
+  await client.query(`REVOKE airen_control_plane_owner FROM ${quotePostgresIdentifier(roleName)}`);
   const proof = await client.query<{ can_set_owner: boolean }>(
     "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
   );
