@@ -1,0 +1,60 @@
+name: AOS R1 Foundation Control Plane Convergence 141
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-b44-foundation-controlplane-convergence-141-20260919
+  pull_request:
+    branches:
+      - foundation/aos-app-sa-integration-031-handoff-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GATE141_PARENT: 9d564d5f88e3d3bb25cf9179422ec0ed7f3888f7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify current-parent convergence delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "${GATE141_PARENT}^{commit}"
+          test "$(git merge-base "$GATE141_PARENT" "$GITHUB_SHA")" = "$GATE141_PARENT"
+          test -f db/migrations/0036_aos02_organization_control_plane.sql
+          test -f db/migrations/0037_aos03_product_subscription_access_runtime.sql
+          test ! -e db/migrations/0038_ra01_ristoairen_product_attachment.sql
+          test ! -e db/migrations/0039_ra01_ristoairen_experience_handoff.sql
+          test ! -e apps/api/src/ristoairen-product-attachment-api.ts
+          test ! -e apps/api/src/ra01-staging-server.ts
+      - run: npm ci
+      - name: AOS01/AOS02/AOS03/AOS05 contract regressions
+        run: |
+          node --experimental-strip-types --test tests/integration/aos01-product-registry-contract.test.ts
+          node --experimental-strip-types --test tests/integration/aos02-organization-context-contract.test.ts
+          node --experimental-strip-types --test tests/integration/aos03-product-access-contract.test.ts
+          node --experimental-strip-types --test tests/integration/aos05-product-attachment-contract.test.ts
+      - name: Existing Foundation boundary regression
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
+      - name: Prove migration renumbering and no RA01 runtime activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "CREATE TABLE platform.organizations" db/migrations/0036_aos02_organization_control_plane.sql
+          grep -F "CREATE TABLE platform.product_subscription_bindings" db/migrations/0037_aos03_product_subscription_access_runtime.sql
+          ! git diff "$GATE141_PARENT" "$GITHUB_SHA" --name-only | grep -E '^db/migrations/003[0-5]_'
+          ! git diff "$GATE141_PARENT" "$GITHUB_SHA" --name-only | grep -E '^deploy/|^render\.|^apps/api/src/session-authority'
