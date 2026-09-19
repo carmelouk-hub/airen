@@ -175,6 +175,41 @@ async function revokeBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
   process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.revoked", provisioningMode: "bootstrap" })}\n`);
 }
 
+async function grantBootstrapOwnerMigrationDdlPrivileges(client: PoolClient): Promise<void> {
+  const current = await client.query<{ database_name: string }>("SELECT current_database()::text AS database_name");
+  const databaseName = current.rows[0]?.database_name;
+  if (!databaseName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration database identity is unavailable");
+  await client.query(
+    `GRANT CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} TO airen_control_plane_owner`,
+  );
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_ddl.database_create_granted", provisioningMode: "bootstrap" })}\n`);
+}
+
+async function ensureBootstrapOwnerSecuritySchemaCreate(client: PoolClient): Promise<void> {
+  const result = await client.query<{ exists: boolean }>(
+    "SELECT to_regnamespace('security') IS NOT NULL AS exists",
+  );
+  if (result.rows[0]?.exists === true) {
+    await client.query("GRANT CREATE ON SCHEMA security TO airen_control_plane_owner");
+  }
+}
+
+async function revokeBootstrapOwnerMigrationDdlPrivileges(client: PoolClient): Promise<void> {
+  const current = await client.query<{ database_name: string }>("SELECT current_database()::text AS database_name");
+  const databaseName = current.rows[0]?.database_name;
+  if (!databaseName) throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration database identity is unavailable");
+  const schema = await client.query<{ exists: boolean }>(
+    "SELECT to_regnamespace('security') IS NOT NULL AS exists",
+  );
+  if (schema.rows[0]?.exists === true) {
+    await client.query("REVOKE CREATE ON SCHEMA security FROM airen_control_plane_owner");
+  }
+  await client.query(
+    `REVOKE CREATE ON DATABASE ${quotePostgresIdentifier(databaseName)} FROM airen_control_plane_owner`,
+  );
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_ddl.revoked", provisioningMode: "bootstrap" })}\n`);
+}
+
 async function runMigrations(connectionString: string, roleProvisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const pool = new Pool({ connectionString, max: 1, application_name: "airenos-migration" });
   const client = await pool.connect();
@@ -185,6 +220,7 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
     if (roleProvisioningMode === "bootstrap") {
       await grantBootstrapOwnerSetRole(client);
       bootstrapOwnerSetRoleGranted = true;
+      await grantBootstrapOwnerMigrationDdlPrivileges(client);
     }
     await client.query(`
       CREATE TABLE IF NOT EXISTS public.airen_schema_migrations (
@@ -200,6 +236,9 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
     );
 
     for (const migrationId of migrationFiles) {
+      if (roleProvisioningMode === "bootstrap") {
+        await ensureBootstrapOwnerSecuritySchemaCreate(client);
+      }
       const sql = await readFile(resolve("db/migrations", migrationId), "utf8");
       const sha256 = checksum(sql);
       const existing = await client.query<{ sha256: string }>("SELECT sha256 FROM public.airen_schema_migrations WHERE migration_id=$1", [migrationId]);
@@ -224,9 +263,10 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
   } finally {
     if (bootstrapOwnerSetRoleGranted) {
       try {
+        await revokeBootstrapOwnerMigrationDdlPrivileges(client);
         await revokeBootstrapOwnerSetRole(client);
       } catch (error) {
-        process.stderr.write(`${JSON.stringify({ event: "migration.owner_set_role.revoke_failed" })}\n`);
+        process.stderr.write(`${JSON.stringify({ event: "migration.owner_privilege_cleanup_failed" })}\n`);
         throw error;
       }
     }
