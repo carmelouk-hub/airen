@@ -130,6 +130,15 @@ jobs:
             IF v_policy_count = 0 THEN
               RAISE EXCEPTION 'GATE153_RLS_POLICY_SET_EMPTY';
             END IF;
+
+            IF EXISTS (
+              SELECT 1
+              FROM pg_auth_members m
+              JOIN pg_roles target ON target.oid = m.roleid
+              WHERE target.rolname = 'airen_control_plane_owner'
+            ) THEN
+              RAISE EXCEPTION 'GATE153_OWNER_MEMBERSHIP_NOT_REVOKED';
+            END IF;
           END
           $$;
           SQL
