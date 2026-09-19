@@ -141,12 +141,54 @@ async function provisionOrVerifyRuntimeRoles(client: PoolClient, mode: RuntimeRo
   await assertCanonicalRuntimeRoles(client, "external");
 }
 
+async function grantBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
+  await client.query(`
+    DO $
+    BEGIN
+      EXECUTE format(
+        'GRANT airen_control_plane_owner TO %I WITH INHERIT FALSE, SET TRUE',
+        current_user
+      );
+    END
+    $
+  `);
+  const proof = await client.query<{ can_set_owner: boolean }>(
+    "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
+  );
+  if (proof.rows[0]?.can_set_owner !== true) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal cannot SET ROLE to the canonical control-plane owner");
+  }
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.granted", provisioningMode: "bootstrap" })}\n`);
+}
+
+async function revokeBootstrapOwnerSetRole(client: PoolClient): Promise<void> {
+  await client.query(`
+    DO $
+    BEGIN
+      EXECUTE format('REVOKE airen_control_plane_owner FROM %I', current_user);
+    END
+    $
+  `);
+  const proof = await client.query<{ can_set_owner: boolean }>(
+    "SELECT pg_has_role(current_user, 'airen_control_plane_owner', 'SET') AS can_set_owner",
+  );
+  if (proof.rows[0]?.can_set_owner === true) {
+    throw new AppError("RUNTIME_CONFIGURATION_INVALID", "Migration principal retained unexpected SET ROLE access to the canonical control-plane owner");
+  }
+  process.stdout.write(`${JSON.stringify({ event: "migration.owner_set_role.revoked", provisioningMode: "bootstrap" })}\n`);
+}
+
 async function runMigrations(connectionString: string, roleProvisioningMode: RuntimeRoleProvisioningMode): Promise<void> {
   const pool = new Pool({ connectionString, max: 1, application_name: "airenos-migration" });
   const client = await pool.connect();
+  let bootstrapOwnerSetRoleGranted = false;
   try {
     await client.query("SELECT pg_advisory_lock(hashtext('airenos-foundation-migrations'))");
     await provisionOrVerifyRuntimeRoles(client, roleProvisioningMode);
+    if (roleProvisioningMode === "bootstrap") {
+      await grantBootstrapOwnerSetRole(client);
+      bootstrapOwnerSetRoleGranted = true;
+    }
     await client.query(`
       CREATE TABLE IF NOT EXISTS public.airen_schema_migrations (
         migration_id text PRIMARY KEY,
@@ -183,6 +225,14 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
       process.stdout.write(`${JSON.stringify({ event: "migration.applied", migrationId })}\n`);
     }
   } finally {
+    if (bootstrapOwnerSetRoleGranted) {
+      try {
+        await revokeBootstrapOwnerSetRole(client);
+      } catch (error) {
+        process.stderr.write(`${JSON.stringify({ event: "migration.owner_set_role.revoke_failed" })}\n`);
+        throw error;
+      }
+    }
     try { await client.query("SELECT pg_advisory_unlock(hashtext('airenos-foundation-migrations'))"); } catch {}
     client.release();
     await pool.end();
