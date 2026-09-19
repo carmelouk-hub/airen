@@ -50,6 +50,42 @@ function checksum(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
+const MIGRATION_FILENAME_PATTERN = /^(\\d{4})_[A-Za-z0-9_.-]+\\.sql$/;
+
+export function validateCanonicalMigrationSequence(entries: readonly string[]): readonly string[] {
+  const numbered = entries.filter((name) => /^\\d{4}_/.test(name));
+  const invalid = numbered.filter((name) => !MIGRATION_FILENAME_PATTERN.test(name));
+  if (invalid.length) {
+    throw new AppError("VALIDATION_FAILED", "Migration directory contains noncanonical numbered filenames", {
+      invalidMigrationFiles: invalid.sort(),
+    });
+  }
+
+  const migrationFiles = numbered.filter((name) => MIGRATION_FILENAME_PATTERN.test(name)).sort();
+  if (!migrationFiles.length) {
+    throw new AppError("VALIDATION_FAILED", "Migration directory contains no canonical migrations");
+  }
+
+  const seen = new Set<number>();
+  for (let index = 0; index < migrationFiles.length; index += 1) {
+    const migrationId = migrationFiles[index];
+    const match = MIGRATION_FILENAME_PATTERN.exec(migrationId);
+    const number = Number(match?.[1]);
+    const expected = index + 1;
+
+    if (!Number.isInteger(number) || number !== expected || seen.has(number)) {
+      throw new AppError("VALIDATION_FAILED", "Foundation migration sequence must be contiguous from 0001 with no duplicates", {
+        migrationId,
+        migrationNumber: number,
+        expectedMigrationNumber: expected,
+      });
+    }
+    seen.add(number);
+  }
+
+  return migrationFiles;
+}
+
 function transactionBody(sql: string, migrationId: string): string {
   const trimmed = sql.trim();
   const begin = /(^|\n)\s*BEGIN;\s*/i.exec(trimmed);
@@ -119,9 +155,9 @@ async function runMigrations(connectionString: string, roleProvisioningMode: Run
       REVOKE ALL ON public.airen_schema_migrations FROM PUBLIC;
     `);
 
-    const migrationFiles = (await readdir(resolve("db/migrations")))
-      .filter((name) => /^\d{4}_[A-Za-z0-9_.-]+\.sql$/.test(name))
-      .sort();
+    const migrationFiles = validateCanonicalMigrationSequence(
+      await readdir(resolve("db/migrations")),
+    );
 
     for (const migrationId of migrationFiles) {
       const sql = await readFile(resolve("db/migrations", migrationId), "utf8");
