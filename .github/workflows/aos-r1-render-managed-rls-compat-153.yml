@@ -1,0 +1,169 @@
+name: AOS R1 Render Managed RLS Compatibility 153
+
+on:
+  push:
+    branches:
+      - foundation/aos-r1-render-managed-rls-compat-153-20260919
+  pull_request:
+    branches:
+      - foundation/aos-r1-foundation-migration-runner-149-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-managed-postgres-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: airenos_gate153
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d airenos_gate153"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      GATE153_PARENT: 554dcb94f8ce34512bca5822a4f32a540c68da64
+      SUPER_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/airenos_gate153
+      GATE153_DATABASE_URL: postgresql://airenos_render_bootstrap_test:bootstrap_test@127.0.0.1:5432/airenos_gate153
+      MIGRATION_SECRET_MANAGER_ADAPTER: env
+      MIGRATION_DATABASE_URL_SECRET_REF: secret://env/GATE153_DATABASE_URL
+      AIREN_RUNTIME_ROLE_PROVISIONING_MODE: bootstrap
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.2"
+          cache: npm
+      - name: Verify source-only Gate153 delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base "$GATE153_PARENT" "$GITHUB_SHA")" = "$GATE153_PARENT"
+          ! git diff --name-only "$GATE153_PARENT" "$GITHUB_SHA" | grep -E '^apps/|^packages/|^render\.|^deploy/Dockerfile'
+      - run: npm ci
+      - name: Gate149 and Gate153 source regressions
+        run: |
+          node --experimental-strip-types --test tests/integration/foundation-migration-runner-149.test.ts
+          node --experimental-strip-types --test tests/integration/render-managed-control-plane-owner-153.test.ts
+      - name: Create Render-like managed bootstrap principal
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$SUPER_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE airenos_render_bootstrap_test
+            LOGIN PASSWORD 'bootstrap_test'
+            NOSUPERUSER NOCREATEDB CREATEROLE NOINHERIT NOBYPASSRLS;
+          ALTER DATABASE airenos_gate153 OWNER TO airenos_render_bootstrap_test;
+          SQL
+          test "$(psql "$SUPER_DATABASE_URL" -Atc "SELECT (NOT rolsuper AND rolcreaterole AND NOT rolbypassrls AND NOT rolcreatedb) FROM pg_roles WHERE rolname='airenos_render_bootstrap_test'")" = "t"
+      - name: Apply complete canonical chain as Render-like principal
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types deploy/migrate.ts | tee "$RUNNER_TEMP/gate153-first.log"
+          test "$(grep -c '"event":"migration.applied"' "$RUNNER_TEMP/gate153-first.log" || true)" -eq 40
+      - name: Verify managed role and RLS equivalence coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$SUPER_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          DECLARE
+            v_missing integer;
+            v_policy_count integer;
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_roles
+              WHERE rolname='airen_control_plane_owner'
+                AND NOT rolcanlogin
+                AND NOT rolsuper
+                AND NOT rolcreatedb
+                AND NOT rolcreaterole
+                AND NOT rolinherit
+                AND NOT rolbypassrls
+            ) THEN
+              RAISE EXCEPTION 'GATE153_OWNER_ATTRIBUTES_FAILED';
+            END IF;
+
+            SELECT count(*) INTO v_missing
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid=c.relnamespace
+            CROSS JOIN LATERAL (
+              VALUES
+                ('SELECT','airen_cp_owner_select'),
+                ('INSERT','airen_cp_owner_insert'),
+                ('UPDATE','airen_cp_owner_update'),
+                ('DELETE','airen_cp_owner_delete')
+            ) AS required(command, policy_name)
+            WHERE c.relkind IN ('r','p')
+              AND c.relrowsecurity
+              AND c.relforcerowsecurity
+              AND n.nspname NOT IN ('pg_catalog','information_schema')
+              AND has_table_privilege('airen_control_plane_owner', c.oid, required.command)
+              AND NOT EXISTS (
+                SELECT 1 FROM pg_policy p
+                WHERE p.polrelid=c.oid AND p.polname=required.policy_name
+              );
+            IF v_missing <> 0 THEN
+              RAISE EXCEPTION 'GATE153_RLS_POLICY_COVERAGE_FAILED:%', v_missing;
+            END IF;
+
+            SELECT count(*) INTO v_policy_count
+            FROM pg_policy
+            WHERE polname IN (
+              'airen_cp_owner_select',
+              'airen_cp_owner_insert',
+              'airen_cp_owner_update',
+              'airen_cp_owner_delete'
+            );
+            IF v_policy_count = 0 THEN
+              RAISE EXCEPTION 'GATE153_RLS_POLICY_SET_EMPTY';
+            END IF;
+          END
+          $$;
+          SQL
+      - name: Prove checksum idempotent second pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types deploy/migrate.ts | tee "$RUNNER_TEMP/gate153-second.log"
+          test "$(grep -c '"event":"migration.skip"' "$RUNNER_TEMP/gate153-second.log" || true)" -eq 40
+          test "$(grep -c '"event":"migration.applied"' "$RUNNER_TEMP/gate153-second.log" || true)" -eq 0
+      - name: Terminal migration census
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "pg";
+          const pool = new pg.Pool({ connectionString: process.env.GATE153_DATABASE_URL });
+          const { rows: [row] } = await pool.query(`
+            SELECT
+              (SELECT count(*)::int FROM public.airen_schema_migrations) AS migration_count,
+              to_regclass('platform.organizations')::text AS organizations,
+              to_regclass('platform.product_subscription_bindings')::text AS subscriptions,
+              to_regclass('platform.ristoairen_experience_handoffs')::text AS handoffs,
+              to_regclass('identity.airenos_sessions')::text AS sessions
+          `);
+          if (
+            row.migration_count !== 40 ||
+            row.organizations !== "platform.organizations" ||
+            row.subscriptions !== "platform.product_subscription_bindings" ||
+            row.handoffs !== "platform.ristoairen_experience_handoffs" ||
+            row.sessions !== "identity.airenos_sessions"
+          ) throw new Error("GATE153_TERMINAL_CENSUS_FAILED");
+          await pool.end();
+          console.log("GATE153_TERMINAL_CENSUS=PASS");
+          NODE
+      - name: Existing Foundation boundaries
+        run: |
+          npm run check:boundaries
+          npm run check:foundation-contracts
